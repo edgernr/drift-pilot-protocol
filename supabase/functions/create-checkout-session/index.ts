@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
       payment_method_types: ['card'],
       line_items: [{ price: Deno.env.get('STRIPE_PRICE_ID')!, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${Deno.env.get('SITE_URL')}/dashboard?checkout=success`,
+      success_url: `${Deno.env.get('SITE_URL')}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${Deno.env.get('SITE_URL')}/dashboard`,
       metadata: { user_id },
       subscription_data: { metadata: { user_id } },
