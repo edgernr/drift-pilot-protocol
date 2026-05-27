@@ -300,6 +300,53 @@
 }
 .welcome-skip:hover { color: var(--ink-2); border-color: oklch(1 0 0 / 0.2); }
 
+/* ── Onboarding multi-step ──────────────────────── */
+.onboard-wide { max-width: 600px !important; }
+
+@keyframes onboard-glow {
+  0%, 100% { text-shadow: 0 0 20px var(--teal); color: var(--teal); }
+  50%       { text-shadow: 0 0 40px var(--violet); color: var(--violet); }
+}
+.onboard-glyph-pulse { animation: onboard-glow 2.4s ease-in-out infinite; }
+
+.onboard-dots { display: flex; gap: 8px; justify-content: center; margin: 20px 0 4px; }
+.onboard-dot  { width: 6px; height: 6px; border-radius: 50%; background: oklch(1 0 0 / 0.14); }
+.onboard-dot-on { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+
+.onboard-gates {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%;
+}
+.onboard-gate {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px; border-radius: 10px; text-align: left;
+  background: rgba(180, 200, 255, 0.03); border: 1px solid var(--line);
+}
+.onboard-gate-boss { border-color: oklch(0.72 0.28 340 / 0.4); background: oklch(0.72 0.28 340 / 0.05); }
+.onboard-gate-icon   { font-size: 22px; margin-bottom: 4px; }
+.onboard-gate-name   { font-family: var(--f-display); font-size: 13px; font-weight: 500; color: var(--ink-1); }
+.onboard-gate-sub    { font-family: var(--f-mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+.onboard-gate-reward { font-family: var(--f-mono); font-size: 10px; color: var(--lime); margin-top: 6px; }
+.onboard-gate-boss .onboard-gate-name   { color: var(--magenta); }
+.onboard-gate-boss .onboard-gate-reward { color: var(--amber); }
+
+.onboard-name-input {
+  width: 100%; margin-top: 18px;
+  background: rgba(180, 200, 255, 0.04);
+  border: 1px solid var(--line-2); border-radius: 10px;
+  padding: 14px 16px;
+  font-family: var(--f-mono); font-size: 16px; color: var(--ink-0);
+  text-align: center; outline: none; letter-spacing: 0.04em;
+  transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box;
+}
+.onboard-name-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px oklch(0.86 0.18 185 / 0.12);
+}
+@media (max-width: 540px) {
+  .onboard-gates { grid-template-columns: 1fr; }
+  .onboard-wide  { max-width: 100% !important; }
+}
+
 .btn-metamask {
   flex-shrink: 0; padding: 0 12px; height: 38px; border-radius: 8px;
   background: oklch(0.82 0.18 75 / 0.12); border: 1px solid oklch(0.82 0.18 75 / 0.3);

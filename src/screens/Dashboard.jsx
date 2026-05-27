@@ -29,6 +29,9 @@ export default function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [welcomed, setWelcomed] = useState(() => !!localStorage.getItem('dpp_welcomed'))
+  const [onboardStep, setOnboardStep] = useState(1)
+  const [onboardName, setOnboardName] = useState('')
+  const [profileLinkCopied, setProfileLinkCopied] = useState(false)
 
   const CARD_VARIANTS = [
     { id: 'dark',    grad: 'linear-gradient(135deg, oklch(0.20 0.08 270), oklch(0.12 0.04 250))', swatch: 'oklch(0.22 0.08 270)' },
@@ -125,6 +128,21 @@ export default function Dashboard() {
     localStorage.setItem('dpp_welcomed', '1')
     setWelcomed(true)
     if (andGo) goto('quest')
+  }
+
+  async function handleOnboardFinish() {
+    if (onboardName.trim() && onboardName.trim() !== profile?.name) {
+      await updateProfile(onboardName.trim(), profile?.wallet ?? '')
+    }
+    localStorage.setItem('dpp_welcomed', '1')
+    setWelcomed(true)
+    goto('quest')
+  }
+
+  function copyProfileLink() {
+    navigator.clipboard.writeText(`${window.location.origin}/pilot/${user?.id}`)
+    setProfileLinkCopied(true)
+    setTimeout(() => setProfileLinkCopied(false), 2500)
   }
 
   useEffect(() => {
@@ -242,18 +260,76 @@ export default function Dashboard() {
   return (
     <div className="dash-wrap">
       {showWelcome && (
-        <div className="welcome-backdrop" onClick={() => dismissWelcome(false)}>
-          <div className="welcome-modal" onClick={e => e.stopPropagation()}>
-            <div className="welcome-glyph">◈</div>
-            <h2 className="welcome-title">Welcome to Drift Pilot Protocol</h2>
-            <p className="welcome-body">
-              You're in EVA City — a neon district where developers clear gates, earn $DRIFT, and raid the tower.<br /><br />
-              Gate 01 is your entry point. Clear it to unlock the rest of the city.
-            </p>
-            <div className="welcome-actions">
-              <button className="welcome-cta" onClick={() => dismissWelcome(true)}>Begin Gate 01 →</button>
-              <button className="welcome-skip" onClick={() => dismissWelcome(false)}>Explore Dashboard</button>
-            </div>
+        <div className="welcome-backdrop" onClick={onboardStep < 3 ? () => dismissWelcome(false) : undefined}>
+          <div className={`welcome-modal${onboardStep === 2 ? ' onboard-wide' : ''}`} onClick={e => e.stopPropagation()}>
+
+            {/* ── Step 1: Welcome + Lore ── */}
+            {onboardStep === 1 && (<>
+              <div className="welcome-glyph onboard-glyph-pulse">◈</div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>DRIFT PILOT PROTOCOL</div>
+              <h2 className="welcome-title">Welcome, Pilot.</h2>
+              <p className="welcome-body">
+                EVA City is a neon district where the old code has corrupted. As a Drift Pilot you'll clear the Gates — debugging sectors, building real projects, and earning $DRIFT.<br /><br />
+                Clear all 15 gates in Act I to unlock the Reactive Sector. Raid the tower for bonus rewards.
+              </p>
+              <div className="onboard-dots">
+                <span className="onboard-dot onboard-dot-on" /><span className="onboard-dot" /><span className="onboard-dot" />
+              </div>
+              <div className="welcome-actions">
+                <button className="welcome-cta" onClick={() => setOnboardStep(2)}>Continue →</button>
+                <button className="welcome-skip" onClick={() => dismissWelcome(false)}>Skip intro</button>
+              </div>
+            </>)}
+
+            {/* ── Step 2: Mission path ── */}
+            {onboardStep === 2 && (<>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--amber)', letterSpacing: '0.14em', marginBottom: 10 }}>YOUR ACT I MISSION PATH</div>
+              <h2 className="welcome-title" style={{ marginBottom: 20 }}>HTML Ruins — 4 Gates</h2>
+              <div className="onboard-gates">
+                {[
+                  { icon: '📡', name: 'The Document Tomb', sub: 'Fix corrupted HTML', xp: 100, drift: 250 },
+                  { icon: '⚱️', name: 'The Semantic Crypt', sub: 'Semantic HTML',      xp: 200, drift: 350 },
+                  { icon: '📋', name: 'The Form Gate',      sub: 'Build forms · BOSS', xp: 300, drift: 700, boss: true },
+                  { icon: '🎨', name: 'Paint the City',     sub: 'CSS design systems', xp: 200, drift: 400 },
+                ].map((g, i) => (
+                  <div key={i} className={`onboard-gate${g.boss ? ' onboard-gate-boss' : ''}`}>
+                    <span className="onboard-gate-icon">{g.icon}</span>
+                    <span className="onboard-gate-name">{g.name}</span>
+                    <span className="onboard-gate-sub">{g.sub}</span>
+                    <span className="onboard-gate-reward">+{g.xp} XP · +{g.drift} $DRIFT</span>
+                  </div>
+                ))}
+              </div>
+              <div className="onboard-dots" style={{ marginTop: 20 }}>
+                <span className="onboard-dot" /><span className="onboard-dot onboard-dot-on" /><span className="onboard-dot" />
+              </div>
+              <button className="welcome-cta" style={{ marginTop: 16 }} onClick={() => setOnboardStep(3)}>Continue →</button>
+            </>)}
+
+            {/* ── Step 3: Callsign ── */}
+            {onboardStep === 3 && (<>
+              <div className="welcome-glyph">◈</div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>STEP 3 OF 3</div>
+              <h2 className="welcome-title">Confirm Your Callsign</h2>
+              <p className="welcome-body" style={{ marginBottom: 0 }}>This is how you'll appear on the leaderboard and your shareable pilot profile.</p>
+              <input
+                className="onboard-name-input"
+                value={onboardName || profile?.name || ''}
+                onChange={e => setOnboardName(e.target.value)}
+                placeholder="Enter callsign..."
+                maxLength={30}
+                autoFocus
+              />
+              <div className="onboard-dots">
+                <span className="onboard-dot" /><span className="onboard-dot" /><span className="onboard-dot onboard-dot-on" />
+              </div>
+              <div className="welcome-actions" style={{ marginTop: 4 }}>
+                <button className="welcome-cta" disabled={!(onboardName || profile?.name)} onClick={handleOnboardFinish}>
+                  Begin Gate 01 →
+                </button>
+              </div>
+            </>)}
+
           </div>
         </div>
       )}
@@ -1093,6 +1169,28 @@ export default function Dashboard() {
                     {pwStatus === 'error' && !passwordRecovery && <span className="set-err">Failed — try again</span>}
                   </div>
 
+                </div>
+              </div>
+
+              <div className="section-block">
+                <div className="sb-head"><h3>Public Profile</h3></div>
+                <div className="panel set-form">
+                  <div className="set-field">
+                    <div className="set-label">Share your pilot profile</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        className="set-input set-readonly"
+                        readOnly
+                        value={`${window.location.origin}/pilot/${user?.id ?? ''}`}
+                      />
+                      <button className="btn" style={{ flexShrink: 0, fontSize: 11 }} onClick={copyProfileLink}>
+                        {profileLinkCopied ? '✓ Copied' : 'Copy'}
+                      </button>
+                    </div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', marginTop: 4 }}>
+                      Public page — visible to anyone with the link
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
-const DRIFT_REWARDS = {
+export const DRIFT_REWARDS = {
   'act1-ch01': 250, 'act1-ch02': 350, 'act1-ch03': 700,
   'act1-ch04': 400, 'act1-ch05': 500, 'act1-ch06': 900,
   'act1-ch07': 550, 'act1-ch08': 1000, 'act1-ch09': 700, 'act1-ch10': 1500,
