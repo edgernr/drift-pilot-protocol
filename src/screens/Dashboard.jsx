@@ -161,6 +161,7 @@ export default function Dashboard() {
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
       body: { user_id: user.id, email: user.email },
     })
+    console.log('checkout response:', { data, error })
     if (error || !data?.url) { setCheckoutLoading(false); return }
     window.location.href = data.url
   }
