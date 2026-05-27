@@ -13,7 +13,7 @@ function fmtTime(s) { if (!s) return '—'; return `${Math.floor(s / 60)}:${Stri
 
 export default function Dashboard() {
   const { goto } = useNav()
-  const { user, profile, logout, updateProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
+  const { user, profile, logout, updateProfile, refreshProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
   const [resetConfirm, setResetConfirm] = useState(null)
   const [unlockStatus, setUnlockStatus] = useState({})
   const [newPassword, setNewPassword] = useState('')
@@ -33,6 +33,12 @@ export default function Dashboard() {
   const [onboardName, setOnboardName] = useState('')
   const [profileLinkCopied, setProfileLinkCopied] = useState(false)
   const [banDurations, setBanDurations] = useState({})
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutSuccess, setCheckoutSuccess] = useState(() => {
+    const ok = new URLSearchParams(window.location.search).get('checkout') === 'success'
+    if (ok) window.history.replaceState({}, '', '/dashboard')
+    return ok
+  })
 
   const CARD_VARIANTS = [
     { id: 'dark',    grad: 'linear-gradient(135deg, oklch(0.20 0.08 270), oklch(0.12 0.04 250))', swatch: 'oklch(0.22 0.08 270)' },
@@ -144,6 +150,19 @@ export default function Dashboard() {
     navigator.clipboard.writeText(`${window.location.origin}/pilot/${user?.id}`)
     setProfileLinkCopied(true)
     setTimeout(() => setProfileLinkCopied(false), 2500)
+  }
+
+  useEffect(() => {
+    if (checkoutSuccess) refreshProfile()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleCheckout() {
+    setCheckoutLoading(true)
+    const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+      body: { user_id: user.id, email: user.email },
+    })
+    if (error || !data?.url) { setCheckoutLoading(false); return }
+    window.location.href = data.url
   }
 
   useEffect(() => {
@@ -460,6 +479,17 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {checkoutSuccess && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'oklch(0.75 0.22 145 / 0.1)', border: '1px solid oklch(0.75 0.22 145 / 0.35)', borderRadius: 10, padding: '14px 18px', margin: '0 0 20px', fontFamily: 'var(--f-mono)', fontSize: 12 }}>
+            <span style={{ fontSize: 20 }}>✓</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: 'var(--lime)', fontWeight: 600, marginBottom: 2 }}>Season Pass activated!</div>
+              <div style={{ color: 'var(--ink-2)', fontSize: 11 }}>All 15 gates are now unlocked. Welcome to the full protocol.</div>
+            </div>
+            <button style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 16 }} onClick={() => setCheckoutSuccess(false)}>×</button>
+          </div>
+        )}
+
         {view === 'home' ? (
           <>
             <div className="hero-banner">
@@ -721,7 +751,9 @@ export default function Dashboard() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'oklch(0.72 0.28 340 / 0.06)', border: '1px solid oklch(0.72 0.28 340 / 0.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 16, fontFamily: 'var(--f-mono)', fontSize: 11 }}>
                 <span style={{ fontSize: 20 }}>🔓</span>
                 <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 15 gates</strong> sequentially with a Season Pass — no $DRIFT spend needed.</span>
-                <span className="chip chip-amber">Coming Soon</span>
+                <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px', flexShrink: 0 }} onClick={handleCheckout} disabled={checkoutLoading}>
+                  {checkoutLoading ? 'Loading…' : 'Get Season Pass →'}
+                </button>
               </div>
             )}
 
@@ -1108,9 +1140,12 @@ export default function Dashboard() {
                         ? <span className="chip chip-lime" style={{ padding: '2px 8px', fontSize: 10 }}>ACTIVE</span>
                         : <span className="chip" style={{ padding: '2px 8px', fontSize: 10 }}>NOT ACTIVE</span>
                       }
-                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>
-                        {isSubscribed ? 'Full access to all worlds' : 'Unlock gates with $DRIFT or contact for Season Pass'}
-                      </span>
+                      {isSubscribed
+                        ? <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>Full access to all worlds</span>
+                        : <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px' }} onClick={handleCheckout} disabled={checkoutLoading}>
+                            {checkoutLoading ? 'Loading…' : 'Get Season Pass — $19/mo →'}
+                          </button>
+                      }
                     </div>
                   </div>
                   <div className="set-actions">

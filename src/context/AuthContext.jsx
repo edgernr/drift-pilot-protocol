@@ -276,6 +276,10 @@ export function AuthProvider({ children }) {
     return !error
   }
 
+  async function refreshProfile() {
+    if (user) await fetchProfile(user.id)
+  }
+
   async function logout() {
     await supabase.auth.signOut()
     setUser(null)
@@ -283,7 +287,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )
