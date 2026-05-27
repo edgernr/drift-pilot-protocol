@@ -1,0 +1,189 @@
+/* Gate 04 — Paint the City — Amber accent */
+
+/* XP bar */
+.dq-wrap-g4 .dq-xp-fill {
+  background: linear-gradient(90deg, var(--amber), oklch(0.70 0.20 55));
+}
+
+/* Checker boxes — amber theme */
+.dq-wrap-g4 .dq4-obj-box {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.dq-wrap-g4 li.done .dq4-obj-box {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: oklch(0.10 0.02 75);
+}
+
+/* ── Scene art — 8-swatch color matrix ───────────────────────────────────── */
+
+.dq4-scene-matrix {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  width: 108px;
+  margin: auto;
+  padding: 12px;
+  background: oklch(0.10 0.03 260);
+  border: 1px solid oklch(0.22 0.06 260);
+  border-radius: 6px;
+}
+
+.dq4-swatch {
+  height: 22px;
+  border-radius: 3px;
+  background: oklch(0.18 0.04 260);
+  border: 1px solid oklch(0.26 0.06 260);
+  transition: background 0.45s ease, box-shadow 0.45s ease, border-color 0.45s ease;
+}
+
+/* Each swatch lights a different neon when its check passes */
+.dq4-swatch-1.lit { background: var(--teal);    border-color: var(--teal);    box-shadow: 0 0 8px oklch(0.72 0.22 185 / 0.65); }
+.dq4-swatch-2.lit { background: var(--violet);  border-color: var(--violet);  box-shadow: 0 0 8px oklch(0.70 0.25 295 / 0.65); }
+.dq4-swatch-3.lit { background: var(--lime);    border-color: var(--lime);    box-shadow: 0 0 8px oklch(0.90 0.22 135 / 0.65); }
+.dq4-swatch-4.lit { background: var(--amber);   border-color: var(--amber);   box-shadow: 0 0 8px oklch(0.82 0.18 75 / 0.65);  }
+.dq4-swatch-5.lit { background: var(--magenta); border-color: var(--magenta); box-shadow: 0 0 8px oklch(0.72 0.28 340 / 0.65); }
+.dq4-swatch-6.lit { background: oklch(0.65 0.20 220); border-color: oklch(0.65 0.20 220); box-shadow: 0 0 8px oklch(0.65 0.20 220 / 0.65); }
+.dq4-swatch-7.lit { background: oklch(0.70 0.18 45);  border-color: oklch(0.70 0.18 45);  box-shadow: 0 0 8px oklch(0.70 0.18 45 / 0.65);  }
+.dq4-swatch-8.lit { background: oklch(0.75 0.22 160); border-color: oklch(0.75 0.22 160); box-shadow: 0 0 8px oklch(0.75 0.22 160 / 0.65); }
+
+/* All clear — matrix pulses */
+.dq4-scene-matrix.complete {
+  border-color: var(--amber);
+  box-shadow: 0 0 16px oklch(0.82 0.18 75 / 0.35);
+  animation: dq4MatrixPulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes dq4MatrixPulse {
+  from { box-shadow: 0 0 8px oklch(0.82 0.18 75 / 0.25); }
+  to   { box-shadow: 0 0 24px oklch(0.82 0.18 75 / 0.55); }
+}
+
+/* ── Live preview iframe ─────────────────────────────────────────────────── */
+
+.dq4-preview-frame {
+  flex: 1;
+  min-height: 0;
+  border: none;
+  background: #fff;
+  display: block;
+}
+
+/* ── Override chip in tab bar ────────────────────────────────────────────── */
+
+.dq4-override-chip {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: oklch(0.72 0.28 340 / 0.2);
+  border: 1px solid oklch(0.72 0.28 340 / 0.5);
+  color: oklch(0.85 0.22 340);
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* ── Protocol Override slot ──────────────────────────────────────────────── */
+
+.dq4-slot-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid oklch(0.20 0.04 260);
+  background: oklch(0.10 0.03 260);
+}
+
+.dq4-slot-label {
+  flex: 1;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: oklch(0.45 0.06 260);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s;
+}
+
+.dq4-slot-wrap.ready .dq4-slot-label {
+  color: var(--amber);
+}
+
+/* The slot itself */
+.dq4-protocol-slot {
+  flex-shrink: 0;
+  width: 136px;
+  height: 30px;
+  border-radius: 3px;
+  border: 1px solid oklch(0.25 0.05 260);
+  background: oklch(0.13 0.03 260);
+  position: relative;
+  overflow: hidden;
+  cursor: not-allowed;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Inactive scanline texture */
+.dq4-protocol-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    oklch(1 0 0 / 0.03) 0px,
+    oklch(1 0 0 / 0.03) 1px,
+    transparent 1px,
+    transparent 9px
+  );
+  pointer-events: none;
+}
+
+/* Ready state */
+.dq4-protocol-slot.ready {
+  border-color: var(--amber);
+  background: oklch(0.16 0.07 75);
+  cursor: pointer;
+  animation: dq4SlotPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dq4SlotPulse {
+  0%, 100% { box-shadow: 0 0 8px oklch(0.82 0.18 75 / 0.30); }
+  50%       { box-shadow: 0 0 22px oklch(0.82 0.18 75 / 0.70); }
+}
+
+/* Shimmer sweep on ready */
+.dq4-protocol-slot.ready::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.82 0.18 75 / 0.35),
+    transparent
+  );
+  animation: dq4Shimmer 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dq4Shimmer {
+  to { left: 160%; }
+}
+
+/* Activating flash */
+.dq4-protocol-slot.activating {
+  animation: dq4SlotActivate 0.5s ease-out forwards;
+}
+
+@keyframes dq4SlotActivate {
+  0%   { background: oklch(0.16 0.07 75); }
+  50%  { background: var(--amber); box-shadow: 0 0 40px oklch(0.82 0.18 75); }
+  100% { background: oklch(0.72 0.28 340); border-color: oklch(0.72 0.28 340); box-shadow: 0 0 20px oklch(0.72 0.28 340 / 0.6); }
+}

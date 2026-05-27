@@ -1,0 +1,146 @@
+/* === Quest 2 — The Architect's Codex: scene art (left panel) === */
+
+.dq2-scene-codex {
+  width: 52px;
+  height: 42px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 20px;
+  background: linear-gradient(160deg, #1a1e2e, #0e1020);
+  border: 1px solid #252840;
+  border-radius: 2px;
+  transition: border-color 0.6s, box-shadow 0.6s;
+}
+
+/* carved ruling lines */
+.dq2-scene-codex::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 7px;
+  right: 7px;
+  height: 1px;
+  background: #2a3060;
+  box-shadow: 0 7px 0 #2a3060, 0 14px 0 #2a3060, 0 21px 0 #2a3060;
+}
+
+/* central glyph circle */
+.dq2-scene-codex::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #2a3060;
+  border-radius: 50%;
+  transition: border-color 0.6s, box-shadow 0.6s;
+}
+
+.dq2-scene-codex.verified {
+  border-color: oklch(0.72 0.22 290 / 0.6);
+  box-shadow: 0 0 12px oklch(0.72 0.22 290 / 0.18), inset 0 0 10px oklch(0.72 0.22 290 / 0.06);
+}
+
+.dq2-scene-codex.verified::after {
+  border-color: oklch(0.72 0.22 290 / 0.9);
+  box-shadow: 0 0 0 4px oklch(0.72 0.22 290 / 0.1), 0 0 16px oklch(0.72 0.22 290 / 0.4);
+  animation: codexGlyphPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes codexGlyphPulse {
+  0%, 100% { opacity: 0.65; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 1;    transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* === Quest 2 — Identity scanner obj box (violet instead of magenta) === */
+
+.dq2-obj-box {
+  border-color: var(--violet) !important;
+  color: var(--violet) !important;
+}
+
+li.done .dq2-obj-box {
+  border-color: var(--lime) !important;
+  color: var(--lime) !important;
+}
+
+/* === Quest 2 — Codex slot (right panel) === */
+
+.dq-codex-slot {
+  position: relative;
+  width: 160px;
+  height: 120px;
+  z-index: 3;
+  margin-bottom: 28px;
+  cursor: default;
+}
+
+.dq-codex-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #080c14;
+}
+
+.dq-codex-frame {
+  position: absolute;
+  inset: -4px;
+  border: 4px solid #1e2038;
+  border-radius: 4px;
+  pointer-events: none;
+  transition: border-color 0.5s, box-shadow 0.5s;
+}
+
+.dq-codex-slot.incomplete .dq-codex-frame {
+  border-color: #2a2840;
+  box-shadow: 0 0 0 2px #06060e, 0 0 14px oklch(0.72 0.22 290 / 0.08);
+}
+
+.dq-codex-slot.verified .dq-codex-frame {
+  border-color: oklch(0.72 0.22 290);
+  box-shadow: 0 0 0 2px #06060e, 0 0 28px oklch(0.72 0.22 290 / 0.5), 0 0 60px oklch(0.72 0.22 290 / 0.18);
+}
+
+.dq-codex-slot.verified {
+  cursor: pointer;
+  filter: drop-shadow(0 0 8px oklch(0.72 0.22 290 / 0.35));
+}
+
+.dq-codex-slot .dq-enter-prompt {
+  color: oklch(0.72 0.22 290);
+}
+
+.dq-codex-slot.verified .dq-enter-prompt {
+  opacity: 1;
+  animation: pulseText 1.6s ease-in-out infinite;
+}
+
+.dq-codex-verified-chip {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: oklch(0.72 0.22 290 / 0.12);
+  border: 1px solid oklch(0.72 0.22 290 / 0.4);
+  color: oklch(0.72 0.22 290);
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.dq-codex-slot.verifying {
+  animation: codexVerify 0.75s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes codexVerify {
+  0%   { transform: scale(1);    filter: brightness(1); }
+  20%  { transform: scale(1.04); filter: brightness(3) drop-shadow(0 0 20px oklch(0.72 0.22 290)); }
+  60%  { transform: scale(1.1);  filter: brightness(8) drop-shadow(0 0 40px oklch(0.72 0.22 290)); }
+  100% { transform: scale(2.5);  filter: brightness(20); opacity: 0; }
+}

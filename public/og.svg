@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="oklch(0.78 0.18 185)"/>
+      <stop offset="100%" stop-color="oklch(0.72 0.28 185)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Grid lines -->
+  <g opacity="0.06" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="105" x2="1200" y2="105"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="420" x2="1200" y2="420"/>
+    <line x1="0" y1="525" x2="1200" y2="525"/>
+    <line x1="150" y1="0" x2="150" y2="630"/>
+    <line x1="300" y1="0" x2="300" y2="630"/>
+    <line x1="450" y1="0" x2="450" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="750" y1="0" x2="750" y2="630"/>
+    <line x1="900" y1="0" x2="900" y2="630"/>
+    <line x1="1050" y1="0" x2="1050" y2="630"/>
+  </g>
+
+  <!-- Teal glow accent top-left -->
+  <circle cx="120" cy="120" r="200" fill="oklch(0.72 0.28 185)" opacity="0.06"/>
+  <!-- Violet glow accent bottom-right -->
+  <circle cx="1100" cy="520" r="250" fill="oklch(0.72 0.25 290)" opacity="0.06"/>
+
+  <!-- Border -->
+  <rect x="40" y="40" width="1120" height="550" rx="16" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.1"/>
+
+  <!-- Tag line -->
+  <text x="80" y="142" font-family="'Space Grotesk', sans-serif" font-size="13" font-weight="500" letter-spacing="0.2em" fill="oklch(0.78 0.18 185)" opacity="0.9" text-transform="uppercase">DRIFT PILOT PROTOCOL</text>
+
+  <!-- Main headline -->
+  <text x="80" y="240" font-family="'Space Grotesk', sans-serif" font-size="72" font-weight="700" fill="#e8e8f4" letter-spacing="-0.03em">Learn.</text>
+  <text x="80" y="330" font-family="'Space Grotesk', sans-serif" font-size="72" font-weight="700" fill="#e8e8f4" letter-spacing="-0.03em">Build.</text>
+  <text x="80" y="420" font-family="'Space Grotesk', sans-serif" font-size="72" font-weight="700" fill="oklch(0.78 0.18 185)" letter-spacing="-0.03em">Earn.</text>
+
+  <!-- Description -->
+  <text x="80" y="510" font-family="'Inter', sans-serif" font-size="20" font-weight="400" fill="#8080a0">A gamified coding academy. Clear gates. Raid Gate Zero. Earn $DRIFT.</text>
+
+  <!-- Right side chips -->
+  <g transform="translate(760, 180)">
+    <!-- Chip 1 -->
+    <rect x="0" y="0" width="180" height="44" rx="8" fill="oklch(0.72 0.28 185)" opacity="0.12"/>
+    <rect x="0" y="0" width="180" height="44" rx="8" fill="none" stroke="oklch(0.72 0.28 185)" stroke-width="1" opacity="0.4"/>
+    <text x="90" y="28" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="500" fill="oklch(0.78 0.18 185)" text-anchor="middle">◈ INTERFACE</text>
+    <!-- Chip 2 -->
+    <rect x="0" y="60" width="180" height="44" rx="8" fill="oklch(0.72 0.25 290)" opacity="0.12"/>
+    <rect x="0" y="60" width="180" height="44" rx="8" fill="none" stroke="oklch(0.72 0.25 290)" stroke-width="1" opacity="0.4"/>
+    <text x="90" y="88" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="500" fill="oklch(0.78 0.22 290)" text-anchor="middle">◉ SIGNAL</text>
+    <!-- Chip 3 -->
+    <rect x="0" y="120" width="180" height="44" rx="8" fill="oklch(0.82 0.18 75)" opacity="0.12"/>
+    <rect x="0" y="120" width="180" height="44" rx="8" fill="none" stroke="oklch(0.82 0.18 75)" stroke-width="1" opacity="0.4"/>
+    <text x="90" y="148" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="500" fill="oklch(0.82 0.18 75)" text-anchor="middle">⬡ VAULT</text>
+    <!-- Chip 4 -->
+    <rect x="0" y="180" width="180" height="44" rx="8" fill="oklch(0.72 0.28 340)" opacity="0.12"/>
+    <rect x="0" y="180" width="180" height="44" rx="8" fill="none" stroke="oklch(0.72 0.28 340)" stroke-width="1" opacity="0.4"/>
+    <text x="90" y="208" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="500" fill="oklch(0.72 0.28 340)" text-anchor="middle">⬢ CIPHER</text>
+    <!-- Chip 5 -->
+    <rect x="0" y="240" width="180" height="44" rx="8" fill="oklch(0.9 0.22 135)" opacity="0.12"/>
+    <rect x="0" y="240" width="180" height="44" rx="8" fill="none" stroke="oklch(0.9 0.22 135)" stroke-width="1" opacity="0.4"/>
+    <text x="90" y="268" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="500" fill="oklch(0.9 0.22 135)" text-anchor="middle">△ ARCHITECT</text>
+  </g>
+
+  <!-- DRIFT badge bottom right -->
+  <g transform="translate(960, 490)">
+    <rect x="0" y="0" width="160" height="48" rx="10" fill="oklch(0.82 0.18 75)" opacity="0.15"/>
+    <rect x="0" y="0" width="160" height="48" rx="10" fill="none" stroke="oklch(0.82 0.18 75)" stroke-width="1.5" opacity="0.5"/>
+    <text x="80" y="20" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="500" fill="oklch(0.82 0.18 75)" text-anchor="middle" letter-spacing="0.15em">EARN</text>
+    <text x="80" y="40" font-family="'Space Grotesk', sans-serif" font-size="18" font-weight="700" fill="oklch(0.82 0.18 75)" text-anchor="middle">$DRIFT</text>
+  </g>
+</svg>
