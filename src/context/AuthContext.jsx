@@ -70,6 +70,15 @@ export function AuthProvider({ children }) {
       supabase.from('gate_unlocks').select('quest_id,drift_cost,unlocked_at').eq('user_id', userId),
     ])
     if (prof) {
+      const isPermanentBan = prof.banned_until === '2099-01-01T00:00:00Z'
+      const isTempBan = prof.banned_until && new Date(prof.banned_until) > new Date()
+      if (isPermanentBan || isTempBan) {
+        localStorage.setItem('dpp_ban_until', prof.banned_until)
+        await supabase.auth.signOut()
+        setUser(null)
+        setProfile(null)
+        return
+      }
       const totalXp = xpRows?.reduce((s, r) => {
         if (r.quest_id?.startsWith('raid:')) {
           if (r.xp_earned === 0) return s
@@ -203,6 +212,25 @@ export function AuthProvider({ children }) {
     return !error
   }
 
+  async function banPilot(targetUserId, duration) {
+    if (!user || !profile?.is_admin) return false
+    let banned_until = null
+    if (duration !== 'unban') {
+      if (duration === 'permanent') {
+        banned_until = '2099-01-01T00:00:00Z'
+      } else {
+        const ms = { '1h': 3600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 }[duration]
+        if (!ms) return false
+        banned_until = new Date(Date.now() + ms).toISOString()
+      }
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ banned_until })
+      .eq('id', targetUserId)
+    return !error
+  }
+
   async function clearQuest(questId) {
     if (!user) return false
     const { error } = await supabase
@@ -255,7 +283,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, updateProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )

@@ -9,6 +9,15 @@ export default function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [banMsg, setBanMsg] = useState(() => {
+    const v = localStorage.getItem('dpp_ban_until')
+    if (!v) return null
+    if (v === '2099-01-01T00:00:00Z') return 'Your account has been permanently suspended.'
+    const d = new Date(v)
+    if (d > new Date()) return `Your account is suspended until ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
+    localStorage.removeItem('dpp_ban_until')
+    return null
+  })
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -45,6 +54,13 @@ export default function Login() {
           <h2 style={{ marginTop: 24 }}>Log in</h2>
           <p className="sub">New pilot? <span className="link" onClick={() => goto('signup')}>Create an account →</span></p>
 
+          {banMsg && (
+            <div className="login-ban">
+              <div style={{ fontSize: 16, marginBottom: 6 }}>🚫</div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Access Suspended</div>
+              <div style={{ opacity: 0.8 }}>{banMsg}</div>
+            </div>
+          )}
           {error && <div className="login-error">{error}</div>}
 
           <form onSubmit={handleSubmit} className="login-form">

@@ -30,6 +30,7 @@
 .login-card .sub .link:hover { text-decoration: underline; }
 
 .login-error { background: oklch(0.55 0.22 20 / 0.12); border: 1px solid oklch(0.55 0.22 20 / 0.4); border-radius: 10px; padding: 12px 16px; font-family: var(--f-mono); font-size: 12px; color: var(--magenta); margin-bottom: 20px; }
+.login-ban { background: oklch(0.55 0.22 20 / 0.10); border: 1px solid oklch(0.55 0.22 20 / 0.5); border-radius: 10px; padding: 16px; font-family: var(--f-mono); font-size: 12px; color: oklch(0.85 0.18 25); margin-bottom: 20px; text-align: center; line-height: 1.5; }
 
 .login-form { display: flex; flex-direction: column; gap: 16px; }
 .login-field { display: flex; flex-direction: column; gap: 7px; }

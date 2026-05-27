@@ -13,7 +13,7 @@ function fmtTime(s) { if (!s) return '—'; return `${Math.floor(s / 60)}:${Stri
 
 export default function Dashboard() {
   const { goto } = useNav()
-  const { user, profile, logout, updateProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
+  const { user, profile, logout, updateProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
   const [resetConfirm, setResetConfirm] = useState(null)
   const [unlockStatus, setUnlockStatus] = useState({})
   const [newPassword, setNewPassword] = useState('')
@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [onboardStep, setOnboardStep] = useState(1)
   const [onboardName, setOnboardName] = useState('')
   const [profileLinkCopied, setProfileLinkCopied] = useState(false)
+  const [banDurations, setBanDurations] = useState({})
 
   const CARD_VARIANTS = [
     { id: 'dark',    grad: 'linear-gradient(135deg, oklch(0.20 0.08 270), oklch(0.12 0.04 250))', swatch: 'oklch(0.22 0.08 270)' },
@@ -115,7 +116,7 @@ export default function Dashboard() {
     if (view !== 'admin' || !isAdmin) return
     Promise.all([
       supabase.from('quest_completions').select('user_id, quest_id, time_taken, paste_count, completed_at').eq('flagged', true).order('completed_at', { ascending: false }),
-      supabase.from('profiles').select('id, name, is_subscribed, is_admin').order('name'),
+      supabase.from('profiles').select('id, name, is_subscribed, is_admin, banned_until').order('name'),
     ]).then(([{ data: flagged }, { data: pilots }]) => {
       setFlaggedRows(flagged ?? [])
       setAllPilots(pilots ?? [])
@@ -996,24 +997,69 @@ export default function Dashboard() {
                 <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{allPilots.length} pilots</span>
               </div>
               <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 80px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  <span>Pilot</span><span>Season Pass</span><span>Action</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 170px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  <span>Pilot</span><span>Season Pass</span><span>Ban Status</span><span>Actions</span>
                 </div>
-                {allPilots.map((p, i) => (
-                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 80px', padding: '12px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center' }}>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>
-                      {p.name ?? 'Unnamed'}
-                      {p.is_admin && <span className="chip" style={{ marginLeft: 8, padding: '1px 5px', fontSize: 8 }}>ADMIN</span>}
+                {allPilots.map((p, i) => {
+                  const banned = p.banned_until && (p.banned_until === '2099-01-01T00:00:00Z' || new Date(p.banned_until) > new Date())
+                  const banExpiry = banned && p.banned_until !== '2099-01-01T00:00:00Z'
+                    ? new Date(p.banned_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    : null
+                  return (
+                    <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 170px', padding: '12px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center' }}>
+                      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>
+                        {p.name ?? 'Unnamed'}
+                        {p.is_admin && <span className="chip" style={{ marginLeft: 8, padding: '1px 5px', fontSize: 8 }}>ADMIN</span>}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10 }}>
+                          {p.is_subscribed ? <span style={{ color: 'var(--lime)' }}>✓</span> : <span style={{ color: 'var(--ink-3)' }}>—</span>}
+                        </span>
+                        <button className="btn" style={{ fontSize: 9, padding: '2px 6px', color: p.is_subscribed ? 'var(--magenta)' : undefined }}
+                          onClick={async () => { const ok = await toggleSubscription(p.id, p.is_subscribed); if (ok) setAllPilots(ps => ps.map((pl, j) => j === i ? { ...pl, is_subscribed: !pl.is_subscribed } : pl)) }}>
+                          {p.is_subscribed ? 'Revoke' : 'Grant'}
+                        </button>
+                      </div>
+                      <div>
+                        {banned
+                          ? <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--magenta)', background: 'oklch(0.72 0.28 340 / 0.08)', border: '1px solid oklch(0.72 0.28 340 / 0.35)', borderRadius: 5, padding: '2px 7px' }}>
+                              🚫 {banExpiry ? `Until ${banExpiry}` : 'Permanent'}
+                            </span>
+                          : <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>—</span>
+                        }
+                      </div>
+                      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                        {!banned && (
+                          <select
+                            value={banDurations[p.id] ?? '24h'}
+                            onChange={e => setBanDurations(d => ({ ...d, [p.id]: e.target.value }))}
+                            style={{ fontFamily: 'var(--f-mono)', fontSize: 9, background: 'oklch(1 0 0 / 0.04)', border: '1px solid var(--line-2)', borderRadius: 6, padding: '3px 5px', color: 'var(--ink-2)', cursor: 'pointer' }}>
+                            <option value="1h">1 hour</option>
+                            <option value="24h">24 hours</option>
+                            <option value="7d">7 days</option>
+                            <option value="30d">30 days</option>
+                            <option value="permanent">Permanent</option>
+                          </select>
+                        )}
+                        <button className="btn" style={{ fontSize: 9, padding: '2px 8px', color: banned ? 'var(--lime)' : 'var(--magenta)' }}
+                          onClick={async () => {
+                            const dur = banned ? 'unban' : (banDurations[p.id] ?? '24h')
+                            const ok = await banPilot(p.id, dur)
+                            if (ok) {
+                              let newBannedUntil = null
+                              if (dur !== 'unban') {
+                                newBannedUntil = dur === 'permanent' ? '2099-01-01T00:00:00Z'
+                                  : new Date(Date.now() + { '1h': 3600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 }[dur]).toISOString()
+                              }
+                              setAllPilots(ps => ps.map((pl, j) => j === i ? { ...pl, banned_until: newBannedUntil } : pl))
+                            }
+                          }}>
+                          {banned ? 'Unban' : 'Ban'}
+                        </button>
+                      </div>
                     </div>
-                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10 }}>
-                      {p.is_subscribed ? <span style={{ color: 'var(--lime)' }}>✓ Active</span> : <span style={{ color: 'var(--ink-3)' }}>—</span>}
-                    </span>
-                    <button className="btn" style={{ fontSize: 10, padding: '3px 8px', color: p.is_subscribed ? 'var(--magenta)' : undefined }}
-                      onClick={async () => { const ok = await toggleSubscription(p.id, p.is_subscribed); if (ok) setAllPilots(ps => ps.map((pl, j) => j === i ? { ...pl, is_subscribed: !pl.is_subscribed } : pl)) }}>
-                      {p.is_subscribed ? 'Revoke' : 'Grant'}
-                    </button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </>
