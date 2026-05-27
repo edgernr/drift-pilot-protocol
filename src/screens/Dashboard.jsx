@@ -34,16 +34,13 @@ export default function Dashboard() {
   const [profileLinkCopied, setProfileLinkCopied] = useState(false)
   const [banDurations, setBanDurations] = useState({})
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  // Read session_id BEFORE clearing URL in checkoutSuccess initializer
+  const [checkoutSessionId] = useState(() => new URLSearchParams(window.location.search).get('session_id'))
   const [checkoutSuccess, setCheckoutSuccess] = useState(() => {
-    const params = new URLSearchParams(window.location.search)
-    const ok = params.get('checkout') === 'success'
+    const ok = new URLSearchParams(window.location.search).get('checkout') === 'success'
     if (ok) window.history.replaceState({}, '', '/dashboard')
     return ok
   })
-  const checkoutSessionId = (() => {
-    const params = new URLSearchParams(window.location.search)
-    return params.get('session_id')
-  })()
 
   const CARD_VARIANTS = [
     { id: 'dark',    grad: 'linear-gradient(135deg, oklch(0.20 0.08 270), oklch(0.12 0.04 250))', swatch: 'oklch(0.22 0.08 270)' },
