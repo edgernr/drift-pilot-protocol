@@ -170,7 +170,10 @@ export default function Dashboard() {
     if (bugScreenshot) {
       const ext = bugScreenshot.name.split('.').pop()
       const path = `${Date.now()}-${user.id}.${ext}`
-      const { data: up } = await supabase.storage.from('bug-screenshots').upload(path, bugScreenshot, { upsert: true })
+      const { data: up, error: upErr } = await supabase.storage
+        .from('bug-screenshots')
+        .upload(path, bugScreenshot, { upsert: true, contentType: bugScreenshot.type || 'image/png' })
+      if (upErr) console.warn('Screenshot upload failed:', upErr.message)
       if (up) {
         const { data: pub } = supabase.storage.from('bug-screenshots').getPublicUrl(up.path)
         screenshot_url = pub.publicUrl
