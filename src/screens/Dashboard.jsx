@@ -33,6 +33,10 @@ export default function Dashboard() {
   const [onboardName, setOnboardName] = useState('')
   const [profileLinkCopied, setProfileLinkCopied] = useState(false)
   const [banDurations, setBanDurations] = useState({})
+  const [bugReports, setBugReports] = useState([])
+  const [bugModalOpen, setBugModalOpen] = useState(false)
+  const [bugText, setBugText] = useState('')
+  const [bugStatus, setBugStatus] = useState(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   // Read session_id BEFORE clearing URL in checkoutSuccess initializer
   const [checkoutSessionId] = useState(() => new URLSearchParams(window.location.search).get('session_id'))
@@ -125,9 +129,11 @@ export default function Dashboard() {
     Promise.all([
       supabase.from('quest_completions').select('user_id, quest_id, time_taken, paste_count, completed_at').eq('flagged', true).order('completed_at', { ascending: false }),
       supabase.from('profiles').select('id, name, is_subscribed, is_admin, banned_until').order('name'),
-    ]).then(([{ data: flagged }, { data: pilots }]) => {
+      supabase.from('bug_reports').select('id, user_id, description, view, url, user_agent, status, created_at').order('created_at', { ascending: false }),
+    ]).then(([{ data: flagged }, { data: pilots }, { data: bugs }]) => {
       setFlaggedRows(flagged ?? [])
       setAllPilots(pilots ?? [])
+      setBugReports(bugs ?? [])
     })
   }, [view, isAdmin])
 
@@ -152,6 +158,26 @@ export default function Dashboard() {
     navigator.clipboard.writeText(`${window.location.origin}/pilot/${user?.id}`)
     setProfileLinkCopied(true)
     setTimeout(() => setProfileLinkCopied(false), 2500)
+  }
+
+  async function submitBugReport() {
+    if (!bugText.trim()) return
+    setBugStatus('sending')
+    const { error } = await supabase.from('bug_reports').insert({
+      user_id: user.id,
+      description: bugText.trim(),
+      view,
+      url: window.location.href,
+      user_agent: navigator.userAgent,
+      status: 'new',
+    })
+    if (!error) {
+      setBugStatus('sent')
+      setBugText('')
+      setTimeout(() => { setBugModalOpen(false); setBugStatus(null) }, 1800)
+    } else {
+      setBugStatus('error')
+    }
   }
 
   useEffect(() => {
@@ -363,6 +389,31 @@ export default function Dashboard() {
         </div>
       )}
       {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+
+      {bugModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(5,7,13,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setBugModalOpen(false) }}>
+          <div className="panel" style={{ width: '100%', maxWidth: 460, padding: '32px 28px' }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>⚠ Bug Report</div>
+            <h3 style={{ fontSize: 20, fontWeight: 500, marginBottom: 6 }}>What went wrong?</h3>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', marginBottom: 20 }}>Describe what happened and what you expected. Current view and browser info are captured automatically.</p>
+            <textarea
+              value={bugText}
+              onChange={e => setBugText(e.target.value)}
+              placeholder="e.g. Clicking 'Resume Quest' does nothing after completing Gate 02..."
+              rows={5}
+              style={{ width: '100%', background: 'rgba(180,200,255,0.03)', border: '1px solid var(--line-2)', borderRadius: 10, padding: '12px 14px', color: 'var(--ink-0)', fontFamily: 'var(--f-body)', fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
+              <button className="btn" onClick={() => setBugModalOpen(false)} style={{ fontSize: 12 }}>Cancel</button>
+              <button className="btn btn-primary" onClick={submitBugReport} disabled={!bugText.trim() || bugStatus === 'sending'} style={{ fontSize: 12 }}>
+                {bugStatus === 'sending' ? 'Sending…' : bugStatus === 'sent' ? '✓ Sent!' : 'Submit Report'}
+              </button>
+            </div>
+            {bugStatus === 'error' && <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--magenta)', marginTop: 10 }}>Failed to send — try again.</div>}
+          </div>
+        </div>
+      )}
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => { goto('landing'); setSidebarOpen(false) }}>
           <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 40 }} />
@@ -394,6 +445,13 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+        <div style={{ padding: '0 12px 8px' }}>
+          <button onClick={() => { setBugModalOpen(true); setBugText(''); setBugStatus(null) }}
+            style={{ width: '100%', background: 'none', border: '1px solid var(--line)', borderRadius: 8, padding: '7px 12px', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', cursor: 'pointer', letterSpacing: '0.06em', transition: 'color 0.15s, border-color 0.15s', textAlign: 'left' }}>
+            ⚠ Report a Bug
+          </button>
+        </div>
 
         <div className="wallet-card">
           <div className="addr">
@@ -998,6 +1056,44 @@ export default function Dashboard() {
                 <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                   {flaggedRows.length} flagged · {allPilots.length} pilots
                 </p>
+              </div>
+            </div>
+
+            <div className="section-block" style={{ marginBottom: 24 }}>
+              <div className="sb-head">
+                <h3>Bug Reports</h3>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)' }}>{bugReports.filter(b => b.status === 'new').length} new</span>
+              </div>
+              <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+                {bugReports.length === 0 ? (
+                  <div style={{ padding: '20px 18px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No bug reports yet.</div>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                      <span>Description</span><span>Pilot</span><span>View</span><span>Date</span><span>Status</span>
+                    </div>
+                    {bugReports.map((b, i) => (
+                      <div key={b.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '12px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center', gap: 8 }}>
+                        <div>
+                          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 3 }}>{b.description}</div>
+                          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)' }}>{b.user_agent?.slice(0, 60)}…</div>
+                        </div>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-2)' }}>{allPilots.find(p => p.id === b.user_id)?.name ?? 'Unknown'}</span>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{b.view ?? '—'}</span>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        <select value={b.status} onChange={async e => {
+                          const newStatus = e.target.value
+                          await supabase.from('bug_reports').update({ status: newStatus }).eq('id', b.id)
+                          setBugReports(rs => rs.map((r, j) => j === i ? { ...r, status: newStatus } : r))
+                        }} style={{ fontFamily: 'var(--f-mono)', fontSize: 9, background: 'oklch(1 0 0 / 0.04)', border: '1px solid var(--line-2)', borderRadius: 6, padding: '3px 5px', color: b.status === 'new' ? 'var(--magenta)' : b.status === 'fixed' ? 'var(--lime)' : 'var(--amber)', cursor: 'pointer' }}>
+                          <option value="new">New</option>
+                          <option value="reviewed">Reviewed</option>
+                          <option value="fixed">Fixed</option>
+                        </select>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
 
