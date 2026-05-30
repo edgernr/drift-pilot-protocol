@@ -37,6 +37,8 @@ export default function Dashboard() {
   const [bugModalOpen, setBugModalOpen] = useState(false)
   const [bugText, setBugText] = useState('')
   const [bugStatus, setBugStatus] = useState(null)
+  const [bugScreenshot, setBugScreenshot] = useState(null)
+  const [bugPreview, setBugPreview] = useState(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   // Read session_id BEFORE clearing URL in checkoutSuccess initializer
   const [checkoutSessionId] = useState(() => new URLSearchParams(window.location.search).get('session_id'))
@@ -163,17 +165,43 @@ export default function Dashboard() {
   async function submitBugReport() {
     if (!bugText.trim()) return
     setBugStatus('sending')
+
+    let screenshot_url = null
+    if (bugScreenshot) {
+      const ext = bugScreenshot.name.split('.').pop()
+      const path = `${Date.now()}-${user.id}.${ext}`
+      const { data: up } = await supabase.storage.from('bug-screenshots').upload(path, bugScreenshot, { upsert: true })
+      if (up) {
+        const { data: pub } = supabase.storage.from('bug-screenshots').getPublicUrl(up.path)
+        screenshot_url = pub.publicUrl
+      }
+    }
+
     const { error } = await supabase.from('bug_reports').insert({
       user_id: user.id,
       description: bugText.trim(),
       view,
       url: window.location.href,
       user_agent: navigator.userAgent,
+      screenshot_url,
       status: 'new',
     })
+
     if (!error) {
+      supabase.functions.invoke('notify-discord', {
+        body: {
+          description: bugText.trim(),
+          user_name: profile?.name ?? user.email,
+          view,
+          url: window.location.href,
+          screenshot_url,
+          created_at: new Date().toISOString(),
+        },
+      }).catch(() => {})
       setBugStatus('sent')
       setBugText('')
+      setBugScreenshot(null)
+      setBugPreview(null)
       setTimeout(() => { setBugModalOpen(false); setBugStatus(null) }, 1800)
     } else {
       setBugStatus('error')
@@ -401,9 +429,32 @@ export default function Dashboard() {
               value={bugText}
               onChange={e => setBugText(e.target.value)}
               placeholder="e.g. Clicking 'Resume Quest' does nothing after completing Gate 02..."
-              rows={5}
+              rows={4}
               style={{ width: '100%', background: 'rgba(180,200,255,0.03)', border: '1px solid var(--line-2)', borderRadius: 10, padding: '12px 14px', color: 'var(--ink-0)', fontFamily: 'var(--f-body)', fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
             />
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, cursor: 'pointer' }}>
+              <div style={{ flex: 1, background: 'rgba(180,200,255,0.03)', border: '1px dashed var(--line-2)', borderRadius: 8, padding: '10px 14px', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.06em' }}>
+                {bugScreenshot ? `📎 ${bugScreenshot.name}` : '📎 Attach screenshot (optional)'}
+              </div>
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                const f = e.target.files?.[0]
+                if (!f) return
+                setBugScreenshot(f)
+                const reader = new FileReader()
+                reader.onload = ev => setBugPreview(ev.target.result)
+                reader.readAsDataURL(f)
+              }} />
+            </label>
+
+            {bugPreview && (
+              <div style={{ marginTop: 10, position: 'relative', display: 'inline-block' }}>
+                <img src={bugPreview} alt="screenshot" style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 8, border: '1px solid var(--line)' }} />
+                <button onClick={() => { setBugScreenshot(null); setBugPreview(null) }}
+                  style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(5,7,13,0.8)', border: 'none', color: 'var(--ink-1)', borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: 12 }}>×</button>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
               <button className="btn" onClick={() => setBugModalOpen(false)} style={{ fontSize: 12 }}>Cancel</button>
               <button className="btn btn-primary" onClick={submitBugReport} disabled={!bugText.trim() || bugStatus === 'sending'} style={{ fontSize: 12 }}>
