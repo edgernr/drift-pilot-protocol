@@ -166,27 +166,12 @@ export default function Dashboard() {
     if (!bugText.trim()) return
     setBugStatus('sending')
 
-    let screenshot_url = null
-    if (bugScreenshot) {
-      const ext = bugScreenshot.name.split('.').pop()
-      const path = `${Date.now()}-${user.id}.${ext}`
-      const { data: up, error: upErr } = await supabase.storage
-        .from('bug-screenshots')
-        .upload(path, bugScreenshot, { upsert: true, contentType: bugScreenshot.type || 'image/png' })
-      if (upErr) console.warn('Screenshot upload failed:', upErr.message)
-      if (up) {
-        const { data: pub } = supabase.storage.from('bug-screenshots').getPublicUrl(up.path)
-        screenshot_url = pub.publicUrl
-      }
-    }
-
     const { error } = await supabase.from('bug_reports').insert({
       user_id: user.id,
       description: bugText.trim(),
       view,
       url: window.location.href,
       user_agent: navigator.userAgent,
-      screenshot_url,
       status: 'new',
     })
 
@@ -197,7 +182,7 @@ export default function Dashboard() {
           user_name: profile?.name ?? user.email,
           view,
           url: window.location.href,
-          screenshot_url,
+          screenshot_base64: bugPreview ?? null,
           created_at: new Date().toISOString(),
         },
       }).catch(() => {})

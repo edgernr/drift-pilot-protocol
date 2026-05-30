@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
-    const { description, user_name, view, url, screenshot_url, created_at } = await req.json()
+    const { description, user_name, view, url, screenshot_base64, created_at } = await req.json()
 
     const webhookUrl = Deno.env.get('DISCORD_WEBHOOK_URL')
     if (!webhookUrl) {
@@ -29,13 +29,28 @@ Deno.serve(async (req) => {
       footer: { text: 'Drift Pilot Protocol' },
     }
 
-    if (screenshot_url) embed.image = { url: screenshot_url }
+    if (screenshot_base64) {
+      const [header, data] = screenshot_base64.split(',')
+      const mime = header.match(/data:([^;]+)/)?.[1] ?? 'image/png'
+      const ext = mime.split('/')[1] ?? 'png'
+      const binary = atob(data)
+      const bytes = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
 
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ embeds: [embed] }),
-    })
+      embed.image = { url: `attachment://screenshot.${ext}` }
+
+      const form = new FormData()
+      form.append('payload_json', JSON.stringify({ embeds: [embed] }))
+      form.append('file[0]', new Blob([bytes], { type: mime }), `screenshot.${ext}`)
+
+      await fetch(webhookUrl, { method: 'POST', body: form })
+    } else {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embeds: [embed] }),
+      })
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...cors, 'Content-Type': 'application/json' },
