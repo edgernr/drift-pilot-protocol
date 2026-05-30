@@ -10,10 +10,40 @@ function initials(name) { return (name ?? 'PL').split(' ').map(w => w[0]).join('
 function shortenWallet(w) { return w ? `${w.slice(0, 6)}...${w.slice(-4)}` : 'Not linked' }
 function fmtTime(s) { if (!s) return '—'; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
 
+const AI_CHALLENGES = [
+  {
+    quest_id: 'ai:js-01',
+    title: 'Signal Decoder',
+    icon: '↩',
+    language: 'javascript',
+    xp: 150,
+    requirements: 'Write a function reverseWords(str) that reverses the word order in a string. Example: reverseWords("sector zero burns bright") → "bright burns zero sector". Any correct approach is valid.',
+    starter: 'function reverseWords(str) {\n  // your code here\n}',
+  },
+  {
+    quest_id: 'ai:py-01',
+    title: 'Sector Scanner',
+    icon: '⌖',
+    language: 'python',
+    xp: 200,
+    requirements: 'Write a function count_even(numbers) that returns the count of even numbers in a list. Example: count_even([1, 2, 3, 4, 5, 6]) → 3. Do not use any imports.',
+    starter: 'def count_even(numbers):\n    # your code here\n    pass',
+  },
+  {
+    quest_id: 'ai:sql-01',
+    title: 'Pilot Registry',
+    icon: '⌗',
+    language: 'sql',
+    xp: 250,
+    requirements: 'Write a SQL query to return the top 3 pilots by xp from a table called pilot_stats with columns: pilot_name (text) and xp (integer). Return pilot_name and xp, sorted highest first.',
+    starter: '-- Write your query here\nSELECT',
+  },
+]
+
 
 export default function Dashboard() {
   const { goto } = useNav()
-  const { user, profile, logout, updateProfile, refreshProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
+  const { user, profile, logout, completeQuest, updateProfile, refreshProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
   const [resetConfirm, setResetConfirm] = useState(null)
   const [unlockStatus, setUnlockStatus] = useState({})
   const [newPassword, setNewPassword] = useState('')
@@ -39,6 +69,8 @@ export default function Dashboard() {
   const [bugStatus, setBugStatus] = useState(null)
   const [bugScreenshot, setBugScreenshot] = useState(null)
   const [bugPreview, setBugPreview] = useState(null)
+  const [challengeCodes, setChallengeCodes] = useState({})
+  const [challengeResults, setChallengeResults] = useState({})
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   // Read session_id BEFORE clearing URL in checkoutSuccess initializer
   const [checkoutSessionId] = useState(() => new URLSearchParams(window.location.search).get('session_id'))
@@ -221,6 +253,26 @@ export default function Dashboard() {
     })
     if (error || !data?.url) { setCheckoutLoading(false); return }
     window.location.href = data.url
+  }
+
+  async function handleGradeChallenge(ch) {
+    const code = challengeCodes[ch.quest_id] ?? ch.starter
+    if (!code.trim()) return
+    setChallengeResults(prev => ({ ...prev, [ch.quest_id]: 'loading' }))
+    try {
+      const { data, error } = await supabase.functions.invoke('grade-code', {
+        body: { code, quest_title: ch.title, requirements: ch.requirements, language: ch.language },
+      })
+      if (error) throw new Error(error.message)
+      setChallengeResults(prev => ({ ...prev, [ch.quest_id]: data }))
+    } catch {
+      setChallengeResults(prev => ({ ...prev, [ch.quest_id]: { passed: false, score: 0, feedback: 'Grading failed — please try again.' } }))
+    }
+  }
+
+  async function handleClaimChallenge(ch) {
+    const ok = await completeQuest(ch.quest_id, ch.xp)
+    if (ok) setChallengeResults(prev => ({ ...prev, [ch.quest_id]: null }))
   }
 
   useEffect(() => {
@@ -472,6 +524,7 @@ export default function Dashboard() {
             <a className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><span className="ic">◈</span> Dashboard</a>
             <a onClick={gotoActiveQuest}><span className="ic">▶</span> Active Quest</a>
             <a className={view === 'skill-tree' ? 'active' : ''} onClick={() => setView('skill-tree')}><span className="ic">⟐</span> Skill Tree</a>
+            <a className={view === 'challenges' ? 'active' : ''} onClick={() => setView('challenges')}><span className="ic">⊕</span> AI Challenges</a>
             <a className={view === 'raids' ? 'active' : ''} onClick={() => setView('raids')}><span className="ic">※</span> Raids</a>
           </div>
         </div>
@@ -1463,6 +1516,94 @@ export default function Dashboard() {
             </div>
           </>
         )}
+        {view === 'challenges' && (
+          <div className="dash-section">
+            <div style={{ marginBottom: 24 }}>
+              <div className="gradient-text" style={{ fontFamily: 'var(--f-display)', fontSize: 22, fontWeight: 800, letterSpacing: '0.06em', marginBottom: 8 }}>AI CHALLENGES</div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '0.04em' }}>Submit any working solution — multiple approaches accepted across JS, Python, and SQL.</div>
+            </div>
+
+            {!isSubscribed ? (
+              <div className="panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, marginBottom: 4 }}>Season Pass Required</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>AI Challenges are available to Season Pass holders only.</div>
+                </div>
+                <button className="btn btn-primary" style={{ fontSize: 12, flexShrink: 0 }} onClick={handleCheckout} disabled={checkoutLoading}>
+                  {checkoutLoading ? 'Loading…' : 'Get Season Pass →'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {AI_CHALLENGES.map(ch => {
+                  const isDone = profile?.completedQuestIds?.has(ch.quest_id)
+                  const result = challengeResults[ch.quest_id]
+                  const code = challengeCodes[ch.quest_id] ?? ch.starter
+                  const isLoading = result === 'loading'
+
+                  return (
+                    <div key={ch.quest_id} className="panel" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <span style={{ fontSize: 28, lineHeight: 1 }}>{ch.icon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 15 }}>{ch.title}</div>
+                          <div style={{ display: 'flex', gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
+                            <span className="chip" style={{ fontFamily: 'var(--f-mono)', fontSize: 9 }}>{ch.language.toUpperCase()}</span>
+                            <span className="chip" style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--amber)' }}>+{ch.xp} XP</span>
+                            {isDone && <span className="chip" style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--lime)' }}>✓ COMPLETE</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: 14, fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-2)', lineHeight: 1.7, padding: '10px 14px', background: 'rgba(180,200,255,0.03)', borderRadius: 8, border: '1px solid var(--line)' }}>
+                        {ch.requirements}
+                      </div>
+
+                      {!isDone && (
+                        <>
+                          <textarea
+                            value={code}
+                            onChange={e => setChallengeCodes(prev => ({ ...prev, [ch.quest_id]: e.target.value }))}
+                            spellCheck={false}
+                            style={{ marginTop: 12, width: '100%', minHeight: 160, fontFamily: 'var(--f-mono)', fontSize: 12, lineHeight: 1.6, background: 'oklch(0.10 0.03 260)', border: '1px solid var(--line)', borderRadius: 8, padding: '12px 14px', color: 'var(--ink-1)', resize: 'vertical', boxSizing: 'border-box', outline: 'none' }}
+                          />
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+                            <button
+                              className="btn btn-primary"
+                              style={{ fontSize: 12 }}
+                              disabled={isLoading || !code.trim()}
+                              onClick={() => handleGradeChallenge(ch)}
+                            >
+                              {isLoading ? 'Grading…' : 'Submit →'}
+                            </button>
+                            {result && !isLoading && (
+                              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: result.passed ? 'var(--lime)' : 'var(--magenta)' }}>
+                                {result.passed ? '✓ PASSED' : '✗ FAILED'} — {result.score}/100
+                              </span>
+                            )}
+                          </div>
+
+                          {result && !isLoading && (
+                            <div style={{ marginTop: 10, padding: '12px 14px', background: result.passed ? 'rgba(132,204,22,0.05)' : 'rgba(232,67,147,0.05)', borderRadius: 8, borderLeft: `2px solid ${result.passed ? 'var(--lime)' : 'var(--magenta)'}` }}>
+                              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-2)', lineHeight: 1.7 }}>{result.feedback}</div>
+                              {result.passed && (
+                                <button className="btn btn-primary" style={{ marginTop: 10, fontSize: 11 }} onClick={() => handleClaimChallenge(ch)}>
+                                  Claim +{ch.xp} XP →
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
     </div>
   )
