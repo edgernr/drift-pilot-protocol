@@ -166,6 +166,13 @@ export default function Dashboard() {
     if (!bugText.trim()) return
     setBugStatus('sending')
 
+    const { count } = await supabase
+      .from('bug_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+    if (count >= 2) { setBugStatus('ratelimit'); return }
+
     const { error } = await supabase.from('bug_reports').insert({
       user_id: user.id,
       description: bugText.trim(),
@@ -450,6 +457,7 @@ export default function Dashboard() {
               </button>
             </div>
             {bugStatus === 'error' && <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--magenta)', marginTop: 10 }}>Failed to send — try again.</div>}
+            {bugStatus === 'ratelimit' && <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--amber)', marginTop: 10 }}>Too many reports — wait 5 minutes before sending another.</div>}
           </div>
         </div>
       )}
