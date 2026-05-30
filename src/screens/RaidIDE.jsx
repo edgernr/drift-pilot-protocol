@@ -537,6 +537,7 @@ export default function RaidIDE({
 
   const [activeTab, setActiveTab] = useState('workspace')
   const [viewRole, setViewRole] = useState(myRole ?? 'interface')
+  const [syncAiResults, setSyncAiResults] = useState({})
   const [selectedFile, setSelectedFile] = useState(null)
   const [dbFiles, setDbFiles] = useState({})   // { role: { path: content } }
   const [editContent, setEditContent] = useState('')
@@ -624,6 +625,21 @@ export default function RaidIDE({
 
   function getRoleFiles(role) {
     return { ...(STARTERS[role] ?? {}), ...(dbFiles[role] ?? {}) }
+  }
+
+  async function handleAiGrade(syncNum, syncDef) {
+    setSyncAiResults(prev => ({ ...prev, [syncNum]: 'loading' }))
+    const roles = [...new Set(syncDef.conditions.map(c => c.role).filter(r => r !== 'all'))]
+    const codeSnippets = roles.map(role => {
+      const files = getRoleFiles(role)
+      const main = Object.values(files)[0] ?? ''
+      return `[${role}]\n${main.slice(0, 700)}`
+    }).join('\n\n')
+    const requirements = syncDef.conditions.map(c => `- ${c.role === 'all' ? 'all roles' : c.role}: ${c.text}`).join('\n')
+    const { data } = await supabase.functions.invoke('grade-code', {
+      body: { code: codeSnippets, quest_title: `Raid Sync #${syncNum}`, requirements, language: 'javascript' },
+    }).catch(() => ({ data: { passed: false, score: 0, feedback: 'Could not grade — try again.' } }))
+    setSyncAiResults(prev => ({ ...prev, [syncNum]: data ?? { passed: false, score: 0, feedback: 'Could not grade — try again.' } }))
   }
 
   function canEdit() {
@@ -1112,7 +1128,18 @@ export default function RaidIDE({
                                     onClick={() => onSync(s.n, true, syncEvidence[s.n])}
                                   >PASS RITUAL</button>
                                   <button className="btn" style={{ fontSize: 10, padding: '4px 14px', color: 'var(--magenta)' }} disabled={busy} onClick={() => onSync(s.n, false)}>FAIL RITUAL</button>
+                                  <button
+                                    className="btn"
+                                    style={{ fontSize: 10, padding: '4px 14px', color: 'var(--amber)' }}
+                                    disabled={syncAiResults[s.n] === 'loading'}
+                                    onClick={() => handleAiGrade(s.n, s)}
+                                  >{syncAiResults[s.n] === 'loading' ? '⟳ Grading…' : 'AI Grade'}</button>
                                 </div>
+                                {syncAiResults[s.n] && syncAiResults[s.n] !== 'loading' && (
+                                  <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 6, background: syncAiResults[s.n].passed ? 'rgba(132,204,22,0.06)' : 'rgba(232,67,147,0.06)', borderLeft: `2px solid ${syncAiResults[s.n].passed ? 'var(--lime)' : 'var(--magenta)'}`, fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+                                    <span style={{ color: syncAiResults[s.n].passed ? 'var(--lime)' : 'var(--magenta)', fontWeight: 700, marginRight: 6 }}>AI {syncAiResults[s.n].score}/100</span>{syncAiResults[s.n].feedback}
+                                  </div>
+                                )}
                                 {(syncEvidence[s.n] ?? '').trim().length < 10 && (
                                   <div className="sync-evidence-hint">PASS requires at least one piece of evidence — no blind passing allowed</div>
                                 )}

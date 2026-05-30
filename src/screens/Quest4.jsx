@@ -5,6 +5,7 @@ import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
 import QuestQuiz from './QuestQuiz'
+import { supabase } from '../lib/supabase'
 
 // ─── HTML templates — same class names across all variants ────────────────────
 
@@ -417,6 +418,7 @@ export default function Quest4() {
   const [modalOpen, setModalOpen] = useState(false)
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
+  const [aiReview, setAiReview] = useState(null)
 
   const iframeRef = useRef(null)
   const cssLnRef = useRef(null)
@@ -440,6 +442,14 @@ export default function Quest4() {
   useEffect(() => {
     if (tab === 'preview') updatePreview(cssCode, brandOverride)
   }, [cssCode, tab, brandOverride, updatePreview])
+
+  useEffect(() => {
+    if (!allPassed) { setAiReview(null); return }
+    setAiReview('loading')
+    supabase.functions.invoke('grade-code', {
+      body: { code: cssCode, quest_title: 'Gate 04 — Paint the City', requirements: 'Write a CSS design system using custom properties: define color and spacing variables in :root, use var() throughout all rules, no hardcoded hex values outside :root, include a @media breakpoint.', language: 'css' },
+    }).then(({ data }) => setAiReview(data ?? null)).catch(() => setAiReview(null))
+  }, [allPassed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const statusText = pasteBlocked
     ? '⊘ Paste disabled — type your design system'
@@ -560,6 +570,12 @@ export default function Quest4() {
                 )
               })}
             </ul>
+            {aiReview === 'loading' && <div style={{ marginTop: 10, fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.04em' }}>⟳ AI reviewing…</div>}
+            {aiReview && aiReview !== 'loading' && (
+              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 6, background: aiReview.passed ? 'rgba(132,204,22,0.06)' : 'rgba(232,67,147,0.06)', borderLeft: `2px solid ${aiReview.passed ? 'var(--lime)' : 'var(--magenta)'}`, fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+                <span style={{ color: aiReview.passed ? 'var(--lime)' : 'var(--magenta)', fontWeight: 700, marginRight: 6 }}>AI</span>{aiReview.feedback}
+              </div>
+            )}
           </div>
 
           <div className="dq-rewards">

@@ -4,6 +4,7 @@ import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
 import QuestQuiz from './QuestQuiz'
+import { supabase } from '../lib/supabase'
 
 const VARIANTS = [
   `<html>
@@ -120,6 +121,7 @@ export default function Quest() {
   const [dungeonEntry, setDungeonEntry] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [quizOpen, setQuizOpen] = useState(false)
+  const [aiReview, setAiReview] = useState(null)
 
   const iframeRef = useRef(null)
   const htmlLnRef = useRef(null)
@@ -141,6 +143,14 @@ export default function Quest() {
   useEffect(() => { updatePreview(htmlCode) }, [htmlCode, updatePreview])
 
   const errorsLeft = errors.size
+
+  useEffect(() => {
+    if (errorsLeft !== 0) { setAiReview(null); return }
+    setAiReview('loading')
+    supabase.functions.invoke('grade-code', {
+      body: { code: htmlCode, quest_title: 'Gate 01 — The Document Tomb', requirements: 'Fix all HTML structural errors: valid DOCTYPE declaration, correct html/head/body nesting, all tags properly closed, no broken or unclosed tags.', language: 'html' },
+    }).then(({ data }) => setAiReview(data ?? null)).catch(() => setAiReview(null))
+  }, [errorsLeft]) // eslint-disable-line react-hooks/exhaustive-deps
   const xpEarned = (4 - errorsLeft) * 25
   const xpPct = (xpEarned / 100) * 100
   const xpLabel = `${xpEarned} / 100 XP`
@@ -256,6 +266,12 @@ export default function Quest() {
                 )
               })}
             </ul>
+            {aiReview === 'loading' && <div style={{ marginTop: 10, fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.04em' }}>⟳ AI reviewing…</div>}
+            {aiReview && aiReview !== 'loading' && (
+              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 6, background: aiReview.passed ? 'rgba(132,204,22,0.06)' : 'rgba(232,67,147,0.06)', borderLeft: `2px solid ${aiReview.passed ? 'var(--lime)' : 'var(--magenta)'}`, fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+                <span style={{ color: aiReview.passed ? 'var(--lime)' : 'var(--magenta)', fontWeight: 700, marginRight: 6 }}>AI</span>{aiReview.feedback}
+              </div>
+            )}
           </div>
 
           <div className="dq-rewards">
