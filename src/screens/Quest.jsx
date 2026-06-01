@@ -71,25 +71,25 @@ const ERROR_CHECKS = [
   {
     id: 'doctype',
     label: 'Missing DOCTYPE declaration',
-    hint: 'Add <!DOCTYPE html> as the very first line — before everything else',
+    hint: 'Every HTML document starts with a special declaration on line 1 that tells the browser it\'s working with modern HTML. It comes before the html tag and begins with an exclamation mark.',
     test: code => /<!DOCTYPE\s+html>/i.test(code),
   },
   {
     id: 'h1',
     label: 'Unclosed <h1> tag',
-    hint: 'Every opening tag needs a matching closing tag — add </h1> after the heading text',
+    hint: 'Heading elements wrap content between two tags — one to open and one to close. Look at the heading text and think about what needs to come after it.',
     test: code => /<\/h1>/i.test(code),
   },
   {
     id: 'nesting',
     label: 'Tag nesting violation (strong / p)',
-    hint: 'Inner elements must close before outer ones — </strong> should come before </p>',
+    hint: 'Tags must close in reverse order of how they opened — the last tag opened is the first to close. Which of these two tags was opened most recently?',
     test: code => !/<\/p>\s*<\/strong>/i.test(code) && /<\/strong>/i.test(code),
   },
   {
     id: 'anchor',
     label: 'Anchor tag not properly closed',
-    hint: 'Links close with </a>, not another <a> — replace the trailing <a> at the end of the link',
+    hint: 'An element must end with its own dedicated closing tag. Check the very end of the link — does the tag there open something or close something?',
     test: code => /<\/a>/i.test(code),
   },
 ]

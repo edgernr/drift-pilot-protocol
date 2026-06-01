@@ -1,0 +1,174 @@
+/* Gate 07 — Ghost Feedback — Ghost/white-blue accent */
+
+/* XP bar */
+.dq-wrap-g7 .dq-xp-fill {
+  background: linear-gradient(90deg, var(--ghost), oklch(0.80 0.06 235));
+}
+
+/* Checker boxes — ghost theme */
+.dq-wrap-g7 .dq7-obj-box {
+  border-color: var(--ghost);
+  color: var(--ghost);
+}
+.dq-wrap-g7 li.done .dq7-obj-box {
+  background: var(--ghost);
+  border-color: var(--ghost);
+  color: oklch(0.10 0.02 240);
+}
+
+/* ── Scene art — frozen figures grid ─────────────────────────────────────── */
+
+.dq7-scene-figures {
+  width: 112px;
+  height: 80px;
+  margin: auto;
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 8px;
+  background: oklch(0.10 0.03 260);
+  border: 1px solid oklch(0.22 0.06 260);
+  border-radius: 4px;
+}
+
+.dq7-figure {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: oklch(0.18 0.03 260);
+  border: 1px solid oklch(0.25 0.04 260);
+  transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, height 0.4s ease;
+}
+
+/* Different heights for visual variety */
+.dq7-figure-1 { height: 44px; }
+.dq7-figure-2 { height: 56px; }
+.dq7-figure-3 { height: 38px; }
+.dq7-figure-4 { height: 52px; }
+.dq7-figure-5 { height: 46px; }
+.dq7-figure-6 { height: 40px; }
+.dq7-figure-7 { height: 58px; }
+
+.dq7-figure.awake {
+  background: var(--ghost);
+  border-color: var(--ghost);
+  box-shadow: 0 0 6px oklch(0.90 0.04 230 / 0.55);
+}
+
+/* Alive — figures pulse */
+.dq7-scene-figures.alive {
+  border-color: var(--ghost);
+  box-shadow: 0 0 10px oklch(0.90 0.04 230 / 0.20);
+}
+
+.dq7-scene-figures.alive .dq7-figure.awake {
+  animation: dq7FigurePulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes dq7FigurePulse {
+  from { box-shadow: 0 0 4px oklch(0.90 0.04 230 / 0.40); }
+  to   { box-shadow: 0 0 12px oklch(0.90 0.04 230 / 0.70); }
+}
+
+/* ── Live preview iframe ─────────────────────────────────────────────────── */
+
+.dq7-preview-frame {
+  flex: 1;
+  min-height: 0;
+  border: none;
+  background: #0a0d18;
+  display: block;
+}
+
+/* ── Ghost Signal slot ───────────────────────────────────────────────────── */
+
+.dq7-slot-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid oklch(0.20 0.04 260);
+  background: oklch(0.10 0.03 260);
+}
+
+.dq7-slot-label {
+  flex: 1;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: oklch(0.45 0.06 260);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s;
+}
+
+.dq7-slot-wrap.ready .dq7-slot-label {
+  color: var(--ghost);
+}
+
+.dq7-ghost-signal {
+  flex-shrink: 0;
+  width: 136px;
+  height: 30px;
+  border-radius: 3px;
+  border: 1px solid oklch(0.25 0.05 260);
+  background: oklch(0.13 0.03 260);
+  position: relative;
+  overflow: hidden;
+  cursor: not-allowed;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.dq7-ghost-signal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    oklch(1 0 0 / 0.03) 0px,
+    oklch(1 0 0 / 0.03) 1px,
+    transparent 1px,
+    transparent 9px
+  );
+  pointer-events: none;
+}
+
+.dq7-ghost-signal.ready {
+  border-color: var(--ghost);
+  background: oklch(0.18 0.03 245);
+  cursor: pointer;
+  animation: dq7SignalPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes dq7SignalPulse {
+  0%, 100% { box-shadow: 0 0 8px oklch(0.90 0.04 230 / 0.25); }
+  50%       { box-shadow: 0 0 20px oklch(0.90 0.04 230 / 0.60); }
+}
+
+.dq7-ghost-signal.ready::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(0.90 0.04 230 / 0.30), transparent);
+  animation: dq7SignalShimmer 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dq7SignalShimmer {
+  to { left: 160%; }
+}
+
+.dq7-ghost-signal.activating {
+  animation: dq7SignalActivate 0.5s ease-out forwards;
+}
+
+@keyframes dq7SignalActivate {
+  0%   { background: oklch(0.18 0.03 245); }
+  50%  { background: var(--ghost); box-shadow: 0 0 40px oklch(0.90 0.04 230); }
+  100% { background: oklch(0.72 0.28 340); border-color: oklch(0.72 0.28 340); box-shadow: 0 0 20px oklch(0.72 0.28 340 / 0.5); }
+}

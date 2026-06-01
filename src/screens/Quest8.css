@@ -1,0 +1,213 @@
+/* Gate 08 — The Collapse — Orange accent */
+
+/* XP bar */
+.dq-wrap-g8 .dq-xp-fill {
+  background: linear-gradient(90deg, var(--orange), oklch(0.82 0.14 45));
+}
+
+/* Checker boxes — orange theme */
+.dq-wrap-g8 .dq8-obj-box {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+.dq-wrap-g8 li.done .dq8-obj-box {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: oklch(0.10 0.02 50);
+}
+
+/* ── Boss HP bar ─────────────────────────────────────────────────────────── */
+
+.dq8-boss-hp {
+  padding: 10px 12px;
+  background: oklch(0.10 0.04 260);
+  border: 1px solid oklch(0.90 0.04 230 / 0.15);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.dq8-boss-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.dq8-boss-title {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--orange);
+}
+
+.dq8-boss-status {
+  font-family: var(--f-mono);
+  font-size: 9px;
+}
+
+.dq8-boss-bar {
+  height: 5px;
+  background: oklch(0.16 0.03 260);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dq8-boss-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), oklch(0.82 0.14 45));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ── Scene art — stacked panels ──────────────────────────────────────────── */
+
+.dq8-scene-stack {
+  width: 112px;
+  height: 80px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  background: oklch(0.10 0.03 260);
+  border: 1px solid oklch(0.22 0.06 260);
+  border-radius: 4px;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.dq8-panel {
+  flex: 1;
+  border-radius: 2px;
+  background: oklch(0.15 0.03 260);
+  border: 1px solid oklch(0.22 0.04 260);
+  transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, flex 0.4s ease;
+}
+
+.dq8-panel.crushing {
+  background: var(--orange);
+  border-color: var(--orange);
+  box-shadow: 0 0 5px oklch(0.78 0.17 50 / 0.55);
+  flex: 1.4;
+  animation: dq8PanelFlicker 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes dq8PanelFlicker {
+  from { box-shadow: 0 0 4px oklch(0.78 0.17 50 / 0.40); }
+  to   { box-shadow: 0 0 10px oklch(0.78 0.17 50 / 0.75); }
+}
+
+.dq8-panel.cleared {
+  background: oklch(0.17 0.05 145);
+  border-color: oklch(0.28 0.07 145);
+  flex: 1;
+}
+
+.dq8-scene-stack.collapsed {
+  border-color: var(--lime);
+  box-shadow: 0 0 12px oklch(0.84 0.22 130 / 0.25);
+}
+
+.dq8-scene-stack.collapsed .dq8-panel {
+  animation: none;
+  background: oklch(0.19 0.06 145);
+  border-color: oklch(0.32 0.09 145);
+  box-shadow: none;
+  flex: 1;
+}
+
+/* ── Live preview iframe ─────────────────────────────────────────────────── */
+
+.dq8-preview-frame {
+  flex: 1;
+  min-height: 0;
+  border: none;
+  background: #0a0d18;
+  display: block;
+}
+
+/* ── Mobile Gate slot ────────────────────────────────────────────────────── */
+
+.dq8-slot-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid oklch(0.20 0.04 260);
+  background: oklch(0.10 0.03 260);
+}
+
+.dq8-slot-label {
+  flex: 1;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: oklch(0.45 0.06 260);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s;
+}
+
+.dq8-slot-wrap.ready .dq8-slot-label {
+  color: var(--orange);
+}
+
+.dq8-mobile-gate {
+  flex-shrink: 0;
+  width: 136px;
+  height: 30px;
+  border-radius: 3px;
+  border: 1px solid oklch(0.25 0.05 260);
+  background: oklch(0.13 0.03 260);
+  position: relative;
+  overflow: hidden;
+  cursor: not-allowed;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  /* stacked bars texture */
+  background-image: repeating-linear-gradient(
+    0deg,
+    oklch(1 0 0 / 0.025) 0px,
+    oklch(1 0 0 / 0.025) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+}
+
+.dq8-mobile-gate.ready {
+  border-color: var(--orange);
+  background-color: oklch(0.15 0.06 50);
+  cursor: pointer;
+  animation: dq8GatePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes dq8GatePulse {
+  0%, 100% { box-shadow: 0 0 8px oklch(0.78 0.17 50 / 0.30); }
+  50%       { box-shadow: 0 0 22px oklch(0.78 0.17 50 / 0.70); }
+}
+
+.dq8-mobile-gate.ready::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(0.78 0.17 50 / 0.35), transparent);
+  animation: dq8GateShimmer 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dq8GateShimmer {
+  to { left: 160%; }
+}
+
+.dq8-mobile-gate.activating {
+  animation: dq8GateActivate 0.6s ease-out forwards;
+}
+
+@keyframes dq8GateActivate {
+  0%   { background-color: oklch(0.15 0.06 50); }
+  50%  { background-color: var(--orange); box-shadow: 0 0 40px oklch(0.78 0.17 50); }
+  100% { background-color: var(--ghost); border-color: var(--ghost); box-shadow: 0 0 20px oklch(0.90 0.04 230 / 0.5); }
+}

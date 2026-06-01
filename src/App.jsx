@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { NavigationProvider } from './context/NavigationContext'
 import { AuthProvider } from './context/AuthContext'
+import { AcademyProvider } from './context/AcademyContext'
 import RouteTransition from './components/RouteTransition'
 import ProtectedRoute from './components/ProtectedRoute'
 import GateRoute from './components/GateRoute'
@@ -12,7 +13,54 @@ import Quest from './screens/Quest'
 import Quest2 from './screens/Quest2'
 import Quest3 from './screens/Quest3'
 import Quest4 from './screens/Quest4'
+import Quest5 from './screens/Quest5'
+import Quest6 from './screens/Quest6'
+import Quest7 from './screens/Quest7'
+import Quest8 from './screens/Quest8'
 import PilotProfile from './screens/PilotProfile'
+import AcademyLanding from './screens/AcademyLanding'
+import AcademyOnboarding from './screens/AcademyOnboarding'
+import AcademyDashboard from './screens/AcademyDashboard'
+import GateS01 from './screens/GateS01'
+import GateS02 from './screens/GateS02'
+import GateS03 from './screens/GateS03'
+import GateS04 from './screens/GateS04'
+import GateS05 from './screens/GateS05'
+import GateS06 from './screens/GateS06'
+import GateS07 from './screens/GateS07'
+import GateS08 from './screens/GateS08'
+import GateS09 from './screens/GateS09'
+import GateS10 from './screens/GateS10'
+import GateS11 from './screens/GateS11'
+import GateS12 from './screens/GateS12'
+import GateS13 from './screens/GateS13'
+import GateS14 from './screens/GateS14'
+import GateS15 from './screens/GateS15'
+import GateP01 from './screens/GateP01'
+import GateP02 from './screens/GateP02'
+import GateP03 from './screens/GateP03'
+import GateP04 from './screens/GateP04'
+import GateP05 from './screens/GateP05'
+import GateP06 from './screens/GateP06'
+import GateP07 from './screens/GateP07'
+import GateP08 from './screens/GateP08'
+import GateP09 from './screens/GateP09'
+import GateP10 from './screens/GateP10'
+import GateP11 from './screens/GateP11'
+import GateP12 from './screens/GateP12'
+import GateP13 from './screens/GateP13'
+import GateP14 from './screens/GateP14'
+import GateP15 from './screens/GateP15'
+import GateJ01 from './screens/GateJ01'
+import GateJ02 from './screens/GateJ02'
+import GateJ03 from './screens/GateJ03'
+import GateJ04 from './screens/GateJ04'
+import GateJ05 from './screens/GateJ05'
+import GateJ06 from './screens/GateJ06'
+import GateJ07 from './screens/GateJ07'
+import GateJ08 from './screens/GateJ08'
+import GateJ09 from './screens/GateJ09'
+import GateJ10 from './screens/GateJ10'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -27,7 +75,55 @@ function AnimatedRoutes() {
         <Route path="/quest2" element={<GateRoute requires={['act1-ch01']}><Quest2 /></GateRoute>} />
         <Route path="/quest3" element={<GateRoute requires={['act1-ch01', 'act1-ch02']}><Quest3 /></GateRoute>} />
         <Route path="/quest4" element={<GateRoute requires={['act1-ch01', 'act1-ch02', 'act1-ch03']} unlockKey="act1-ch04"><Quest4 /></GateRoute>} />
+        <Route path="/quest5" element={<GateRoute requires={['act1-ch04']} unlockKey="act1-ch05"><Quest5 /></GateRoute>} />
+        <Route path="/quest6" element={<GateRoute requires={['act1-ch05']} unlockKey="act1-ch06"><Quest6 /></GateRoute>} />
+        <Route path="/quest7" element={<GateRoute requires={['act1-ch06']} unlockKey="act1-ch07"><Quest7 /></GateRoute>} />
+        <Route path="/quest8" element={<GateRoute requires={['act1-ch07']} unlockKey="act1-ch08"><Quest8 /></GateRoute>} />
         <Route path="/pilot/:id" element={<PilotProfile />} />
+        {/* Drift Builders Academy */}
+        <Route path="/academy" element={<AcademyLanding />} />
+        <Route path="/academy/onboarding" element={<ProtectedRoute><AcademyOnboarding /></ProtectedRoute>} />
+        <Route path="/academy/dashboard" element={<ProtectedRoute><AcademyDashboard /></ProtectedRoute>} />
+        <Route path="/academy/gate/s01" element={<ProtectedRoute><GateS01 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s02" element={<ProtectedRoute><GateS02 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s03" element={<ProtectedRoute><GateS03 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s04" element={<ProtectedRoute><GateS04 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s05" element={<ProtectedRoute><GateS05 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s06" element={<ProtectedRoute><GateS06 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s07" element={<ProtectedRoute><GateS07 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s08" element={<ProtectedRoute><GateS08 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s09" element={<ProtectedRoute><GateS09 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s10" element={<ProtectedRoute><GateS10 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s11" element={<ProtectedRoute><GateS11 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s12" element={<ProtectedRoute><GateS12 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s13" element={<ProtectedRoute><GateS13 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s14" element={<ProtectedRoute><GateS14 /></ProtectedRoute>} />
+        <Route path="/academy/gate/s15" element={<ProtectedRoute><GateS15 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p01" element={<ProtectedRoute><GateP01 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p02" element={<ProtectedRoute><GateP02 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p03" element={<ProtectedRoute><GateP03 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p04" element={<ProtectedRoute><GateP04 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p05" element={<ProtectedRoute><GateP05 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p06" element={<ProtectedRoute><GateP06 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p07" element={<ProtectedRoute><GateP07 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p08" element={<ProtectedRoute><GateP08 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p09" element={<ProtectedRoute><GateP09 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p10" element={<ProtectedRoute><GateP10 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p11" element={<ProtectedRoute><GateP11 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p12" element={<ProtectedRoute><GateP12 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p13" element={<ProtectedRoute><GateP13 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p14" element={<ProtectedRoute><GateP14 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p15" element={<ProtectedRoute><GateP15 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j01" element={<ProtectedRoute><GateJ01 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j02" element={<ProtectedRoute><GateJ02 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j03" element={<ProtectedRoute><GateJ03 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j04" element={<ProtectedRoute><GateJ04 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j05" element={<ProtectedRoute><GateJ05 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j06" element={<ProtectedRoute><GateJ06 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j07" element={<ProtectedRoute><GateJ07 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j08" element={<ProtectedRoute><GateJ08 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j09" element={<ProtectedRoute><GateJ09 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j10" element={<ProtectedRoute><GateJ10 /></ProtectedRoute>} />
       </Routes>
     </div>
   )
@@ -37,12 +133,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <NavigationProvider>
-          <div className="grid-bg" />
-          <div className="noise" />
-          <RouteTransition />
-          <AnimatedRoutes />
-        </NavigationProvider>
+        <AcademyProvider>
+          <NavigationProvider>
+            <div className="grid-bg" />
+            <div className="noise" />
+            <RouteTransition />
+            <AnimatedRoutes />
+          </NavigationProvider>
+        </AcademyProvider>
       </AuthProvider>
     </BrowserRouter>
   )

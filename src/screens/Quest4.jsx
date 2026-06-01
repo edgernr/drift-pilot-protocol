@@ -293,13 +293,13 @@ const CSS_CHECKS = [
   {
     id: 'root_vars',
     label: ':root custom properties declared',
-    hint: 'Open a :root { } block and declare at least one -- custom property inside',
+    hint: 'Custom properties must be declared inside a special selector that targets the document root — making them available to every rule on the page. That selector is a CSS pseudo-class.',
     test: css => /:root\s*\{[^}]*--[a-z]/.test(css),
   },
   {
     id: 'color_tokens',
     label: 'Color system: 3+ color variables',
-    hint: 'Define 3+ custom properties with color values — #hex, oklch(), rgb(), hsl(), or named colors',
+    hint: 'Color variables need actual color values. Any valid CSS color format works. Make sure you have at least three separate color properties defined in your root block.',
     test: css => {
       const rootBlock = css.match(/:root\s*\{([^}]+)\}/)
       if (!rootBlock) return false
@@ -315,7 +315,7 @@ const CSS_CHECKS = [
   {
     id: 'spacing_tokens',
     label: 'Spacing system: 2+ size variables',
-    hint: 'Define 2+ custom properties with size values — 8px, 1rem, 16px, 100%, etc.',
+    hint: 'Spacing variables hold size values in a CSS length unit. Think about padding, gap, or margin values you\'ll reuse — define at least two of them.',
     test: css => {
       const rootBlock = css.match(/:root\s*\{([^}]+)\}/)
       if (!rootBlock) return false
@@ -326,31 +326,31 @@ const CSS_CHECKS = [
   {
     id: 'var_used',
     label: 'Variables applied with var()',
-    hint: 'Use var(--your-variable) inside CSS rules outside :root',
+    hint: 'To reference a custom property in a CSS rule, there\'s a function that takes the variable name as its argument. That function name is three letters long.',
     test: css => /var\s*\(\s*--/.test(css.replace(/:root\s*\{[^}]+\}/, '')),
   },
   {
     id: 'no_hex_rules',
     label: 'Zero hardcoded #hex in rules',
-    hint: 'All #hex colors must live in :root — class rules must reference var(--...) only',
+    hint: 'Hardcoded color values directly in class rules defeat the purpose of a design system — you\'d need to change them in every rule. Every color used in a rule should come from a variable.',
     test: css => !/#[0-9a-fA-F]{3,8}/.test(css.replace(/:root\s*\{[^}]+\}/, '')),
   },
   {
     id: 'header_styled',
     label: '.city-header styled with variables',
-    hint: 'Add a .city-header { } rule that uses at least one var(--...)',
+    hint: 'Find the .city-header element in the HTML, then write a CSS rule targeting it. Apply at least one of your defined variables to a visual property like background or color.',
     test: css => /\.city-header\s*\{[^}]*var\s*\(\s*--[^)]+\)[^}]*\}/.test(css),
   },
   {
     id: 'card_styled',
     label: '.status-card styled with variables',
-    hint: 'Add a .status-card { } rule that uses at least one var(--...)',
+    hint: 'Find the .status-card element in the HTML and write a CSS rule for it. Apply at least one of your defined variables — the card should look styled, not bare.',
     test: css => /\.status-card\s*\{[^}]*var\s*\(\s*--[^)]+\)[^}]*\}/.test(css),
   },
   {
     id: 'responsive',
     label: 'Responsive @media breakpoint added',
-    hint: 'Add a @media (max-width: ...) or @media (min-width: ...) block',
+    hint: 'A media query wraps rules that only apply when a condition is met — like the viewport being a certain width. Write one that makes the layout adapt for different screen sizes.',
     test: css => /@media\s*\([^)]*(?:max|min)-width[^)]*\)/.test(css),
   },
 ]
@@ -688,18 +688,18 @@ export default function Quest4() {
           </div>
           <div className="dq-next-quest">
             <div className="dq-nq-label">GATE 05 UNLOCKED</div>
-            <div className="dq-nq-card">
-              <span className="dq-nq-emoji">📐</span>
+            <div className="dq-nq-card" onClick={async () => { await completeQuest('act1-ch04', 240, getAnalytics()); goto('quest5') }} style={{ cursor: 'pointer' }}>
+              <span className="dq-nq-emoji">⚓</span>
               <div>
-                <div className="dq-nq-title">Gate 05</div>
-                <div className="dq-nq-sub">Coming Soon</div>
+                <div className="dq-nq-title">Gate 05 — The Gravity Anchor</div>
+                <div className="dq-nq-sub">Flexbox layouts · Rank D</div>
               </div>
               <span className="dq-nq-arrow">→</span>
             </div>
           </div>
           <button
             className="btn btn-primary"
-            onClick={async () => { await completeQuest('act1-ch04', 200, getAnalytics()); goto('dashboard') }}
+            onClick={async () => { await completeQuest('act1-ch04', 240, getAnalytics()); goto('dashboard') }}
           >
             Continue →
           </button>

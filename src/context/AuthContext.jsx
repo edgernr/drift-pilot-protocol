@@ -5,8 +5,8 @@ const AuthContext = createContext(null)
 
 export const DRIFT_REWARDS = {
   'act1-ch01': 250, 'act1-ch02': 350, 'act1-ch03': 700,
-  'act1-ch04': 400, 'act1-ch05': 500, 'act1-ch06': 900,
-  'act1-ch07': 550, 'act1-ch08': 1000, 'act1-ch09': 700, 'act1-ch10': 1500,
+  'act1-ch04': 195, 'act1-ch05': 225, 'act1-ch06': 400,
+  'act1-ch07': 280, 'act1-ch08': 400, 'act1-ch09': 700, 'act1-ch10': 1500,
 }
 
 // Raid XP rewards (distinct from DRIFT payout amounts: 2350/1050/250/0)

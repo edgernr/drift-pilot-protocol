@@ -92,13 +92,21 @@ export default function Dashboard() {
     'act1-ch02': 'The Semantic Crypt',
     'act1-ch03': 'The Form Gate',
     'act1-ch04': 'Paint the City',
+    'act1-ch05': 'The Gravity Anchor',
+    'act1-ch06': 'The Infinite Grid',
+    'act1-ch07': 'Ghost Feedback',
+    'act1-ch08': 'The Collapse',
   }
 
   const KNOWN_GATES = [
     { id: 'act1-ch01', label: 'Gate 01 — The Document Tomb', xp: 100 },
     { id: 'act1-ch02', label: 'Gate 02 — The Semantic Crypt', xp: 200 },
     { id: 'act1-ch03', label: 'Gate 03 — The Form Gate', xp: 300 },
-    { id: 'act1-ch04', label: 'Gate 04 — Paint the City', xp: 200 },
+    { id: 'act1-ch04', label: 'Gate 04 — Paint the City', xp: 240 },
+    { id: 'act1-ch05', label: 'Gate 05 — The Gravity Anchor', xp: 280 },
+    { id: 'act1-ch06', label: 'Gate 06 — The Infinite Grid', xp: 500 },
+    { id: 'act1-ch07', label: 'Gate 07 — Ghost Feedback', xp: 350 },
+    { id: 'act1-ch08', label: 'Gate 08 — The Collapse', xp: 500 },
   ]
   const [quests, setQuests] = useState([])
   const [lbData, setLbData] = useState([])
@@ -117,6 +125,7 @@ export default function Dashboard() {
 
   const isAdmin = profile?.is_admin ?? false
   const isSubscribed = profile?.is_subscribed ?? false
+  const isFounder = profile?.is_founder ?? false
 
   useEffect(() => {
     supabase.from('quests').select('*').eq('world', 1).order('order_index')
@@ -338,17 +347,17 @@ export default function Dashboard() {
     'act1-ch02': { label: 'Gate 02 — The Semantic Crypt', icon: '⚱️' },
     'act1-ch03': { label: 'Gate 03 — The Form Gate',     icon: '📋' },
     'act1-ch04': { label: 'Gate 04 — Paint the City',    icon: '🎨' },
-    'act1-ch05': { label: 'Gate 05',                     icon: '◈' },
-    'act1-ch06': { label: 'Gate 06 — Boss',              icon: '💀' },
-    'act1-ch07': { label: 'Gate 07',                     icon: '◈' },
-    'act1-ch08': { label: 'Gate 08 — Boss',              icon: '💀' },
+    'act1-ch05': { label: 'Gate 05 — The Gravity Anchor', icon: '⚓' },
+    'act1-ch06': { label: 'Gate 06 — The Infinite Grid',  icon: '⬛' },
+    'act1-ch07': { label: 'Gate 07 — Ghost Feedback',     icon: '👻' },
+    'act1-ch08': { label: 'Gate 08 — The Collapse',       icon: '📱' },
     'act1-ch09': { label: 'Gate 09',                     icon: '◈' },
     'act1-ch10': { label: 'Gate 10 — Boss',              icon: '💀' },
   }
   const DRIFT_REWARDS_UI = {
-    'act1-ch01': 250, 'act1-ch02': 350, 'act1-ch03': 700,
-    'act1-ch04': 400, 'act1-ch05': 500, 'act1-ch06': 900,
-    'act1-ch07': 550, 'act1-ch08': 1000, 'act1-ch09': 700, 'act1-ch10': 1500,
+    'act1-ch01': 80,  'act1-ch02': 160, 'act1-ch03': 300,
+    'act1-ch04': 195, 'act1-ch05': 225, 'act1-ch06': 400,
+    'act1-ch07': 280, 'act1-ch08': 400, 'act1-ch09': 700, 'act1-ch10': 1500,
   }
   function resolveQuestMeta(questId, xpEarned) {
     if (DRIFT_GATE_NAMES[questId]) return { ...DRIFT_GATE_NAMES[questId], drift: DRIFT_REWARDS_UI[questId] ?? 0, kind: 'gate' }
@@ -371,9 +380,17 @@ export default function Dashboard() {
   const act2Done = doneQuests.has('act1-ch02')
   const act3Done = doneQuests.has('act1-ch03')
   const act4Done = doneQuests.has('act1-ch04')
+  const act5Done = doneQuests.has('act1-ch05')
+  const act6Done = doneQuests.has('act1-ch06')
+  const act7Done = doneQuests.has('act1-ch07')
+  const act8Done = doneQuests.has('act1-ch08')
   const myRank = lbData.find(r => r.id === user?.id)?.rank ?? null
 
   function gotoActiveQuest() {
+    if (act7Done && !act8Done) return goto('quest8')
+    if (act6Done && !act7Done) return goto('quest7')
+    if (act5Done && !act6Done) return goto('quest6')
+    if (act4Done && !act5Done) return goto('quest5')
     if (act1Done && act2Done && act3Done && !act4Done) return goto('quest4')
     if (act1Done && act2Done && !act3Done) return goto('quest3')
     if (act1Done && !act2Done) return goto('quest2')
@@ -381,6 +398,10 @@ export default function Dashboard() {
   }
 
   function gotoQuestById(id) {
+    if (id === 'act1-ch08') return goto('quest8')
+    if (id === 'act1-ch07') return goto('quest7')
+    if (id === 'act1-ch06') return goto('quest6')
+    if (id === 'act1-ch05') return goto('quest5')
     if (id === 'act1-ch04') return goto('quest4')
     if (id === 'act1-ch03') return goto('quest3')
     if (id === 'act1-ch02') return goto('quest2')
@@ -665,6 +686,12 @@ export default function Dashboard() {
                   <span className="dot dot-pulse" /> {streak > 0 ? `${streak}-DAY STREAK` : 'START YOUR STREAK'}
                 </span>
                 <h1 style={{ marginTop: 16 }}>GM, {pilotName}.<br /><span className="gradient-text">Ready for today's mission?</span></h1>
+                {(isFounder || isSubscribed) && (
+                  <div className="pilot-badges">
+                    {isFounder && <span className="pilot-badge badge-founder">⬡ EDGERNR</span>}
+                    {isSubscribed && <span className="pilot-badge badge-season1">◈ SEASON 01</span>}
+                  </div>
+                )}
                 <p>{questsDone === 0
                   ? <>Your first mission awaits. Complete Act I to unlock <strong>React Act II</strong>.</>
                   : questsDone < 15

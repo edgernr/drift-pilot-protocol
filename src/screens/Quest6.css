@@ -1,0 +1,219 @@
+/* Gate 06 — The Infinite Grid — Steel blue accent */
+
+/* XP bar */
+.dq-wrap-g6 .dq-xp-fill {
+  background: linear-gradient(90deg, var(--steel-blue), oklch(0.52 0.16 245));
+}
+
+/* Checker boxes — steel blue theme */
+.dq-wrap-g6 .dq6-obj-box {
+  border-color: var(--steel-blue);
+  color: var(--steel-blue);
+}
+.dq-wrap-g6 li.done .dq6-obj-box {
+  background: var(--steel-blue);
+  border-color: var(--steel-blue);
+  color: oklch(0.95 0.01 240);
+}
+
+/* ── Boss HP bar ─────────────────────────────────────────────────────────── */
+
+.dq6-boss-hp {
+  padding: 10px 12px;
+  background: oklch(0.10 0.04 260);
+  border: 1px solid oklch(0.90 0.04 230 / 0.15);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.dq6-boss-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.dq6-boss-title {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ghost);
+}
+
+.dq6-boss-status {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: oklch(0.62 0.22 25);
+}
+
+.dq6-boss-bar {
+  height: 5px;
+  background: oklch(0.16 0.03 260);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dq6-boss-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, oklch(0.90 0.04 230), oklch(0.80 0.06 230));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ── Scene art — grid tiles with white void mist ─────────────────────────── */
+
+.dq6-scene-void {
+  width: 108px;
+  height: 108px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 8px;
+  background: oklch(0.10 0.03 260);
+  border: 1px solid oklch(0.22 0.06 260);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dq6-tile {
+  border-radius: 2px;
+  background: oklch(0.13 0.03 260);
+  border: 1px solid oklch(0.20 0.04 260);
+  transition: background 0.45s ease, box-shadow 0.45s ease, border-color 0.45s ease;
+}
+
+.dq6-tile.lit {
+  background: var(--steel-blue);
+  border-color: var(--steel-blue);
+  box-shadow: 0 0 6px oklch(0.62 0.14 235 / 0.65);
+}
+
+/* White mist overlay — retreats as tiles light up */
+.dq6-mist {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 60% 40%, oklch(0.95 0.01 240 / 0.18), oklch(0.95 0.01 240 / 0.06) 60%, transparent 80%);
+  pointer-events: none;
+  transition: opacity 1s ease;
+}
+
+.dq6-mist.gone {
+  opacity: 0;
+}
+
+.dq6-scene-void.sealed {
+  border-color: var(--steel-blue);
+  box-shadow: 0 0 12px oklch(0.62 0.14 235 / 0.30);
+  animation: dq6VoidPulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes dq6VoidPulse {
+  from { box-shadow: 0 0 6px oklch(0.62 0.14 235 / 0.20); }
+  to   { box-shadow: 0 0 20px oklch(0.62 0.14 235 / 0.50); }
+}
+
+/* ── Live preview iframe ─────────────────────────────────────────────────── */
+
+.dq6-preview-frame {
+  flex: 1;
+  min-height: 0;
+  border: none;
+  background: #fff;
+  display: block;
+}
+
+/* ── Grid Seal slot ──────────────────────────────────────────────────────── */
+
+.dq6-slot-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid oklch(0.20 0.04 260);
+  background: oklch(0.10 0.03 260);
+}
+
+.dq6-slot-label {
+  flex: 1;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: oklch(0.45 0.06 260);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s;
+}
+
+.dq6-slot-wrap.ready .dq6-slot-label {
+  color: var(--steel-blue);
+}
+
+.dq6-grid-seal {
+  flex-shrink: 0;
+  width: 136px;
+  height: 30px;
+  border-radius: 3px;
+  border: 1px solid oklch(0.25 0.05 260);
+  background: oklch(0.13 0.03 260);
+  position: relative;
+  overflow: hidden;
+  cursor: not-allowed;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  /* grid pattern texture */
+  background-image: repeating-linear-gradient(
+    0deg,
+    oklch(1 0 0 / 0.025) 0px,
+    oklch(1 0 0 / 0.025) 1px,
+    transparent 1px,
+    transparent 6px
+  ),
+  repeating-linear-gradient(
+    90deg,
+    oklch(1 0 0 / 0.025) 0px,
+    oklch(1 0 0 / 0.025) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+.dq6-grid-seal.ready {
+  border-color: var(--steel-blue);
+  background-color: oklch(0.16 0.07 235);
+  cursor: pointer;
+  animation: dq6SealPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes dq6SealPulse {
+  0%, 100% { box-shadow: 0 0 8px oklch(0.62 0.14 235 / 0.30); }
+  50%       { box-shadow: 0 0 22px oklch(0.62 0.14 235 / 0.70); }
+}
+
+.dq6-grid-seal.ready::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(0.62 0.14 235 / 0.35), transparent);
+  animation: dq6SealShimmer 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dq6SealShimmer {
+  to { left: 160%; }
+}
+
+.dq6-grid-seal.activating {
+  animation: dq6SealActivate 0.6s ease-out forwards;
+}
+
+@keyframes dq6SealActivate {
+  0%   { background-color: oklch(0.16 0.07 235); }
+  50%  { background-color: var(--steel-blue); box-shadow: 0 0 40px oklch(0.62 0.14 235); }
+  100% { background-color: var(--ghost); border-color: var(--ghost); box-shadow: 0 0 20px oklch(0.90 0.04 230 / 0.5); }
+}

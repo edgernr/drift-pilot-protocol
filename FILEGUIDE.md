@@ -71,7 +71,21 @@ eva-react/
 │       ├── Quest3.css             Gate 03-specific: Label Eater scene art, boss HP bar, form slot (crimson)
 │       ├── Quest4.jsx             GATE 04 — Paint the City. Write CSS design system with custom properties → Protocol Override.
 │       ├── Quest4.css             Gate 04-specific: amber accent, 8-swatch color matrix, protocol slot, preview frame
-│       └── QuestQuiz.jsx          shared knowledge-check overlay — shown before completion animation on all gates
+│       ├── Quest5.jsx             GATE 05 — The Gravity Anchor. Flexbox layouts → 6 checks → Gravity Slot.
+│       ├── Quest5.css             Gate 05-specific: cyan accent, anchor hub + 6 arms scene art, gravity slot
+│       ├── Quest6.jsx             GATE 06 — The Infinite Grid. CSS Grid dashboard → 7 checks → Grid Seal (Boss: White Void).
+│       ├── Quest6.css             Gate 06-specific: steel-blue accent, 3×3 tile grid + mist scene art, boss HP bar, grid seal
+│       ├── Quest7.jsx             GATE 07 — Ghost Feedback. CSS Transitions → 7 checks → Ghost Signal.
+│       ├── Quest7.css             Gate 07-specific: ghost/white-blue accent, bar-chart figures scene art, ghost signal slot
+│       ├── Quest8.jsx             GATE 08 — The Collapse. Mobile-first responsive → 7 checks → Mobile Gate (Boss: The Stack).
+│       ├── Quest8.css             Gate 08-specific: orange accent, stacked panels scene art, boss HP bar, mobile gate slot
+│       ├── QuestQuiz.jsx          shared knowledge-check overlay — shown before completion animation on all gates
+│       ├── AcademyLanding.jsx     /academy — The Construct landing. Three tracks, auth-aware CTA, floating block decorations.
+│       ├── AcademyLanding.css     Academy tokens (--builder-gold, --construct-dark, --block-*), hero, track cards, how-it-works
+│       ├── AcademyOnboarding.jsx  /academy/onboarding — 4-step Builder setup (name→age→experience→intention→result)
+│       ├── AcademyOnboarding.css  Progress bar, step animations, age grid, exp list, intention grid, result card
+│       ├── AcademyDashboard.jsx   /academy/dashboard — Builder HQ. Child profile card, XP bar, gate grid, child switcher.
+│       └── AcademyDashboard.css   Academy dashboard styles: profile card, avatar, XP bar, gate grid (done/active/locked)
 ```
 
 ---
@@ -88,12 +102,44 @@ eva-react/
 | `/quest2` | `Quest2.jsx` | `GateRoute` (ch01) | Gate 02. Div-soup HTML, 8-check identity scanner, codex submit, records `act1-ch02`. |
 | `/quest3` | `Quest3.jsx` | `GateRoute` (ch01+ch02) | Gate 03 (Boss). Comment scaffold, 10-check form scanner, Label Eater HP bar, records `act1-ch03`. |
 | `/quest4` | `Quest4.jsx` | `GateRoute` (ch01+ch02+ch03, or `unlockKey=act1-ch04`) | Gate 04. CSS-only editor, live preview iframe, 8-check CSS audit, Protocol Override slot, records `act1-ch04`. |
+| `/quest5` | `Quest5.jsx` | `GateRoute` (ch04, or `unlockKey=act1-ch05`) | Gate 05. Flexbox. CSS-only editor, 6-check audit, Gravity Slot, records `act1-ch05`. |
+| `/quest6` | `Quest6.jsx` | `GateRoute` (ch05, or `unlockKey=act1-ch06`) | Gate 06 (Boss). CSS Grid dashboard. 7-check audit, boss HP bar, Grid Seal, records `act1-ch06`. |
+| `/quest7` | `Quest7.jsx` | `GateRoute` (ch06, or `unlockKey=act1-ch07`) | Gate 07. CSS Transitions. 7-check audit, Ghost Signal slot, records `act1-ch07`. |
+| `/quest8` | `Quest8.jsx` | `GateRoute` (ch07, or `unlockKey=act1-ch08`) | Gate 08 (Boss). Mobile-first responsive. Full HTML pages. 7-check audit, boss HP bar, Mobile Gate slot, records `act1-ch08`. |
+| `/academy` | `AcademyLanding.jsx` | public | The Construct landing. Three tracks, auth-aware CTA. |
+| `/academy/onboarding` | `AcademyOnboarding.jsx` | `ProtectedRoute` | 4-step Builder setup. Determines track + startGate. Creates `child_profiles` row. |
+| `/academy/dashboard` | `AcademyDashboard.jsx` | `ProtectedRoute` | Builder HQ. Active child card, gate grid, child switcher. |
+| `/academy/gate/s01`–`s15` | `GateS01`–`GateS15` | `ProtectedRoute` | Scratch track (BlockCanvas drag-and-drop). S-06/S-11 are boss gates. |
+| `/academy/gate/p01`–`p15` | `GateP01`–`GateP15` | `ProtectedRoute` | Python track (textarea + regex checks). P-15 is boss gate (debug mechanic). |
 
 ---
 
 ## Auth & Supabase
 
-### Context API shape
+### AcademyContext API shape
+```js
+import { useAcademy } from '../context/AcademyContext'
+const {
+  childProfiles,       // all child_profiles rows for this parent
+  activeChild,         // currently selected child (persisted in sessionStorage)
+  setActiveChild,      // switch active child
+  completedGateIds,    // Set<string> of gate_id strings completed by activeChild
+  totalAcademyXp,      // sum of xp_earned for activeChild's completions
+  createChildProfile,  // async ({ name, age, track, startGate, intention }) → { ok, child, error }
+  completeAcademyGate, // async (childId, gateId, xpEarned) → boolean
+  loadChildProfiles,   // reload from DB
+  loading,             // true while fetching
+} = useAcademy()
+```
+- `AcademyProvider` wraps `AuthProvider` children in `App.jsx` — must be inside `AuthProvider`
+- Uses `useAuth()` to get `user.id` for all Supabase queries
+- `activeChild` auto-selects first child on load; persisted in `sessionStorage` key `academy_active_child`
+- DB tables: `public.child_profiles` + `public.academy_completions` (see schema section)
+- Run `eva-react/academy_schema.sql` in Supabase SQL Editor before using Academy
+
+---
+
+### AuthContext API shape
 ```js
 const {
   user, profile, loading, error, passwordRecovery,
@@ -143,9 +189,13 @@ const {
 
 ### $DRIFT rewards (AuthContext)
 ```js
-const DRIFT_REWARDS = { 'act1-ch01': 250, 'act1-ch02': 350, 'act1-ch03': 700, ... }
+const DRIFT_REWARDS = {
+  'act1-ch01': 80,  'act1-ch02': 160, 'act1-ch03': 300,
+  'act1-ch04': 195, 'act1-ch05': 225, 'act1-ch06': 400,
+  'act1-ch07': 280, 'act1-ch08': 400,
+}
 ```
-`totalDrift` is derived from completions — no DB column needed. Add new entries here when new gates are built.
+`totalDrift` is derived from completions — no DB column needed. Add new entries here when new gates are built. Max earnable across Gates 01-08: 2040 $DRIFT.
 
 ### XP Level system (AuthContext)
 ```js
@@ -436,11 +486,11 @@ Wallet view shows: card balance = spendable (`totalDrift - totalDriftSpent`), EA
 ### Smart quest routing
 ```js
 function gotoActiveQuest() {
-  if (act1Done && act2Done && !act3Done) return goto('quest3')
-  if (act1Done && !act2Done) return goto('quest2')
-  goto('quest')
+  // Routes to the first incomplete gate in sequence (ch01 → ch08)
+  // act1Done…act8Done derived from doneQuests Set in Dashboard
 }
 ```
+`gotoActiveQuest()` checks act1Done through act8Done sequentially and routes to the first incomplete gate. `gotoQuestById(chKey)` maps `'act1-ch01'` through `'act1-ch08'` to their route names.
 
 ### Leaderboard fetch
 ```js
@@ -492,6 +542,11 @@ goto('dashboard')  // → /dashboard
 goto('quest')      // → /quest   (Gate 01)
 goto('quest2')     // → /quest2  (Gate 02)
 goto('quest3')     // → /quest3  (Gate 03)
+goto('quest4')     // → /quest4  (Gate 04)
+goto('quest5')     // → /quest5  (Gate 05)
+goto('quest6')     // → /quest6  (Gate 06)
+goto('quest7')     // → /quest7  (Gate 07)
+goto('quest8')     // → /quest8  (Gate 08)
 ```
 
 `goto()` runs a 380ms animation (progress bar + blur overlay) before calling `navigate()`.
@@ -503,9 +558,9 @@ goto('quest3')     // → /quest3  (Gate 03)
 - **Design tokens** — CSS custom properties in `:root` in `index.css`. Never hardcode hex values.
 - **Global utility classes** — `.btn`, `.panel`, `.chip`, `.gradient-text`, `.reveal`, `.world-card` in `index.css`.
 - **Screen-specific styles** — co-located `ScreenName.css`. Flat class names (no CSS modules).
-- **Neon colors**: `--teal`, `--violet`, `--magenta`, `--lime`, `--amber` in `oklch()`.
+- **Neon colors**: `--teal`, `--violet`, `--magenta`, `--lime`, `--amber`, `--cyan`, `--steel-blue`, `--ghost`, `--orange` in `oklch()`.
 - **Fonts**: `--f-display` (Space Grotesk), `--f-body` (Inter), `--f-mono` (JetBrains Mono).
-- **Gate accent colors**: Gate 01 teal · Gate 02 violet · Gate 03 crimson `oklch(0.62 0.22 25)`
+- **Gate accent colors**: Gate 01 teal · Gate 02 violet · Gate 03 crimson · Gate 04 amber · Gate 05 cyan · Gate 06 steel-blue · Gate 07 ghost · Gate 08 orange
 
 ---
 
@@ -533,6 +588,10 @@ npm run build    # production build → dist/
 - `src/screens/Quest.jsx` — Gate 01 (The Document Tomb); `ERROR_CHECKS`, `dq-signal-slot`, `signalTransmit`
 - `src/screens/Quest2.jsx` — Gate 02 (The Semantic Crypt); `SEMANTIC_CHECKS`, `dq-codex-slot`, `codexVerify`
 - `src/screens/Quest3.jsx` — Gate 03 (The Form Gate); `FORM_CHECKS`, boss HP bar, `dq3-scene-eater`, `dq-form-slot`, `formExtract`
+- `src/screens/Quest5.jsx` — Gate 05 (The Gravity Anchor); 6 Flexbox checks, cyan anchor scene, `dq5-gravity-slot`
+- `src/screens/Quest6.jsx` — Gate 06 (The Infinite Grid); 7 Grid checks, boss HP bar, 3×3 tile grid + mist, `dq6-grid-seal`
+- `src/screens/Quest7.jsx` — Gate 07 (Ghost Feedback); 7 transition checks, bar-chart figures scene, `dq7-ghost-signal`
+- `src/screens/Quest8.jsx` — Gate 08 (The Collapse); 7 responsive checks, full HTML page variants, boss HP bar, stacked panels scene, `dq8-mobile-gate`
 - `src/screens/Dashboard.jsx` — 8-view SPA; `view` + `cardVariant` in localStorage; notification bell; profile dropdown; admin panel; subscription skill tree
 - `src/screens/Dashboard.css` — includes responsive breakpoints: 1100px (hamburger + sidebar overlay), 768px, 480px
 - `src/screens/RaidIDE.jsx` — full in-browser IDE for raid active/siege phases. Props: `raid, members, myRole, isLeader, isAdmin, events, busy, passedSyncs, expandedSync/setExpandedSync, expandedWave/setExpandedWave, syncEvidence/setSyncEvidence, onSync, onWave, onBonus, onLeave, onAdmin*, healthColor, SYNCS, WAVES, ROLES_FULL`. Two tabs: WORKSPACE (Monaco + file tree + role output) and MISSION CONTROL (existing sync/wave/event log UI). `STARTERS` map holds per-role starter file templates. `SYNC_CODE_CHECKS` array has regex checks per role per sync; rendered in right panel + inline in each sync ritual card. Auto-save debounced 1.8s to `raid_files` via Supabase upsert with `onConflict: 'raid_id,role,path'`. Realtime channel `raid-files:{raidId}` syncs file changes live. Interface right panel: `SandpackProvider`+`SandpackPreview` keyed on `previewKey` (re-mounts 1.5s after edit). Vault right panel: PGlite lazy-initialized on first Vault view; `runSQL()` runs current editor content. Non-editable roles show read-only Monaco.

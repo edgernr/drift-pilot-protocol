@@ -1,0 +1,183 @@
+/* Gate 05 — The Gravity Anchor — Cyan accent */
+
+/* XP bar */
+.dq-wrap-g5 .dq-xp-fill {
+  background: linear-gradient(90deg, var(--cyan), oklch(0.72 0.20 205));
+}
+
+/* Checker boxes — cyan theme */
+.dq-wrap-g5 .dq5-obj-box {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.dq-wrap-g5 li.done .dq5-obj-box {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: oklch(0.10 0.02 200);
+}
+
+/* ── Scene art — gravity anchor mechanism ────────────────────────────────── */
+
+.dq5-scene-anchor {
+  width: 110px;
+  height: 110px;
+  margin: auto;
+  position: relative;
+}
+
+.dq5-anchor-hub {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: oklch(0.18 0.05 220);
+  border: 2px solid oklch(0.32 0.08 220);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+
+.dq5-scene-anchor.deployed .dq5-anchor-hub {
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px oklch(0.84 0.18 200 / 0.6);
+}
+
+.dq5-arm {
+  position: absolute;
+  width: 44px;
+  height: 5px;
+  background: oklch(0.22 0.04 260);
+  border-radius: 2px;
+  top: 50%;
+  left: 50%;
+  margin-top: -2.5px;
+  transform-origin: 0 50%;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.dq5-arm-1 { transform: rotate(0deg); }
+.dq5-arm-2 { transform: rotate(60deg); }
+.dq5-arm-3 { transform: rotate(120deg); }
+.dq5-arm-4 { transform: rotate(180deg); }
+.dq5-arm-5 { transform: rotate(240deg); }
+.dq5-arm-6 { transform: rotate(300deg); }
+
+.dq5-arm.lit {
+  background: var(--cyan);
+  box-shadow: 0 0 8px oklch(0.84 0.18 200 / 0.65);
+}
+
+/* All deployed — anchor rotates slightly */
+.dq5-scene-anchor.deployed {
+  animation: dq5AnchorSpin 6s linear infinite;
+}
+
+@keyframes dq5AnchorSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Live preview iframe ─────────────────────────────────────────────────── */
+
+.dq5-preview-frame {
+  flex: 1;
+  min-height: 0;
+  border: none;
+  background: #fff;
+  display: block;
+}
+
+/* ── Gravity Lock slot ───────────────────────────────────────────────────── */
+
+.dq5-slot-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid oklch(0.20 0.04 260);
+  background: oklch(0.10 0.03 260);
+}
+
+.dq5-slot-label {
+  flex: 1;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: oklch(0.45 0.06 260);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s;
+}
+
+.dq5-slot-wrap.ready .dq5-slot-label {
+  color: var(--cyan);
+}
+
+.dq5-gravity-slot {
+  flex-shrink: 0;
+  width: 136px;
+  height: 30px;
+  border-radius: 3px;
+  border: 1px solid oklch(0.25 0.05 260);
+  background: oklch(0.13 0.03 260);
+  position: relative;
+  overflow: hidden;
+  cursor: not-allowed;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.dq5-gravity-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    oklch(1 0 0 / 0.03) 0px,
+    oklch(1 0 0 / 0.03) 1px,
+    transparent 1px,
+    transparent 9px
+  );
+  pointer-events: none;
+}
+
+.dq5-gravity-slot.ready {
+  border-color: var(--cyan);
+  background: oklch(0.16 0.07 200);
+  cursor: pointer;
+  animation: dq5SlotPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes dq5SlotPulse {
+  0%, 100% { box-shadow: 0 0 8px oklch(0.84 0.18 200 / 0.30); }
+  50%       { box-shadow: 0 0 22px oklch(0.84 0.18 200 / 0.70); }
+}
+
+.dq5-gravity-slot.ready::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(0.84 0.18 200 / 0.35), transparent);
+  animation: dq5Shimmer 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dq5Shimmer {
+  to { left: 160%; }
+}
+
+.dq5-gravity-slot.activating {
+  animation: dq5SlotActivate 0.5s ease-out forwards;
+}
+
+@keyframes dq5SlotActivate {
+  0%   { background: oklch(0.16 0.07 200); }
+  50%  { background: var(--cyan); box-shadow: 0 0 40px oklch(0.84 0.18 200); }
+  100% { background: oklch(0.62 0.14 235); border-color: oklch(0.62 0.14 235); box-shadow: 0 0 20px oklch(0.62 0.14 235 / 0.6); }
+}
