@@ -971,7 +971,7 @@ export default function Dashboard() {
                   <div
                     key={q.id}
                     className={`st-node${q.is_boss ? ' st-boss' : ''}${stateCls}`}
-                    onClick={(isDone || isActive) && !q.is_boss ? () => gotoQuestById(chKey) : undefined}
+                    onClick={isDone || isActive || isUnlocked ? () => gotoQuestById(chKey) : undefined}
                   >
                     <div className="st-node-top">
                       <span className="st-ch">{chLabel}</span>
