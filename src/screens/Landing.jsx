@@ -33,6 +33,7 @@ export default function Landing() {
           <li><a href="#quests">Quests</a></li>
           <li><a href="#token">Token</a></li>
           <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#academy" style={{ color: 'var(--builder-gold, oklch(0.86 0.19 80))' }}>Academy</a></li>
         </ul>
         {user
           ? <button className="btn btn-ghost btn-sm" onClick={() => goto('dashboard')}>Dashboard →</button>
@@ -280,6 +281,40 @@ export default function Landing() {
       </section>
 
       {/* PRICING */}
+      {/* ACADEMY */}
+      <section id="academy" style={{ padding: '100px 0', background: 'oklch(0.09 0.02 260)' }}>
+        <div className="container">
+          <div className="reveal" style={{ display: 'flex', gap: 64, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 360px' }}>
+              <span className="eyebrow" style={{ color: 'oklch(0.86 0.19 80)' }}>DRIFT BUILDERS ACADEMY</span>
+              <h2 style={{ marginTop: 16 }}>Built for young coders.<br /><span style={{ color: 'oklch(0.86 0.19 80)' }}>Ages 8 – 16.</span></h2>
+              <p style={{ color: 'var(--ink-2)', lineHeight: 1.7, marginTop: 16, marginBottom: 28 }}>
+                A separate learning track designed for kids and teens. Start with visual block coding, progress to Python, then JavaScript and React — gate by gate, at their own pace.
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <button className="btn btn-primary" style={{ background: 'oklch(0.86 0.19 80)', color: '#000', border: 'none' }} onClick={() => goto('academy')}>Enter the Academy →</button>
+                <button className="btn btn-ghost" onClick={() => goto('academy')}>View Curriculum</button>
+              </div>
+            </div>
+            <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { icon: '🟡', label: 'Block Layer', desc: '15 gates · Block coding · Ages 8–10', color: 'oklch(0.86 0.19 80)' },
+                { icon: '🐍', label: 'Code Layer',  desc: '15 gates · Python · Ages 11–13',     color: 'oklch(0.82 0.18 135)' },
+                { icon: '⚡', label: 'Web Layer',   desc: '10 gates · JavaScript + React · Ages 13+', color: 'oklch(0.78 0.18 210)' },
+              ].map(t => (
+                <div key={t.label} className="panel" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px' }}>
+                  <span style={{ fontSize: 24 }}>{t.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: t.color }}>{t.label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--f-mono)', marginTop: 2 }}>{t.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="pricing">
         <div className="container">
           <div className="section-head reveal">
