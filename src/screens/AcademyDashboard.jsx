@@ -95,6 +95,7 @@ export default function AcademyDashboard() {
   const [pwStatus, setPwStatus]             = useState(null)
   const [emailStatus, setEmailStatus]       = useState(null)
   const [changingEmail, setChangingEmail]   = useState(false)
+  const [viewTrack, setViewTrack]           = useState(null)
 
   // ── Auth guard ──────────────────────────────────────────
   useEffect(() => {
@@ -573,23 +574,36 @@ export default function AcademyDashboard() {
 
         {/* ── SKILL TREE view ──────────────────────────── */}
         {view === 'skill-tree' && (<>
+          {(() => {
+            const stTrack = viewTrack ?? track
+            const stMeta  = TRACK_META[stTrack] ?? meta
+            const stGates = TRACK_GATES[stTrack] ?? gates
+            const stActiveIdx = stGates.findIndex(g => !completedGateIds.has(g.id))
+            const stActiveId  = stActiveIdx >= 0 ? stGates[stActiveIdx]?.id : null
+            const stDoneCount = stGates.filter(g => completedGateIds.has(g.id)).length
+            function stStatus(gate) {
+              if (completedGateIds.has(gate.id)) return 'done'
+              if (gate.id === stActiveId) return 'active'
+              return 'locked'
+            }
+            return (<>
           <div className="st-header">
             <div>
               <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Skill Tree</h2>
               <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                {meta.label} · {meta.lang} · {completedCount}/{gates.length} gates · {fmt(totalAcademyXp)} XP
+                {stMeta.label} · {stMeta.lang} · {stDoneCount}/{stGates.length} gates · {fmt(totalAcademyXp)} XP
               </p>
             </div>
             <div className="st-world-tabs">
-              <div className={`st-world-tab${track === 'scratch'    ? ' st-tab-active' : ' st-tab-locked'}`}>Block Layer</div>
-              <div className={`st-world-tab${track === 'python'     ? ' st-tab-active' : ' st-tab-locked'}`}>Code Layer</div>
-              <div className={`st-world-tab${track === 'javascript' ? ' st-tab-active' : ' st-tab-locked'}`}>Web Layer</div>
+              <div className={`st-world-tab${stTrack === 'scratch'    ? ' st-tab-active' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setViewTrack('scratch')}>Block Layer</div>
+              <div className={`st-world-tab${stTrack === 'python'     ? ' st-tab-active' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setViewTrack('python')}>Code Layer</div>
+              <div className={`st-world-tab${stTrack === 'javascript' ? ' st-tab-active' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setViewTrack('javascript')}>Web Layer</div>
             </div>
           </div>
 
           <div className="st-grid">
-            {gates.map(gate => {
-              const status = gateStatus(gate)
+            {stGates.map(gate => {
+              const status = stStatus(gate)
               const isDone   = status === 'done'
               const isActive = status === 'active'
               const isLocked = status === 'locked'
@@ -617,6 +631,8 @@ export default function AcademyDashboard() {
               )
             })}
           </div>
+            </>)
+          })()}
         </>)}
 
         {/* ── LEADERBOARD view ─────────────────────────── */}
