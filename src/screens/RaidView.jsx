@@ -501,6 +501,7 @@ export default function RaidView() {
   }, [])
 
   const loadOpenRaids = useCallback(async () => {
+    await supabase.rpc('cleanup_expired_lobby_raids').catch(() => {})
     const { data: raids } = await supabase
       .from('raids').select('*').eq('status', 'lobby').order('created_at', { ascending: false })
     const list = raids ?? []
@@ -1094,11 +1095,18 @@ export default function RaidView() {
               {filteredOpenRaids.map(raid => {
                 const mems = openRaidMembers[raid.id] ?? []
                 const alreadyIn = mems.some(m => m.user_id === user?.id)
+                const remainMin = Math.max(0, Math.floor((60 * 60 * 1000 - (Date.now() - new Date(raid.created_at).getTime())) / 60000))
+                const expirySoon = remainMin <= 10
                 return (
                   <div key={raid.id} className="panel raid-open-card">
                     <div className="raid-open-header">
                       <div style={{ fontFamily: 'var(--f-mono)', fontSize: 14, color: 'var(--ink-1)', fontWeight: 600 }}>{raid.name}</div>
-                      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{mems.length}/5 hunters</div>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{mems.length}/5 hunters</div>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: expirySoon ? 'var(--magenta)' : 'var(--ink-3)' }}>
+                          {expirySoon ? `⚠ expires in ${remainMin}m` : `expires in ${remainMin}m`}
+                        </div>
+                      </div>
                     </div>
                     <div className="raid-slots">
                       {ROLE_ORDER.map(k => {
