@@ -6,43 +6,36 @@ import { useAcademy } from '../context/AcademyContext'
 const GATE_ID = 'P-02'
 const GATE_XP = 200
 
-const STARTER = `# The Number Engine — Calculator
-# Follow the steps below. Delete the # at the start of each line to activate it.
-
-# STEP 1 — Ask the user for a number
-# input() asks a question and waits for the user to type something.
-# But input() gives back TEXT, not a number.
-# Wrap it with int() to turn "5" into the number 5.
+const STARTER = `# The Number Engine — Build a calculator in Python
 #
-# num1 = int(input("Enter first number: "))
-# num2 = int(input("Enter second number: "))
-
-# STEP 2 — Do the basic maths (+, -, *, /)
-# Once you have numbers, Python can calculate with them.
+# Your goal: ask the user for two numbers, calculate with them, print the results.
 #
-# print(f"{num1} + {num2} = {num1 + num2}")
-# print(f"{num1} - {num2} = {num1 - num2}")
-# print(f"{num1} * {num2} = {num1 * num2}")
-# print(f"{num1} / {num2} = {num1 / num2}")
-
-# STEP 3 — Integer division (//)
-# Regular / gives a decimal answer: 7 / 2 = 3.5
-# Use // to get the whole number only:  7 // 2 = 3
+# STEP 1 — Get numbers from the user
+# input() asks a question and waits for the user to type an answer.
+# But input() gives you TEXT, not a number. You cannot do maths on text.
+# Use int() to convert the text into a real integer.
+# Use both functions together on one line to capture each number.
 #
-# print(f"{num1} // {num2} = {num1 // num2}")
-
-# STEP 4 — Modulo (%)
-# % gives the REMAINDER after dividing.
-# Example: 17 % 5 = 2  (because 5 goes into 17 three times, with 2 left over)
+# STEP 2 — Do all four basic operations
+# Once you have two number variables, you can calculate with them.
+# You need to show: addition, subtraction, multiplication, and division.
+# Use an f string to label each result so it is clear what each line shows.
 #
-# print(f"{num1} % {num2} = {num1 % num2}")
-
-# STEP 5 — Operator precedence (brackets change the order)
-# Python follows maths rules: * and / happen BEFORE + and -
-# Use brackets () to force a different order.
+# STEP 3 — Integer division
+# Regular division gives a decimal answer (like 3.5).
+# Integer division gives only the whole number part (like 3).
+# The operator is the division symbol written twice in a row.
 #
-# print(2 + 3 * 4)      # = 14  (3*4 first, then +2)
-# print((2 + 3) * 4)    # = 20  (brackets first)
+# STEP 4 — Modulo (the remainder)
+# Modulo tells you what is left over after dividing two numbers.
+# For example: 17 divided by 5 goes 3 times with 2 remaining. The modulo is 2.
+# The operator is the percent symbol.
+#
+# STEP 5 — Brackets change the order
+# Python does multiplication before addition, just like in normal maths.
+# Brackets let you change that order.
+# Write the same calculation twice: once without brackets, once with brackets.
+# The two answers should be different.
 `
 
 const CHECKS = [
@@ -160,12 +153,12 @@ export default function GateP02() {
 
         <div className="ag-right">
           <div className="ag-instruction">
-            Build a Python calculator — step by step. Each step is in the code panel as a comment. Remove the <code>#</code> to activate each line.<br /><br />
-            <strong>Step 1 — Get input.</strong> <code>input()</code> returns text, not a number. Wrap it with <code>int()</code> to convert it: <code>int(input("Enter a number: "))</code><br /><br />
-            <strong>Step 2 — Basic ops.</strong> Add, subtract, multiply, divide your two variables. Print each result using an f-string so the label is clear.<br /><br />
-            <strong>Step 3 — Integer division <code>{'//'}</code>.</strong> Gives only the whole number: <code>7 // 2 = 3</code>, not 3.5.<br /><br />
-            <strong>Step 4 — Modulo <code>%</code>.</strong> Gives the leftover remainder: <code>17 % 5 = 2</code>.<br /><br />
-            <strong>Step 5 — Brackets change order.</strong> <code>2 + 3 * 4 = 14</code> — but <code>(2 + 3) * 4 = 20</code>.
+            Build a calculator in Python. The comments in the code panel explain each step — read them, then write the code yourself.<br /><br />
+            <strong>Step 1 — Input.</strong> <code>input()</code> returns text. <code>int()</code> converts text to a number. You need both — look up how to use them together on one line.<br /><br />
+            <strong>Step 2 — Four operations.</strong> Use your two number variables to add, subtract, multiply, and divide. Print each result with a label using an f string.<br /><br />
+            <strong>Step 3 — Integer division.</strong> The operator is two of the same symbol as regular division. It drops the decimal and keeps only the whole number.<br /><br />
+            <strong>Step 4 — Modulo.</strong> The operator is the percent symbol. It gives you the remainder — what is left over after dividing.<br /><br />
+            <strong>Step 5 — Precedence.</strong> Multiply runs before add. Write a calculation that proves brackets change the result.
           </div>
           <div className="ag-py-editor">
             <div className="ag-py-editor-head">🐍 calculator.py</div>
