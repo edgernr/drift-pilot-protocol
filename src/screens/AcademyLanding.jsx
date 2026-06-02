@@ -30,7 +30,7 @@ export default function AcademyLanding() {
   const { goto } = useNav()
 
   function handleEnter() {
-    if (!user) { goto('signup'); return }
+    if (!user) { goto('academy/signup'); return }
     if (!loading && childProfiles.length > 0) goto('academy/dashboard')
     else goto('academy/onboarding')
   }
@@ -48,7 +48,7 @@ export default function AcademyLanding() {
         </ul>
         {user
           ? <button className="btn btn-ghost btn-sm" onClick={handleEnter}>Enter Academy →</button>
-          : <button className="btn btn-ghost btn-sm" onClick={() => goto('signup')}>Sign Up →</button>
+          : <button className="btn btn-ghost btn-sm" onClick={() => goto('academy/signup')}>Sign Up →</button>
         }
       </nav>
 

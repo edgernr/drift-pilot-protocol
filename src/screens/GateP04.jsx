@@ -12,20 +12,20 @@ const STARTER = `# Loops program
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Uses for + range()',   hint: 'Write: for i in range(5): to loop 5 times.',                         test: c => /for\s+\w+\s+in\s+range\s*\(/.test(c) },
-  { id: 'c2', label: 'Uses enumerate()',     hint: 'Use enumerate() to get both index and value: for i, val in enumerate(mylist):', test: c => /enumerate\s*\(/.test(c) },
-  { id: 'c3', label: 'Uses break',           hint: 'Add a break statement inside a loop to exit it early.',               test: c => /\bbreak\b/.test(c) },
-  { id: 'c4', label: 'Uses continue',        hint: 'Add a continue statement to skip the current item and move to the next.', test: c => /\bcontinue\b/.test(c) },
-  { id: 'c5', label: 'Has a nested for loop',hint: 'Put a for loop inside another for loop — a loop inside a loop.',      test: c => /for\s+\w+[\s\S]{1,200}for\s+\w+/.test(c) },
+  { id: 'c1', label: 'for range loop correct',       hint: 'The citizen IDs aren\'t formatted correctly or the range is wrong. range(1, 11) gives 1 through 10.',                   test: c => /for\s+\w+\s+in\s+range\s*\(/.test(c) },
+  { id: 'c2', label: 'enumerate used',               hint: 'The index isn\'t showing with each sector. Use enumerate() to get both index and value: for i, val in enumerate(mylist):', test: c => /enumerate\s*\(/.test(c) },
+  { id: 'c3', label: 'break exits loop correctly',   hint: 'The loop continues after finding the corrupted sector. break must be inside the if that detects corruption.',             test: c => /\bbreak\b/.test(c) },
+  { id: 'c4', label: 'continue skips correctly',     hint: 'Offline sectors are still being processed. continue must come before the processing code.',                               test: c => /\bcontinue\b/.test(c) },
+  { id: 'c5', label: 'Nested loops generate grid',   hint: 'The grid coordinates aren\'t all appearing. Check that the inner loop runs for each iteration of the outer loop.',       test: c => /for\s+\w+[\s\S]{1,200}for\s+\w+/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'What does the break statement do inside a for loop?',
+  q: 'In Challenge 3, break exited the loop when the corrupted sector was found. What would have happened without break?',
   opts: [
-    'break makes the loop run one extra time before stopping.',
-    'break immediately stops the loop, even if there are more items left to process.',
-    'break skips just the current item and moves on to the next one.',
-    'break resets the loop counter back to zero and starts again.',
+    'Python would have raised an error — loops must have break to stop searching.',
+    'The loop would have continued checking all remaining sectors even after finding the corrupted one.',
+    'The loop would have automatically stopped after finding the first match.',
+    'The variable would have reset to the first sector and started over.',
   ],
   correct: 1,
 }
@@ -161,13 +161,13 @@ export default function GateP04() {
       {done && (
         <div className="ag-done-bd">
           <div className="ag-done-card" style={{ '--ac': 'var(--violet)' }}>
-            <span className="ag-done-emoji">🔁</span>
+            <span className="ag-done-emoji">🔄</span>
             <span className="ag-done-xp">+250 XP</span>
             <h2 className="ag-done-title">The Loop Writer</h2>
-            <p className="ag-done-flavor">Loops are how programs handle repetition. With range, enumerate, break, continue, and nested loops — you can process any collection, any number of times.</p>
+            <p className="ag-done-flavor">Five loops written. Five patterns generated. The Construct's population system runs. Python loops are the heartbeat of the world.</p>
             <div className="ag-done-rewards">
-              <span className="ag-done-reward">Loop Badge</span>
-              <span className="ag-done-reward">Iteration Master</span>
+              <span className="ag-done-reward">Loop Fragment</span>
+              <span className="ag-done-reward">Loop Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

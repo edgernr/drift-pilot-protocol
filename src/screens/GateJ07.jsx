@@ -53,21 +53,21 @@ const STARTER = `// The Complete Interface — Full App in Vanilla JS
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'async fetch used',              hint: 'async function load() { const res = await fetch(url); const data = await res.json() }',              test: c => /\basync\b/.test(c) && /await\s+fetch\s*\(/.test(c) },
-  { id: 'c2', label: 'Form submit with preventDefault',hint: 'addEventListener("submit", (e) => { e.preventDefault(); ... }) — stops the page reload.',           test: c => /addEventListener\s*\(\s*["']submit["']/.test(c) && /\.preventDefault\s*\(\s*\)/.test(c) },
-  { id: 'c3', label: 'Input drives live filter',       hint: 'addEventListener("input", (e) => { state.filter = e.target.value; render() })',                     test: c => /addEventListener\s*\(\s*["']input["']/.test(c) && /\.target\.value/.test(c) },
-  { id: 'c4', label: 'Delete uses .filter()',          hint: 'state.citizens = state.citizens.filter(c => c.name !== name) — filter creates a new array without the deleted item.', test: c => /\.filter\s*\(/.test(c) && /!==/.test(c) },
-  { id: 'c5', label: 'localStorage saves state',       hint: 'localStorage.setItem("key", JSON.stringify(data)) — call this after every change.',                test: c => /localStorage\.setItem\s*\(/.test(c) },
-  { id: 'c6', label: 'Errors shown in DOM',            hint: 'catch (err) { document.getElementById("error-msg").textContent = err.message }',                   test: c => /\bcatch\s*\(/.test(c) && /\.textContent\s*=/.test(c) },
+  { id: 'c1', label: 'Data loads from API',              hint: 'The citizen list doesn\'t populate on load. The initialization function must fetch data and update state.',                test: c => /\basync\b/.test(c) && /await\s+fetch\s*\(/.test(c) },
+  { id: 'c2', label: 'Add citizen works end-to-end',     hint: 'The add form doesn\'t update the list. Form submit must: prevent default, update state, re-render, clear form.',           test: c => /addEventListener\s*\(\s*["']submit["']/.test(c) && /\.preventDefault\s*\(\s*\)/.test(c) },
+  { id: 'c3', label: 'Filter updates list in real time', hint: 'The filter input doesn\'t narrow the displayed citizens. Filter state, then re-render with the filtered array.',            test: c => /addEventListener\s*\(\s*["']input["']/.test(c) && /\.target\.value/.test(c) },
+  { id: 'c4', label: 'Delete removes from state',        hint: 'Clicking delete doesn\'t remove the citizen. Remove from state array, then re-render — don\'t remove from DOM directly.',  test: c => /\.filter\s*\(/.test(c) && /!==/.test(c) },
+  { id: 'c5', label: 'Persistence survives refresh',     hint: 'State resets on refresh. Save state to localStorage on every change, load it on initialization.',                          test: c => /localStorage\.setItem\s*\(/.test(c) },
+  { id: 'c6', label: 'Error state shows on failure',     hint: 'API failure shows a blank screen. Catch errors and render an error message in the UI.',                                    test: c => /\bcatch\s*\(/.test(c) && /\.textContent\s*=/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'Your delete function mutates state.citizens directly with splice(). A colleague says use .filter() instead. Why?',
+  q: 'Your ui.js only contains DOM manipulation — no fetch calls or state updates. Why does this separation make the application easier to maintain?',
   opts: [
-    '.filter() is faster than splice() for large arrays — it uses a native C++ optimization path.',
-    '.filter() returns a new array without changing the original, keeping state predictable and supporting undo — splice() mutates in place and can cause subtle bugs when other code holds a reference to the old array.',
-    'splice() requires you to know the exact index, while .filter() finds items by value automatically.',
-    'Direct mutation with splice() triggers a browser warning in strict mode.',
+    'Separate files are smaller and therefore load faster in the browser.',
+    'When the API changes, you only touch api.js. When the design changes, you only touch ui.js. Changes are isolated — you know exactly where to go for each type of change.',
+    'Browsers can cache separate files individually, improving performance on repeat visits.',
+    'Separation is required for modules to work — mixed concerns prevent proper importing.',
   ],
   correct: 1,
 }
@@ -210,7 +210,7 @@ export default function GateJ07() {
             <p className="ag-done-flavor">The Interface complete. Data fetched. Forms handled. Errors caught. The Construct is a real application now.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Interface Fragment</span>
-              <span className="ag-done-reward">Builder Badge II</span>
+              <span className="ag-done-reward">JS Graduate Badge</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

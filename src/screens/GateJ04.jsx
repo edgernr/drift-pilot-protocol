@@ -54,11 +54,11 @@ const state = {
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'State object defined',          hint: 'Create a state object: const state = { citizens: [], filter: "", history: [] }',                    test: c => /\bconst\s+state\s*=\s*\{|\blet\s+state\s*=\s*\{/.test(c) },
-  { id: 'c2', label: 'render() function present',     hint: 'Create a render() function that reads from state and updates the DOM — one place for all updates.',  test: c => /\bfunction\s+render\s*\(/.test(c) },
-  { id: 'c3', label: 'State updated before render()', hint: 'Update state.property first, then call render() — never update the DOM directly.',                   test: c => /state\.\w+/.test(c) && /render\s*\(\s*\)/.test(c) },
-  { id: 'c4', label: 'localStorage persists state',   hint: 'Use localStorage.setItem() to save and localStorage.getItem() to load.',                            test: c => /localStorage\.setItem\s*\(/.test(c) && /localStorage\.getItem\s*\(/.test(c) },
-  { id: 'c5', label: 'Undo with history array',       hint: 'Push a copy to state.history before each change, pop it to undo.',                                   test: c => /\.push\s*\(/.test(c) && /\.pop\s*\(/.test(c) },
+  { id: 'c1', label: 'State object is source of truth', hint: 'Data is being read from the DOM instead of from the state object. All reads should come from state, not from element.textContent.', test: c => /\bconst\s+state\s*=\s*\{|\blet\s+state\s*=\s*\{/.test(c) },
+  { id: 'c2', label: 'render() function present',       hint: 'DOM updates are scattered throughout the code. Create one render() function that reads state and updates all DOM elements.',         test: c => /\bfunction\s+render\s*\(/.test(c) },
+  { id: 'c3', label: 'State updated before render',     hint: 'The DOM is updated directly without changing state first. Always: update state → call render().',                                    test: c => /state\.\w+/.test(c) && /render\s*\(\s*\)/.test(c) },
+  { id: 'c4', label: 'localStorage persists state',     hint: 'State resets on page refresh. Save to localStorage on every state change, load on page start.',                                     test: c => /localStorage\.setItem\s*\(/.test(c) && /localStorage\.getItem\s*\(/.test(c) },
+  { id: 'c5', label: 'Undo reverses last change',       hint: 'Undo doesn\'t work or goes back too far. Keep a history array and pop the last state to undo.',                                     test: c => /\.push\s*\(/.test(c) && /\.pop\s*\(/.test(c) },
 ]
 
 const QUIZ = {

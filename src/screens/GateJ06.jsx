@@ -34,22 +34,22 @@ const STARTER = `// The Array Toolkit — Transforming Data Without Loops
 `
 
 const CHECKS = [
-  { id: 'c1', label: '.filter() used',                hint: 'Use array.filter(item => condition) to keep only items that match.',                             test: c => /\.filter\s*\(/.test(c) },
-  { id: 'c2', label: '.map() used',                   hint: 'Use array.map(item => transformation) to create a new array of transformed values.',            test: c => /\.map\s*\(/.test(c) },
-  { id: 'c3', label: '.reduce() used',                hint: 'Use array.reduce((acc, item) => acc + item.value, 0) to total up values.',                      test: c => /\.reduce\s*\(/.test(c) },
-  { id: 'c4', label: 'filter + map chained',          hint: 'Chain them: array.filter(…).map(…) — filter narrows the list, map transforms what remains.',    test: c => /\.filter\s*\([^)]*\)\s*\n?\s*\.map\s*\(|\.filter\s*\([^)]*\)\.map\s*\(/.test(c) },
-  { id: 'c5', label: 'Object destructuring used',     hint: 'const { name, level } = obj — extract named properties without repeating obj.name, obj.level.',test: c => /const\s*\{[^}]+\}\s*=/.test(c) },
-  { id: 'c6', label: 'Spread operator used',          hint: 'Use [...array, newItem] to copy an array and add an item, or {...obj, key: val} for objects.', test: c => /\.\.\.\w+/.test(c) },
-  { id: 'c7', label: '.some() and .every() used',     hint: 'some() returns true if any item passes; every() returns true only if all pass.',                test: c => /\.some\s*\(/.test(c) && /\.every\s*\(/.test(c) },
+  { id: 'c1', label: 'filter returns correct subset', hint: 'filter isn\'t returning the right citizens. The callback must return true to keep an item, false to remove it.',          test: c => /\.filter\s*\(/.test(c) },
+  { id: 'c2', label: 'map transforms correctly',      hint: 'map returns wrong values or modifies the original array. map creates a new array — it never changes the original.',       test: c => /\.map\s*\(/.test(c) },
+  { id: 'c3', label: 'reduce calculates correctly',   hint: 'reduce returns wrong total. The accumulator starts at the second argument (0 for sum).',                                   test: c => /\.reduce\s*\(/.test(c) },
+  { id: 'c4', label: 'Method chaining works',         hint: 'Chaining filter and map fails. filter returns an array — you can call map directly on it.',                                test: c => /\.filter\s*\([^)]*\)\s*\n?\s*\.map\s*\(|\.filter\s*\([^)]*\)\.map\s*\(/.test(c) },
+  { id: 'c5', label: 'Destructuring used',            hint: 'Properties are accessed with dot notation instead of destructuring. Use const {name, level} = citizen',                   test: c => /const\s*\{[^}]+\}\s*=/.test(c) },
+  { id: 'c6', label: 'Spread merges arrays',          hint: 'Arrays are concatenated with concat instead of spread. Use [...array1, ...array2]',                                        test: c => /\.\.\.\w+/.test(c) },
+  { id: 'c7', label: 'some and every used',           hint: 'some or every are missing. some: true if any item matches. every: true only if all items match.',                          test: c => /\.some\s*\(/.test(c) && /\.every\s*\(/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'You need a list of names from citizens where level > 3. Which approach is most readable?',
+  q: 'map, filter, and reduce all return new arrays or values without modifying the original. Why is this immutability important when building UIs?',
   opts: [
-    'Loop with forEach and push each matching name into a new array manually.',
-    'citizens.filter(c => c.level > 3).map(c => c.name) — filter first, then transform.',
-    'citizens.map(c => c.name).filter(c => c.level > 3) — transform first, then filter.',
-    'citizens.reduce((acc, c) => c.level > 3 ? [...acc, c.name] : acc, [])',
+    'Immutability makes code run faster because JavaScript can optimize operations that don\'t modify existing data.',
+    'If multiple parts of the UI share the same data array and one modifies it directly, other parts see unexpected changes — immutability prevents hidden data corruption.',
+    'JavaScript engines require immutable data for garbage collection to work correctly.',
+    'Immutability is only important in React — for plain JavaScript it doesn\'t matter.',
   ],
   correct: 1,
 }
@@ -193,7 +193,7 @@ export default function GateJ06() {
             <p className="ag-done-flavor">The Toolkit armed. Data flows through filter, map, reduce. No loop noise. The Construct speaks in transformations now.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Array Fragment</span>
-              <span className="ag-done-reward">Data Badge I</span>
+              <span className="ag-done-reward">Functional Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

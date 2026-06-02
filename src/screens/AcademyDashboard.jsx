@@ -43,6 +43,15 @@ const PYTHON_GATES = [
   { id: 'P-13', name: 'The Module Network',          rank: 'B', concept: 'Modules',                 xp: 275, boss: false, icon: '🔗' },
   { id: 'P-14', name: 'The Complete System',         rank: 'B', concept: 'Integration',             xp: 360, boss: false, icon: '🖥️' },
   { id: 'P-15', name: 'The Rot Detector',            rank: 'B', concept: 'Python Boss',             xp: 800, boss: true,  icon: '🌱' },
+  { id: 'P-16', name: 'The String Forge',           rank: 'C', concept: 'String Methods',          xp: 315, boss: false, icon: '📝' },
+  { id: 'P-17', name: 'The Comprehension Engine',   rank: 'C', concept: 'Comprehensions',          xp: 300, boss: false, icon: '🗜️' },
+  { id: 'P-18', name: 'The Inheritance Tower',      rank: 'B', concept: 'Advanced OOP',            xp: 385, boss: false, icon: '🏰' },
+  { id: 'P-19', name: 'The Generator Network',      rank: 'B', concept: 'Generators',             xp: 330, boss: false, icon: '♾️' },
+  { id: 'P-20', name: 'The Decorator Chamber',      rank: 'B', concept: 'Decorators',             xp: 330, boss: false, icon: '✨' },
+  { id: 'P-21', name: 'The Test Protocol',          rank: 'B', concept: 'Testing',                xp: 330, boss: false, icon: '✅' },
+  { id: 'P-22', name: 'The Context Manager',        rank: 'B', concept: 'Context Managers',       xp: 330, boss: false, icon: '🔒' },
+  { id: 'P-23', name: 'The Type System',            rank: 'B', concept: 'Type Hints',             xp: 300, boss: false, icon: '📋' },
+  { id: 'P-24', name: 'The Environment Protocol',   rank: 'B', concept: 'Environments',           xp: 330, boss: false, icon: '🌱' },
 ]
 const JS_GATES = [
   { id: 'J-01', name: 'The DOM Awakens',         rank: 'E', concept: 'DOM Basics',       xp: 250, boss: false, icon: '🌐' },
@@ -55,6 +64,17 @@ const JS_GATES = [
   { id: 'J-08', name: 'The Performance Layer',    rank: 'C', concept: 'Performance',      xp: 300, boss: false, icon: '🚀' },
   { id: 'J-09', name: 'The React Awakening',      rank: 'B', concept: 'React Components', xp: 350, boss: false, icon: '⚛️' },
   { id: 'J-10', name: 'The Hook Circuit',         rank: 'B', concept: 'React Hooks',      xp: 500, boss: true,  icon: '🪝' },
+  { id: 'J-11', name: 'The Scope Chamber',       rank: 'D', concept: 'Closures & Scope', xp: 330, boss: false, icon: '🔐' },
+  { id: 'J-12', name: 'The Prototype Chain',     rank: 'D', concept: 'Prototypes',       xp: 330, boss: false, icon: '⛓️' },
+  { id: 'J-13', name: 'The Event Loop Depths',   rank: 'C', concept: 'Event Loop',       xp: 330, boss: false, icon: '🔄' },
+  { id: 'J-14', name: 'The Regex Forge',         rank: 'C', concept: 'Regex',            xp: 300, boss: false, icon: '🎯' },
+  { id: 'J-15', name: 'The Error Architecture',  rank: 'C', concept: 'Error Handling',   xp: 330, boss: false, icon: '🛡️' },
+  { id: 'J-16', name: 'The Browser API Vault',   rank: 'C', concept: 'Browser APIs',     xp: 300, boss: false, icon: '🔧' },
+  { id: 'J-17', name: 'The Form Depths',         rank: 'C', concept: 'Advanced Forms',   xp: 330, boss: false, icon: '📋' },
+  { id: 'J-18', name: 'The TypeScript Gateway',  rank: 'B', concept: 'TypeScript',       xp: 330, boss: false, icon: '🚪' },
+  { id: 'J-19', name: 'The Testing Station',     rank: 'B', concept: 'JS Testing',       xp: 330, boss: false, icon: '✅' },
+  { id: 'J-20', name: 'The Build System',        rank: 'B', concept: 'Build Tools',      xp: 330, boss: false, icon: '🏭' },
+  { id: 'J-21', name: 'The React Introduction',  rank: 'B', concept: 'React',            xp: 385, boss: false, icon: '⚛️' },
 ]
 const TRACK_GATES = { scratch: SCRATCH_GATES, python: PYTHON_GATES, javascript: JS_GATES }
 const TRACK_META  = {

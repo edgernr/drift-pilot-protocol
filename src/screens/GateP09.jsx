@@ -42,11 +42,11 @@ except ValueError:
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'ValueError handled',          hint: 'Wrap int() in try/except ValueError: — catch and handle bad input.',        test: c => /\bexcept\s+ValueError/.test(c) },
-  { id: 'c2', label: 'FileNotFoundError handled',   hint: 'Catch except FileNotFoundError: when opening a file that might not exist.', test: c => /\bexcept\s+FileNotFoundError/.test(c) },
-  { id: 'c3', label: 'ZeroDivisionError handled',   hint: 'Catch except ZeroDivisionError: specifically — not a bare except.',         test: c => /\bexcept\s+ZeroDivisionError/.test(c) },
-  { id: 'c4', label: 'Custom exception defined',    hint: 'Define class ConstructError(Exception): pass — then raise it with a message.', test: c => /class\s+\w+\s*\(\s*Exception\s*\)/.test(c) },
-  { id: 'c5', label: 'finally block present',       hint: 'Add finally: after the except blocks — it runs whether an exception occurred or not.', test: c => /\bfinally\s*:/.test(c) },
+  { id: 'c1', label: 'ValueError handled',          hint: 'The program crashes on bad input instead of handling it gracefully. Wrap the int() call in try/except ValueError.',         test: c => /\bexcept\s+ValueError/.test(c) },
+  { id: 'c2', label: 'FileNotFoundError handled',   hint: 'Missing file causes a crash. Catch FileNotFoundError and return default data instead.',                                     test: c => /\bexcept\s+FileNotFoundError/.test(c) },
+  { id: 'c3', label: 'ZeroDivisionError handled',   hint: 'Division by zero crashes the program. Catch ZeroDivisionError specifically, not bare except.',                             test: c => /\bexcept\s+ZeroDivisionError/.test(c) },
+  { id: 'c4', label: 'Custom exception raised',     hint: 'Invalid sector levels don\'t raise ConstructError. Define the class and raise it with a clear message.',                   test: c => /class\s+\w+\s*\(\s*Exception\s*\)/.test(c) },
+  { id: 'c5', label: 'finally block present',       hint: 'No finally block found. Add finally: after the except blocks to run cleanup code always.',                                 test: c => /\bfinally\s*:/.test(c) },
 ]
 
 const QUIZ = {
@@ -198,7 +198,7 @@ export default function GateP09() {
             <p className="ag-done-flavor">The Construct handles its own failures. It doesn't crash. It recovers. Error handling is what makes programs trustworthy.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Error Fragment</span>
-              <span className="ag-done-reward">Error Handler</span>
+              <span className="ag-done-reward">Resilience Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

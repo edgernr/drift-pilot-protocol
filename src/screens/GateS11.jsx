@@ -229,9 +229,8 @@ export default function GateS11() {
             <h2 className="ag-done-title">The Glitch King Falls</h2>
             <p className="ag-done-flavor">Five bugs. Five fixes. The Glitch King is defeated. The Construct runs clean. Builders who can debug can fix anything.</p>
             <div className="ag-done-rewards">
-              <span className="ag-done-reward">Crown Fragment</span>
-              <span className="ag-done-reward">Bug Slayer</span>
-              <span className="ag-done-reward">Boss Kill</span>
+              <span className="ag-done-reward">Glitch King Crown</span>
+              <span className="ag-done-reward">Master Debugger Badge</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

@@ -179,7 +179,7 @@ export default function GateS09() {
             <p className="ag-done-flavor">Three sprites. Three scripts. One coordinated world. The Construct learns that independent things can work together.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Message Fragment</span>
-              <span className="ag-done-reward">Coordination Builder</span>
+              <span className="ag-done-reward">Coordination Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

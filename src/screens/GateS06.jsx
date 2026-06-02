@@ -215,8 +215,7 @@ export default function GateS06() {
             <p className="ag-done-flavor">Three bugs found. Three bugs fixed. The Construct runs clean. Builders who can debug can fix anything.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Glitch Fragment</span>
-              <span className="ag-done-reward">Debugger I</span>
-              <span className="ag-done-reward">Boss Kill</span>
+              <span className="ag-done-reward">Debug Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

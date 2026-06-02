@@ -19,6 +19,7 @@ import Quest7 from './screens/Quest7'
 import Quest8 from './screens/Quest8'
 import PilotProfile from './screens/PilotProfile'
 import AcademyLanding from './screens/AcademyLanding'
+import AcademySignup from './screens/AcademySignup'
 import AcademyOnboarding from './screens/AcademyOnboarding'
 import AcademyDashboard from './screens/AcademyDashboard'
 import GateS01 from './screens/GateS01'
@@ -61,6 +62,26 @@ import GateJ07 from './screens/GateJ07'
 import GateJ08 from './screens/GateJ08'
 import GateJ09 from './screens/GateJ09'
 import GateJ10 from './screens/GateJ10'
+import GateP16 from './screens/GateP16'
+import GateP17 from './screens/GateP17'
+import GateP18 from './screens/GateP18'
+import GateP19 from './screens/GateP19'
+import GateP20 from './screens/GateP20'
+import GateP21 from './screens/GateP21'
+import GateP22 from './screens/GateP22'
+import GateP23 from './screens/GateP23'
+import GateP24 from './screens/GateP24'
+import GateJ11 from './screens/GateJ11'
+import GateJ12 from './screens/GateJ12'
+import GateJ13 from './screens/GateJ13'
+import GateJ14 from './screens/GateJ14'
+import GateJ15 from './screens/GateJ15'
+import GateJ16 from './screens/GateJ16'
+import GateJ17 from './screens/GateJ17'
+import GateJ18 from './screens/GateJ18'
+import GateJ19 from './screens/GateJ19'
+import GateJ20 from './screens/GateJ20'
+import GateJ21 from './screens/GateJ21'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -82,6 +103,7 @@ function AnimatedRoutes() {
         <Route path="/pilot/:id" element={<PilotProfile />} />
         {/* Drift Builders Academy */}
         <Route path="/academy" element={<AcademyLanding />} />
+        <Route path="/academy/signup" element={<AcademySignup />} />
         <Route path="/academy/onboarding" element={<ProtectedRoute><AcademyOnboarding /></ProtectedRoute>} />
         <Route path="/academy/dashboard" element={<ProtectedRoute><AcademyDashboard /></ProtectedRoute>} />
         <Route path="/academy/gate/s01" element={<ProtectedRoute><GateS01 /></ProtectedRoute>} />
@@ -124,6 +146,26 @@ function AnimatedRoutes() {
         <Route path="/academy/gate/j08" element={<ProtectedRoute><GateJ08 /></ProtectedRoute>} />
         <Route path="/academy/gate/j09" element={<ProtectedRoute><GateJ09 /></ProtectedRoute>} />
         <Route path="/academy/gate/j10" element={<ProtectedRoute><GateJ10 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p16" element={<ProtectedRoute><GateP16 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p17" element={<ProtectedRoute><GateP17 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p18" element={<ProtectedRoute><GateP18 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p19" element={<ProtectedRoute><GateP19 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p20" element={<ProtectedRoute><GateP20 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p21" element={<ProtectedRoute><GateP21 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p22" element={<ProtectedRoute><GateP22 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p23" element={<ProtectedRoute><GateP23 /></ProtectedRoute>} />
+        <Route path="/academy/gate/p24" element={<ProtectedRoute><GateP24 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j11" element={<ProtectedRoute><GateJ11 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j12" element={<ProtectedRoute><GateJ12 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j13" element={<ProtectedRoute><GateJ13 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j14" element={<ProtectedRoute><GateJ14 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j15" element={<ProtectedRoute><GateJ15 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j16" element={<ProtectedRoute><GateJ16 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j17" element={<ProtectedRoute><GateJ17 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j18" element={<ProtectedRoute><GateJ18 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j19" element={<ProtectedRoute><GateJ19 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j20" element={<ProtectedRoute><GateJ20 /></ProtectedRoute>} />
+        <Route path="/academy/gate/j21" element={<ProtectedRoute><GateJ21 /></ProtectedRoute>} />
       </Routes>
     </div>
   )

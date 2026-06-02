@@ -192,7 +192,7 @@ export default function GateS02() {
             <p className="ag-done-flavor">The Repeat Machine activates. The Construct learns to remember patterns instead of repeating steps.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Loop Fragment</span>
-              <span className="ag-done-reward">Loop Builder</span>
+              <span className="ag-done-reward">Repeat Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

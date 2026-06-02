@@ -161,7 +161,7 @@ export default function GateS04() {
             <p className="ag-done-flavor">The Memory Box activates. The Construct can remember things now. Numbers. States. Everything changes.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Memory Fragment</span>
-              <span className="ag-done-reward">Memory Builder</span>
+              <span className="ag-done-reward">Variable Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

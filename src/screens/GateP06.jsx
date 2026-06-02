@@ -27,13 +27,13 @@ citizens = ["Zara", "Alex", "Lucy", "Sam", "Viktor"]
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'List created with citizens',  hint: 'Create a list: citizens = ["Zara", "Alex", ...]',                        test: c => /\w+\s*=\s*\[/.test(c) && /["']/.test(c) },
-  { id: 'c2', label: 'append() and remove() used',  hint: 'Call .append("Morgan") to add and .remove("Sam") to delete.',             test: c => /\.append\s*\(/.test(c) && /\.remove\s*\(/.test(c) },
-  { id: 'c3', label: 'sort() called',               hint: 'Call citizens.sort() to sort alphabetically in-place.',                  test: c => /\.sort\s*\(/.test(c) },
-  { id: 'c4', label: 'Slice used correctly',        hint: 'Use list[start:end] — like citizens[1:3] for items at index 1 and 2.',   test: c => /\w+\[\s*\d+\s*:\s*\d+\s*\]/.test(c) },
-  { id: 'c5', label: 'List comprehension present',  hint: 'Write [c for c in citizens if len(c) > 3] to filter by name length.',    test: c => /\[\s*\w+\s+for\s+\w+\s+in\s+\w+/.test(c) && /\bif\b/.test(c) },
-  { id: 'c6', label: '2D list indexed correctly',   hint: 'Create grid = [[0,0,0],[0,0,0],[0,0,0]] then access grid[1][1].',        test: c => /\[\s*\[/.test(c) && /\w+\[\s*\d+\s*\]\s*\[\s*\d+\s*\]/.test(c) },
-  { id: 'c7', label: 'pop() used',                  hint: 'Call citizens.pop() to remove and return the last item.',                test: c => /\.pop\s*\(/.test(c) },
+  { id: 'c1', label: 'List created correctly',              hint: 'The citizens list doesn\'t contain the required names or uses wrong syntax.',                         test: c => /\w+\s*=\s*\[/.test(c) && /["']/.test(c) },
+  { id: 'c2', label: 'append and remove work',              hint: 'Adding or removing citizens isn\'t working. Check that append() adds to the end and remove() finds by value.', test: c => /\.append\s*\(/.test(c) && /\.remove\s*\(/.test(c) },
+  { id: 'c3', label: 'sort works correctly',                hint: 'The list isn\'t alphabetically ordered. Call .sort() on the list directly.',                          test: c => /\.sort\s*\(/.test(c) },
+  { id: 'c4', label: 'Slicing returns subset',              hint: 'The slice returns wrong items. Remember: list[start:end] includes start, excludes end.',              test: c => /\w+\[\s*\d+\s*:\s*\d+\s*\]/.test(c) },
+  { id: 'c5', label: 'List comprehension filters correctly',hint: 'The comprehension returns wrong items or has syntax errors. Check the if condition.',                  test: c => /\[\s*\w+\s+for\s+\w+\s+in\s+\w+/.test(c) && /\bif\b/.test(c) },
+  { id: 'c6', label: '2D list indexed correctly',           hint: 'The grid cell isn\'t being accessed correctly. 2D lists use grid[row][column].',                      test: c => /\[\s*\[/.test(c) && /\w+\[\s*\d+\s*\]\s*\[\s*\d+\s*\]/.test(c) },
+  { id: 'c7', label: 'pop returns and removes',             hint: 'pop() isn\'t being used or its return value is being ignored. It both removes and returns the item.', test: c => /\.pop\s*\(/.test(c) },
 ]
 
 const QUIZ = {
@@ -186,7 +186,7 @@ export default function GateP06() {
             <p className="ag-done-flavor">The List Library organized. The Construct's registry runs clean. Python lists hold the world's memory.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">List Fragment</span>
-              <span className="ag-done-reward">List Builder</span>
+              <span className="ag-done-reward">Collection Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

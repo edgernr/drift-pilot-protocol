@@ -30,11 +30,11 @@ citizen_id = random.randint(1000, 9999)
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Standard library imported',   hint: 'Import a stdlib module: import math, import random, import os, or import datetime.',     test: c => /\bimport\s+(math|random|os|datetime|json)\b/.test(c) },
-  { id: 'c2', label: 'random.randint() used',        hint: 'Use random.randint(1000, 9999) to generate a 4-digit citizen ID.',                       test: c => /random\.randint\s*\(/.test(c) },
-  { id: 'c3', label: 'Module function defined',      hint: 'Define a function starting with create_: def create_citizen(name, level): ...',          test: c => /def\s+create_\w+\s*\(/.test(c) },
-  { id: 'c4', label: 'from ... import used',         hint: 'Use from random import choice, or from math import sqrt.',                               test: c => /\bfrom\s+\w+\s+import\b/.test(c) },
-  { id: 'c5', label: '__name__ guard present',       hint: 'Wrap test code: if __name__ == "__main__": — prevents it running on import.',            test: c => /__name__\s*==\s*["']__main__["']/.test(c) },
+  { id: 'c1', label: 'Standard library imported correctly', hint: 'The import statement is missing or uses wrong module name. Use import math, not import Math.',                test: c => /\bimport\s+(math|random|os|datetime|json)\b/.test(c) },
+  { id: 'c2', label: 'random generates valid IDs',          hint: 'The random ID is outside 1000-9999 range. Use random.randint(1000, 9999).',                                  test: c => /random\.randint\s*\(/.test(c) },
+  { id: 'c3', label: 'Own module function defined',         hint: 'citizen_manager.py is missing the required functions. Define: def create_citizen(name, level): ...',         test: c => /def\s+create_\w+\s*\(/.test(c) },
+  { id: 'c4', label: 'Module imported correctly',           hint: 'main.py isn\'t importing from citizen_manager. Use: from citizen_manager import function_name.',              test: c => /\bfrom\s+\w+\s+import\b/.test(c) },
+  { id: 'c5', label: '__name__ guard present',              hint: 'Test code in citizen_manager.py runs when imported. Wrap it: if __name__ == "__main__":',                     test: c => /__name__\s*==\s*["']__main__["']/.test(c) },
 ]
 
 const QUIZ = {

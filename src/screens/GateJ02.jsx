@@ -41,11 +41,11 @@ const STARTER = `// The Event System — Making the Construct Interactive
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Click handler attached',        hint: 'Use .addEventListener("click", handler) on the button element.',                                                         test: c => /addEventListener\s*\(\s*["']click["']/.test(c) },
-  { id: 'c2', label: 'Input event updates display',   hint: 'Use "input" event (not "change") for real-time updates. Read e.target.value inside the handler.',                        test: c => /addEventListener\s*\(\s*["']input["']/.test(c) && /\.target\.value/.test(c) },
-  { id: 'c3', label: 'Form submission prevented',     hint: 'Call e.preventDefault() at the start of the submit handler to stop the page reload.',                                   test: c => /\.preventDefault\s*\(\s*\)/.test(c) },
-  { id: 'c4', label: 'Keyboard shortcut works',       hint: 'Listen on document for "keydown" and check e.key inside the handler.',                                                  test: c => /addEventListener\s*\(\s*["']keydown["']/.test(c) },
-  { id: 'c5', label: 'Event delegation on parent',    hint: 'Add the listener to the parent and check e.target.matches(".class") to identify which child was clicked.', test: c => /e\.target\.(matches|closest)\s*\(/.test(c) },
+  { id: 'c1', label: 'Click handler attached',      hint: 'Clicking the button does nothing. Use addEventListener("click", handler) on the button element.',                               test: c => /addEventListener\s*\(\s*["']click["']/.test(c) },
+  { id: 'c2', label: 'Input event updates display', hint: 'Typing in the input doesn\'t update the display. Use "input" event not "change" for real-time updates.',                       test: c => /addEventListener\s*\(\s*["']input["']/.test(c) && /\.target\.value/.test(c) },
+  { id: 'c3', label: 'Form submission prevented',   hint: 'Submitting the form reloads the page. Call event.preventDefault() at the start of the submit handler.',                        test: c => /\.preventDefault\s*\(\s*\)/.test(c) },
+  { id: 'c4', label: 'Keyboard shortcut works',     hint: 'The key does nothing. Listen on document for "keydown" and check event.key === "E" (or your chosen key).',                    test: c => /addEventListener\s*\(\s*["']keydown["']/.test(c) },
+  { id: 'c5', label: 'Event delegation works',      hint: 'Dynamically added cards don\'t respond to clicks. Add the listener to the parent container and check event.target inside.',   test: c => /e\.target\.(matches|closest)\s*\(/.test(c) },
 ]
 
 const QUIZ = {

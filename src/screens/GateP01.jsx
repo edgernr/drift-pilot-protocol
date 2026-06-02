@@ -12,20 +12,20 @@ const STARTER = `# Write your Python program below!
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Uses print()',           hint: 'Call print() to show output — like: print("Hello!").',          test: c => /print\s*\(/.test(c) },
-  { id: 'c2', label: 'Has a string variable',  hint: 'Create a variable: name = "Your Name"',                         test: c => /\b\w+\s*=\s*["']/.test(c) },
-  { id: 'c3', label: 'Has a comment (#)',      hint: 'A comment starts with # — like: # This is my program',          test: c => /#[^\n]+/.test(c) },
-  { id: 'c4', label: 'Uses an f-string',       hint: 'f-strings let you embed variables: f"Hello, {name}!"',          test: c => /f["']/.test(c) },
-  { id: 'c5', label: 'Variable in {} braces',  hint: 'Put your variable inside curly braces inside the f-string: {name}', test: c => /\{[a-z_]\w*\}/.test(c) },
+  { id: 'c1', label: 'print() used correctly',              hint: 'Nothing appears in the output. print() shows text in the terminal — put your message inside the parentheses.',                 test: c => /print\s*\(/.test(c) },
+  { id: 'c2', label: 'Name stored in variable',             hint: 'The Builder name is written directly in the print statement instead of stored first. Create a variable: name = "YourName"',    test: c => /\b\w+\s*=\s*["']/.test(c) },
+  { id: 'c3', label: 'Comment present',                     hint: 'No comment found in the code. Start a line with # to write a note the Construct ignores.',                                      test: c => /#[^\n]+/.test(c) },
+  { id: 'c4', label: 'f-string combines text and variable', hint: 'The name and greeting are in separate print statements. Use f"Hello {name}" to combine them.',                                  test: c => /f["']/.test(c) },
+  { id: 'c5', label: 'Variable in f-string braces',         hint: 'Put your variable name inside curly braces in the f-string: f"Hello {name}"',                                                   test: c => /\{[a-z_]\w*\}/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'What is a variable in Python?',
+  q: 'You wrote name = "Builder" and then print(name). Why did Python print Builder without the quotation marks?',
   opts: [
-    'A variable is only for storing numbers — text cannot go in a variable.',
-    'A variable is a named container that stores a value — you can put text, numbers, or other data in it.',
-    'A variable is a special Python command that prints output to the screen.',
-    'A variable can only be used once and then disappears from the program.',
+    'Python automatically removes quotation marks from all output.',
+    'The variable name stores the value Builder — the quotation marks tell Python it\'s text, but the text itself doesn\'t include them.',
+    'print() removes quotation marks as a formatting feature.',
+    'You need to add the quotation marks back inside print() if you want them to show.',
   ],
   correct: 1,
 }
@@ -164,10 +164,10 @@ export default function GateP01() {
             <span className="ag-done-emoji">🐍</span>
             <span className="ag-done-xp">+200 XP</span>
             <h2 className="ag-done-title">First Words</h2>
-            <p className="ag-done-flavor">Your first Python words. A variable holds data. An f-string gives it a voice. A comment explains your thinking. The Code Layer has begun.</p>
+            <p className="ag-done-flavor">First words written. The Construct has a name. Python understands you. The real building begins.</p>
             <div className="ag-done-rewards">
-              <span className="ag-done-reward">Python Starter</span>
-              <span className="ag-done-reward">First Variable</span>
+              <span className="ag-done-reward">First Law Fragment</span>
+              <span className="ag-done-reward">Python Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

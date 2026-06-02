@@ -33,13 +33,13 @@ sector = {
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Dictionary created',          hint: 'Create a dict with string keys: {"name": "Alpha", "population": 1000, ...}', test: c => /\{['"]?\w+['"]?\s*:/.test(c) },
-  { id: 'c2', label: 'Value accessed by key',       hint: 'Use dict["key"] to access a value — like sector["name"].',                   test: c => /\w+\s*\[\s*["']\w+["']\s*\]/.test(c) },
-  { id: 'c3', label: 'Value updated',               hint: 'Assign to an existing key: sector["population"] = 1200.',                   test: c => /\w+\s*\[\s*["']\w+["']\s*\]\s*=/.test(c) },
-  { id: 'c4', label: 'Key deleted with del',        hint: 'Use del sector["access_level"] to remove a key.',                           test: c => /\bdel\s+\w+\[/.test(c) },
-  { id: 'c5', label: '.keys()/.values()/.items() used', hint: 'Call sector.keys(), sector.values(), or sector.items() to iterate.',    test: c => /\.(keys|values|items)\s*\(/.test(c) },
-  { id: 'c6', label: 'Nested dict accessed',        hint: 'Set sector["sub_districts"] = {"North": 300} then access sector["sub_districts"]["North"].', test: c => /\w+\s*\[\s*["']\w+["']\s*\]\s*\[\s*["']\w+["']\s*\]/.test(c) },
-  { id: 'c7', label: 'Dict comprehension correct',  hint: 'Write {k: v*2 for k, v in populations.items()} to double all values.',     test: c => /\{\s*\w+\s*:\s*\w+.+for\s+\w+.*in\s+\w+\.items\s*\(/.test(c) },
+  { id: 'c1', label: 'Dictionary created correctly', hint: 'The sector dictionary is missing required keys or uses wrong syntax. Use {"key": value} format.',                       test: c => /\{['"]?\w+['"]?\s*:/.test(c) },
+  { id: 'c2', label: 'Value access correct',         hint: 'Values aren\'t being accessed. Use sector["key"] to get a value or sector.get("key") for safety.',                    test: c => /\w+\s*\[\s*["']\w+["']\s*\]/.test(c) },
+  { id: 'c3', label: 'Values updated',               hint: 'The population update isn\'t working. Assign directly: sector["population"] = 1200',                                  test: c => /\w+\s*\[\s*["']\w+["']\s*\]\s*=/.test(c) },
+  { id: 'c4', label: 'Key deleted',                  hint: 'The access_level key still exists. Use del sector["key"] to remove it.',                                               test: c => /\bdel\s+\w+\[/.test(c) },
+  { id: 'c5', label: 'Keys/values iterated',         hint: 'Call sector.keys(), sector.values(), or sector.items() to iterate over the dictionary.',                               test: c => /\.(keys|values|items)\s*\(/.test(c) },
+  { id: 'c6', label: 'Nested dict accessed',         hint: 'The sub-district value isn\'t being accessed correctly. Use sector["sub_districts"]["North"]',                         test: c => /\w+\s*\[\s*["']\w+["']\s*\]\s*\[\s*["']\w+["']\s*\]/.test(c) },
+  { id: 'c7', label: 'Dict comprehension correct',   hint: 'The comprehension syntax is wrong or produces incorrect values. Try: {k: v*2 for k, v in populations.items()}',      test: c => /\{\s*\w+\s*:\s*\w+.+for\s+\w+.*in\s+\w+\.items\s*\(/.test(c) },
 ]
 
 const QUIZ = {
@@ -192,7 +192,7 @@ export default function GateP07() {
             <p className="ag-done-flavor">The Dictionary District mapped. Every sector documented. Python dicts are the Construct's structured memory.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Dict Fragment</span>
-              <span className="ag-done-reward">Data Builder</span>
+              <span className="ag-done-reward">Structure Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

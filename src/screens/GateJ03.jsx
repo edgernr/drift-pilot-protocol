@@ -49,11 +49,11 @@ const STARTER = `// The Async Signal — Connecting to External Data
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'async/await with fetch',      hint: 'Mark the function async and use await before fetch(): async function load() { const res = await fetch(url) }',          test: c => /\basync\b/.test(c) && /await\s+fetch\s*\(/.test(c) },
-  { id: 'c2', label: 'Loading state shown',          hint: 'Set textContent = "Loading..." before the fetch, then update it after.',                                               test: c => /["']Loading/.test(c) },
-  { id: 'c3', label: 'response.ok checked',          hint: 'After fetch, check if (!response.ok) before calling .json() — catches 404 and 500 errors.',                           test: c => /response\.ok/.test(c) },
-  { id: 'c4', label: 'Network errors caught',        hint: 'Wrap the fetch in try { ... } catch (error) { ... } to handle connection failures.',                                   test: c => /\bcatch\s*\(/.test(c) },
-  { id: 'c5', label: 'Chained fetches work',         hint: 'Two separate awaited fetches — use data from the first (like an ID) as input to the second.',                          test: c => (c.match(/\bfetch\s*\(/g) || []).length >= 2 },
+  { id: 'c1', label: 'async/await used correctly',        hint: 'The fetch result isn\'t being awaited. The function must be async and use await before fetch().',                          test: c => /\basync\b/.test(c) && /await\s+fetch\s*\(/.test(c) },
+  { id: 'c2', label: 'Loading state shows during fetch',  hint: 'No loading indicator appears while waiting. Show a loading message before fetch, hide it after.',                          test: c => /["']Loading/.test(c) },
+  { id: 'c3', label: 'response.ok checked',               hint: 'HTTP errors aren\'t being caught. Check if (!response.ok) after fetch before calling response.json().',                    test: c => /response\.ok/.test(c) },
+  { id: 'c4', label: 'Network errors caught',             hint: 'Network failures crash the script. Wrap the fetch in try/catch to handle connection errors.',                               test: c => /\bcatch\s*\(/.test(c) },
+  { id: 'c5', label: 'Chained fetches work',              hint: 'The second fetch doesn\'t use data from the first. await the first fetch, extract the ID, then use it in the second.',    test: c => (c.match(/\bfetch\s*\(/g) || []).length >= 2 },
 ]
 
 const QUIZ = {

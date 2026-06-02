@@ -155,7 +155,7 @@ export default function GateS08() {
             <p className="ag-done-flavor">The counter counts down clean. The Construct learns to stop when conditions are met, not just when told to stop.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Counter Fragment</span>
-              <span className="ag-done-reward">Loop Builder II</span>
+              <span className="ag-done-reward">Loop Badge II</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

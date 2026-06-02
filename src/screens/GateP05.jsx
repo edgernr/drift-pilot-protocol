@@ -12,20 +12,20 @@ const STARTER = `# Functions program
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Defines greet()',            hint: 'Write: def greet(name): — a function that takes a name and prints a greeting.', test: c => /def\s+greet\s*\(/.test(c) },
-  { id: 'c2', label: 'Defines calculate_power()',  hint: 'Write: def calculate_power(base, exp): — a function that calculates base to the power of exp.', test: c => /def\s+calculate_power\s*\(/.test(c) },
-  { id: 'c3', label: 'Has a default parameter',    hint: 'Give a parameter a default: def greet(name, greeting="Hello"):', test: c => /def\s+\w+\s*\([^)]*\w\s*=\s*[^,)]+/.test(c) },
-  { id: 'c4', label: 'Uses a keyword argument',    hint: 'Call a function with a keyword: greet(name="Builder") or calculate_power(base=2, exp=8)', test: c => /(greet|calculate_power)\s*\([^)]*\w+\s*=/.test(c) },
-  { id: 'c5', label: 'Has a docstring (""")',       hint: 'Add a docstring inside your function: """This function greets someone."""', test: c => /"""/.test(c) },
+  { id: 'c1', label: 'greet function returns greeting',    hint: 'The function prints instead of returning. Use return to send the value back to whoever called it.',                  test: c => /def\s+greet\s*\(/.test(c) },
+  { id: 'c2', label: 'calculate_power returns correctly',  hint: 'The function returns wrong value or uses wrong operator. Use ** for exponentiation in Python.',                      test: c => /def\s+calculate_power\s*\(/.test(c) },
+  { id: 'c3', label: 'Default parameter works',            hint: 'create_citizen("Alex") raises an error — level has no default. Add =1 after the level parameter.',                  test: c => /def\s+\w+\s*\([^)]*\w\s*=\s*[^,)]+/.test(c) },
+  { id: 'c4', label: 'Keyword argument works',             hint: 'Call a function with a keyword: greet(name="Builder") or describe_sector(name="Alpha", status="active")',           test: c => /(greet|calculate_power)\s*\([^)]*\w+\s*=/.test(c) },
+  { id: 'c5', label: 'Docstrings present',                  hint: 'No docstrings found. Add """ description """ on the line after each def statement.',                                 test: c => /"""/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'Why would you give a function parameter a default value?',
+  q: 'create_citizen has level=1 as a default parameter. Why is this useful compared to always requiring level to be provided?',
   opts: [
-    'Default parameters make the function run faster every time it is called.',
-    'Default parameters let callers skip that argument — the function uses a sensible backup value if nothing is passed.',
-    'Default parameters are required for every function in Python — you cannot define a function without them.',
-    'Default parameters change what the function is named when it is called.',
+    'Default parameters make functions faster because Python skips the parameter check.',
+    'Default parameters let you call the function without providing that argument when the default is appropriate — less typing, cleaner code for the common case.',
+    'Default parameters are required for functions with more than 2 parameters.',
+    'Default parameters prevent errors by automatically correcting wrong values.',
   ],
   correct: 1,
 }
@@ -161,13 +161,13 @@ export default function GateP05() {
       {done && (
         <div className="ag-done-bd">
           <div className="ag-done-card" style={{ '--ac': 'var(--amber)' }}>
-            <span className="ag-done-emoji">⚙️</span>
+            <span className="ag-done-emoji">🔨</span>
             <span className="ag-done-xp">+250 XP</span>
             <h2 className="ag-done-title">The Function Forge</h2>
-            <p className="ag-done-flavor">Functions are the building blocks of every program. You define them once, call them anywhere. Default parameters. Keyword arguments. Docstrings. The Code Layer is now yours.</p>
+            <p className="ag-done-flavor">Five functions forged. Five tools for the Construct. Python functions are the Builder's most powerful instruments.</p>
             <div className="ag-done-rewards">
-              <span className="ag-done-reward">Function Badge</span>
-              <span className="ag-done-reward">Code Layer Graduate</span>
+              <span className="ag-done-reward">Function Fragment</span>
+              <span className="ag-done-reward">Function Badge II</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

@@ -6,26 +6,61 @@ import { useAcademy } from '../context/AcademyContext'
 const GATE_ID = 'P-02'
 const GATE_XP = 200
 
-const STARTER = `# Calculator program
-# Tip: Use int(input("Enter a number: ")) to get a number from the user
+const STARTER = `# The Number Engine — Calculator
+# Follow the steps below. Delete the # at the start of each line to activate it.
 
+# STEP 1 — Ask the user for a number
+# input() asks a question and waits for the user to type something.
+# But input() gives back TEXT, not a number.
+# Wrap it with int() to turn "5" into the number 5.
+#
+# num1 = int(input("Enter first number: "))
+# num2 = int(input("Enter second number: "))
+
+# STEP 2 — Do the basic maths (+, -, *, /)
+# Once you have numbers, Python can calculate with them.
+#
+# print(f"{num1} + {num2} = {num1 + num2}")
+# print(f"{num1} - {num2} = {num1 - num2}")
+# print(f"{num1} * {num2} = {num1 * num2}")
+# print(f"{num1} / {num2} = {num1 / num2}")
+
+# STEP 3 — Integer division (//)
+# Regular / gives a decimal answer: 7 / 2 = 3.5
+# Use // to get the whole number only:  7 // 2 = 3
+#
+# print(f"{num1} // {num2} = {num1 // num2}")
+
+# STEP 4 — Modulo (%)
+# % gives the REMAINDER after dividing.
+# Example: 17 % 5 = 2  (because 5 goes into 17 three times, with 2 left over)
+#
+# print(f"{num1} % {num2} = {num1 % num2}")
+
+# STEP 5 — Operator precedence (brackets change the order)
+# Python follows maths rules: * and / happen BEFORE + and -
+# Use brackets () to force a different order.
+#
+# print(2 + 3 * 4)      # = 14  (3*4 first, then +2)
+# print((2 + 3) * 4)    # = 20  (brackets first)
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Gets input with int(input())', hint: 'Use int(input("...")) to read a number from the user.',               test: c => /int\s*\(\s*input\s*\(/.test(c) },
-  { id: 'c2', label: 'Uses arithmetic (+, -, *, /)', hint: 'Use +, -, *, or / to perform a calculation.',                         test: c => /[\+\-\*\/]/.test(c) },
-  { id: 'c3', label: 'Uses integer division (//)',   hint: 'Use // to divide and get a whole number — like: 7 // 2 gives 3.',     test: c => /\/\//.test(c) },
-  { id: 'c4', label: 'Uses modulo (%)',              hint: 'Use % to find the remainder — like: 7 % 2 gives 1.',                  test: c => /%/.test(c) },
-  { id: 'c5', label: 'Shows result with f-string',   hint: 'Print the result using an f-string: print(f"The answer is {result}")', test: c => /f["'][^"']*\{[^}]+\}/.test(c) },
+  { id: 'c1', label: 'Input converted to number',       hint: 'You\'re using input() directly in arithmetic. input() returns text — wrap it with int() first: int(input("Enter number: "))',  test: c => /int\s*\(\s*input\s*\(/.test(c) },
+  { id: 'c2', label: 'Basic operations complete',        hint: 'One or more of +, -, *, / are missing from the output.',                                                                         test: c => /[\+\-\*\/]/.test(c) },
+  { id: 'c3', label: 'Integer division shown',           hint: '// is missing. Integer division gives the whole number part of a division result.',                                              test: c => /\/\//.test(c) },
+  { id: 'c4', label: 'Modulo shown',                     hint: '% is missing. Modulo gives the remainder after division.',                                                                       test: c => /%/.test(c) },
+  { id: 'c5', label: 'Results displayed clearly',        hint: 'Numbers appear but without labels. Use f-strings to show what each number means.',                                               test: c => /f["'][^"']*\{[^}]+\}/.test(c) },
+  { id: 'c6', label: 'Precedence example correct',       hint: 'Remember: multiplication before addition unless brackets say otherwise. Try: 2 + 3 * 4 vs (2 + 3) * 4',                        test: c => /\(.*\+.*\)|\(.*-.*\)/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'What does the // operator do in Python?',
+  q: 'What does 17 % 5 equal, and when would you actually use modulo in a real program?',
   opts: [
-    '// divides two numbers and keeps the decimal — like regular division.',
-    '// divides two numbers and rounds down to a whole number — this is called integer division.',
-    '// makes Python skip a line of code when it runs.',
-    '// is how you write a comment in Python.',
+    '3.4 — modulo is the same as division but shows the decimal part.',
+    '2 — because 5 goes into 17 three times with 2 left over. Useful for checking if a number is even (number % 2 == 0).',
+    '3 — because 5 goes into 17 three times. Useful for rounding numbers down.',
+    '85 — modulo multiplies the two numbers.',
   ],
   correct: 1,
 }
@@ -48,7 +83,8 @@ function Scene({ passCount }) {
           {passCount >= 2 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>arithmetic operator found</span></div>}
           {passCount >= 3 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>integer division (//) found</span></div>}
           {passCount >= 4 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>modulo (%) found</span></div>}
-          {passCount >= 5 && <div className="ag-py-line">&gt;&gt;&gt; <span style={{ color: 'var(--amber)' }}>ALL CHECKS PASSED!</span></div>}
+          {passCount >= 5 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>precedence example correct</span></div>}
+          {passCount >= 6 && <div className="ag-py-line">&gt;&gt;&gt; <span style={{ color: 'var(--amber)' }}>ALL CHECKS PASSED!</span></div>}
         </div>
       </div>
     </div>
@@ -118,13 +154,18 @@ export default function GateP02() {
             className="ag-run-btn" style={{ '--ac': 'var(--teal)' }}
             onClick={handleRun} disabled={!allPassed || running}
           >
-            {running ? '⟳ Running checks…' : allPassed ? '▶ RUN CALCULATOR' : `○ ${5 - passCount} check${5 - passCount !== 1 ? 's' : ''} remaining`}
+            {running ? '⟳ Running checks…' : allPassed ? '▶ RUN CALCULATOR' : `○ ${6 - passCount} check${6 - passCount !== 1 ? 's' : ''} remaining`}
           </button>
         </div>
 
         <div className="ag-right">
           <div className="ag-instruction">
-            Build a <strong>Python calculator</strong>. Read a number from the user, perform calculations using <strong>+, -, *, /</strong>, use <strong>//</strong> for integer division, use <strong>%</strong> for the remainder, then print the result with an f-string.
+            Build a Python calculator — step by step. Each step is in the code panel as a comment. Remove the <code>#</code> to activate each line.<br /><br />
+            <strong>Step 1 — Get input.</strong> <code>input()</code> returns text, not a number. Wrap it with <code>int()</code> to convert it: <code>int(input("Enter a number: "))</code><br /><br />
+            <strong>Step 2 — Basic ops.</strong> Add, subtract, multiply, divide your two variables. Print each result using an f-string so the label is clear.<br /><br />
+            <strong>Step 3 — Integer division <code>{'//'}</code>.</strong> Gives only the whole number: <code>7 // 2 = 3</code>, not 3.5.<br /><br />
+            <strong>Step 4 — Modulo <code>%</code>.</strong> Gives the leftover remainder: <code>17 % 5 = 2</code>.<br /><br />
+            <strong>Step 5 — Brackets change order.</strong> <code>2 + 3 * 4 = 14</code> — but <code>(2 + 3) * 4 = 20</code>.
           </div>
           <div className="ag-py-editor">
             <div className="ag-py-editor-head">🐍 calculator.py</div>
@@ -165,10 +206,10 @@ export default function GateP02() {
             <span className="ag-done-emoji">🔢</span>
             <span className="ag-done-xp">+200 XP</span>
             <h2 className="ag-done-title">The Number Engine</h2>
-            <p className="ag-done-flavor">Your program takes numbers, transforms them, and reports back. That is the core of every calculator, every game score, every bank account. Python is now your calculator.</p>
+            <p className="ag-done-flavor">The Number Engine runs correctly. The Construct can calculate now. Math is just another law written in Python.</p>
             <div className="ag-done-rewards">
-              <span className="ag-done-reward">Math Badge</span>
-              <span className="ag-done-reward">Number Cruncher</span>
+              <span className="ag-done-reward">Calculation Fragment</span>
+              <span className="ag-done-reward">Math Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

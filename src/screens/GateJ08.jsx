@@ -42,18 +42,18 @@ const STARTER = `// The Performance Layer — Keeping the Construct Fast
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Debounce with clearTimeout + setTimeout', hint: 'clearTimeout(timer) cancels the previous call; setTimeout(() => fn(), 300) schedules a new one.',  test: c => /clearTimeout\s*\(/.test(c) && /setTimeout\s*\(/.test(c) },
-  { id: 'c2', label: 'requestAnimationFrame used',              hint: 'Call requestAnimationFrame(step) inside the step function to loop on each frame — smooth 60fps updates.', test: c => /requestAnimationFrame\s*\(/.test(c) },
-  { id: 'c3', label: 'Virtual scroll with .slice()',            hint: 'Use .slice(startIndex, endIndex) to render only the items in the visible window — essential for large lists.', test: c => /\.slice\s*\(/.test(c) && /(scrollTop|clientHeight|innerHeight)/.test(c) },
+  { id: 'c1', label: 'Search input debounced',         hint: 'A fetch fires on every keystroke. Wrap the fetch call in a debounce function with 300ms delay.',                                         test: c => /clearTimeout\s*\(/.test(c) && /setTimeout\s*\(/.test(c) },
+  { id: 'c2', label: 'Scroll handler throttled',       hint: 'The scroll handler runs on every pixel of scroll. Wrap in requestAnimationFrame or a throttle function.',                                test: c => /requestAnimationFrame\s*\(/.test(c) },
+  { id: 'c3', label: 'List renders only visible items',hint: 'All 1000 items are in the DOM. Only render items near the viewport — remove and add items as the user scrolls.',                         test: c => /\.slice\s*\(/.test(c) && /(scrollTop|clientHeight|innerHeight)/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'A search input fires a fetch on every keystroke — 300ms debounce would help. What does debouncing actually do?',
+  q: 'Debounce waits until the user stops typing before firing. Throttle fires at a maximum rate regardless of input. Which would you use for a "save as you type" feature, and why?',
   opts: [
-    'It batches multiple events into one and fires the handler once per second regardless of typing speed.',
-    'It delays the handler until the user pauses — clearTimeout cancels the previous timer, setTimeout schedules a new one, so only the last keystroke triggers the fetch.',
-    'It throttles the event to fire at most once every 300ms, even if the user is still typing.',
-    'It buffers all keystrokes and sends them together in a single fetch after 300ms.',
+    'Throttle — it saves at regular intervals which gives users consistent feedback that their work is being saved.',
+    'Debounce — you want to save after the user finishes a thought, not mid-word. Saving on every character is wasteful; waiting until they pause saves once with final content.',
+    'Neither — save-as-you-type should fire on every keystroke to avoid data loss.',
+    'Both simultaneously — throttle for immediate feedback, debounce for final save.',
   ],
   correct: 1,
 }

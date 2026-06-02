@@ -211,7 +211,7 @@ export default function GateS07() {
             <p className="ag-done-flavor">One definition. Infinite uses. The Construct learns to reuse what it already knows.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Function Fragment</span>
-              <span className="ag-done-reward">Function Builder</span>
+              <span className="ag-done-reward">Function Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

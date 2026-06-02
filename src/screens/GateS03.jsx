@@ -220,7 +220,7 @@ export default function GateS03() {
             <p className="ag-done-flavor">The Decision Point clears. The Construct can now choose its own path based on what's true.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Decision Fragment</span>
-              <span className="ag-done-reward">Decision Builder</span>
+              <span className="ag-done-reward">Branch Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

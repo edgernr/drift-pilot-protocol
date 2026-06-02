@@ -12,20 +12,21 @@ const STARTER = `# Grade checker program
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Uses elif',    hint: 'Add elif score >= 70: to check another range after your first if.',  test: c => /\belif\b/.test(c) },
-  { id: 'c2', label: 'Uses else',    hint: 'Add else: at the end to handle anything that didn\'t match.',        test: c => /\belse\b/.test(c) },
-  { id: 'c3', label: 'Uses and',     hint: 'Use and to check two things at once: if x > 5 and x < 10:',         test: c => /\band\b/.test(c) },
-  { id: 'c4', label: 'Uses or',      hint: 'Use or to allow either condition: if score == 0 or score < 0:',     test: c => /\bor\b/.test(c) },
-  { id: 'c5', label: 'Uses not',     hint: 'Use not to reverse a condition: if not valid:',                     test: c => /\bnot\b/.test(c) },
+  { id: 'c1', label: 'Five levels handled',      hint: 'Not all 5 access levels produce different output. Each level needs its own elif branch.',          test: c => /\belif\b/.test(c) },
+  { id: 'c2', label: 'Invalid levels caught',    hint: 'Levels 0 and 6 don\'t show the invalid message. Add conditions for values outside the 1-5 range.', test: c => /\belse\b/.test(c) },
+  { id: 'c3', label: 'and operator used',        hint: 'No and operator found. Combine two conditions: level >= 1 and level <= 5',                          test: c => /\band\b/.test(c) },
+  { id: 'c4', label: 'or operator used',         hint: 'No or operator found. Use or to catch multiple invalid cases: level < 1 or level > 5',              test: c => /\bor\b/.test(c) },
+  { id: 'c5', label: 'not operator used',        hint: 'No not operator found. Try: not (level >= 1 and level <= 5) as an alternative to the or approach.',  test: c => /\bnot\b/.test(c) },
+  { id: 'c6', label: 'All test cases pass',       hint: 'One or more test inputs produce wrong output. Run through each level manually to find the error.',    test: c => /\bif\b.*\bprint\b|\bprint\b.*\bif\b/s.test(c) || (/\bif\b/.test(c) && /\bprint\b/.test(c)) },
 ]
 
 const QUIZ = {
-  q: 'What is the difference between if and elif in Python?',
+  q: 'You used elif instead of multiple if statements. If you used if for every condition, what would happen for input level = 3?',
   opts: [
-    'elif is the same as if — they are completely interchangeable.',
-    'elif is checked only when the previous if (or elif) was False — it chains conditions so only one branch runs.',
-    'elif always runs, even if the if above it was True.',
-    'elif is only allowed inside loops — it cannot appear outside a for loop.',
+    'The same thing — elif and if work identically in Python.',
+    'Python would check every if condition — level 3 would print "Extended access" AND also check and potentially print other messages if conditions overlapped.',
+    'Python would skip all conditions after the first one that\'s true.',
+    'Python would combine all matching outputs into one message.',
   ],
   correct: 1,
 }
@@ -48,7 +49,8 @@ function Scene({ passCount }) {
           {passCount >= 2 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>else detected</span></div>}
           {passCount >= 3 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>and operator found</span></div>}
           {passCount >= 4 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>or operator found</span></div>}
-          {passCount >= 5 && <div className="ag-py-line">&gt;&gt;&gt; <span style={{ color: 'var(--amber)' }}>ALL CHECKS PASSED!</span></div>}
+          {passCount >= 5 && <div className="ag-py-line">✓ <span style={{ color: 'var(--lime)' }}>all test cases pass</span></div>}
+          {passCount >= 6 && <div className="ag-py-line">&gt;&gt;&gt; <span style={{ color: 'var(--amber)' }}>ALL CHECKS PASSED!</span></div>}
         </div>
       </div>
     </div>
@@ -118,7 +120,7 @@ export default function GateP03() {
             className="ag-run-btn" style={{ '--ac': 'var(--lime)' }}
             onClick={handleRun} disabled={!allPassed || running}
           >
-            {running ? '⟳ Running checks…' : allPassed ? '▶ RUN PROGRAM' : `○ ${5 - passCount} check${5 - passCount !== 1 ? 's' : ''} remaining`}
+            {running ? '⟳ Running checks…' : allPassed ? '▶ RUN PROGRAM' : `○ ${6 - passCount} check${6 - passCount !== 1 ? 's' : ''} remaining`}
           </button>
         </div>
 
@@ -162,13 +164,13 @@ export default function GateP03() {
       {done && (
         <div className="ag-done-bd">
           <div className="ag-done-card" style={{ '--ac': 'var(--lime)' }}>
-            <span className="ag-done-emoji">🔀</span>
+            <span className="ag-done-emoji">🚪</span>
             <span className="ag-done-xp">+300 XP</span>
             <h2 className="ag-done-title">The Condition Writer</h2>
-            <p className="ag-done-flavor">Programs make decisions. With if, elif, else, and, or, not — you can write any decision logic in Python. Every app, every game, every system uses this.</p>
+            <p className="ag-done-flavor">The access system governs correctly. The Construct knows who goes where. Python conditions are the laws that make it fair.</p>
             <div className="ag-done-rewards">
-              <span className="ag-done-reward">Logic Badge</span>
-              <span className="ag-done-reward">Decision Maker</span>
+              <span className="ag-done-reward">Condition Fragment</span>
+              <span className="ag-done-reward">Logic Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

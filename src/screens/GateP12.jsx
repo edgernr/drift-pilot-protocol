@@ -41,10 +41,10 @@ def find_citizen(citizens, target):
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Linear search returns -1',      hint: 'Return -1 after the loop when the target is not found.',                          test: c => /return\s+-1/.test(c) },
-  { id: 'c2', label: 'Binary search midpoint correct', hint: 'Calculate mid = (left + right) // 2 using integer division.',                     test: c => /\/\/\s*2/.test(c) },
-  { id: 'c3', label: 'Sorted list explanation',        hint: 'Add a comment explaining why binary search requires sorted data.',                 test: c => /#[^\n]*\bbinary\b[^\n]*\b(sort|order)\b/i.test(c) },
-  { id: 'c4', label: 'Bubble sort uses nested loops',  hint: 'Use nested for loops with range() and swap pairs — do not use .sort()',            test: c => (c.match(/for\s+\w+\s+in\s+range\s*\(/g) || []).length >= 2 },
+  { id: 'c1', label: 'Linear search correct',           hint: 'The search returns wrong index or doesn\'t handle not-found case. Return -1 when the item isn\'t found.',        test: c => /return\s+-1/.test(c) },
+  { id: 'c2', label: 'Binary search correct',           hint: 'Binary search returns wrong index or doesn\'t halve the search range. Calculate mid = (left + right) // 2',      test: c => /\/\/\s*2/.test(c) },
+  { id: 'c3', label: 'Binary search explanation present',hint: 'No comment explaining why sorted is required. Add a comment: # Binary search only works because the list is sorted.', test: c => /#[^\n]*\bbinary\b[^\n]*\b(sort|order)\b/i.test(c) },
+  { id: 'c4', label: 'Bubble sort uses nested loops',   hint: 'The sort uses .sort() instead of nested loops. Implement the comparison and swap manually.',                      test: c => (c.match(/for\s+\w+\s+in\s+range\s*\(/g) || []).length >= 2 },
 ]
 
 const QUIZ = {

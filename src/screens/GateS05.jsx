@@ -161,13 +161,13 @@ export default function GateS05() {
       {done && (
         <div className="ag-done-bd">
           <div className="ag-done-card" style={{ '--ac': 'var(--amber)' }}>
-            <span className="ag-done-emoji">⚡</span>
+            <span className="ag-done-emoji">📡</span>
             <span className="ag-done-xp">+100 XP</span>
             <h2 className="ag-done-title">The Event Tower</h2>
             <p className="ag-done-flavor">The Event Tower activates. The Construct listens now. It responds to what happens, not just what's planned.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Event Fragment</span>
-              <span className="ag-done-reward">Event Builder</span>
+              <span className="ag-done-reward">Event Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

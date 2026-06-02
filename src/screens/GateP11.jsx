@@ -29,11 +29,11 @@ coords = (127.5, -43.2)
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Tuple stores coordinates',      hint: 'Use () not [] for immutable data: coords = (127.5, -43.2)',                   test: c => /\w+\s*=\s*\(\s*-?[\d.]+\s*,\s*-?[\d.]+/.test(c) },
-  { id: 'c2', label: 'set() removes duplicates',      hint: 'Convert to set: unique = set(sectors_with_dupes)',                             test: c => /\bset\s*\(/.test(c) },
-  { id: 'c3', label: 'set.add() used',                hint: 'Call .add("Delta") on the set to insert a new value.',                         test: c => /\.add\s*\(/.test(c) },
-  { id: 'c4', label: '.strip() and .split() used',    hint: 'Call .strip() to trim whitespace and .split(", ") to break into a list.',      test: c => /\.strip\s*\(/.test(c) && /\.split\s*\(/.test(c) },
-  { id: 'c5', label: 'str.join() assembles output',   hint: 'Reassemble with " | ".join(names) — join is called on the separator string.',  test: c => /\.join\s*\(/.test(c) },
+  { id: 'c1', label: 'Tuple stores coordinates',   hint: 'The coordinates are stored in a list instead of a tuple. Use () not [] for immutable data.',                     test: c => /\w+\s*=\s*\(\s*-?[\d.]+\s*,\s*-?[\d.]+/.test(c) },
+  { id: 'c2', label: 'Set removes duplicates',     hint: 'The unique sectors list still has duplicates. Convert to set: unique = set(sectors_list)',                       test: c => /\bset\s*\(/.test(c) },
+  { id: 'c3', label: 'Set membership check used',  hint: 'Checking if a sector is in the set uses "in" with a list instead. Sets have O(1) lookup with "in". Add new items with .add().',  test: c => /\.add\s*\(/.test(c) },
+  { id: 'c4', label: 'String methods applied',     hint: 'The citizen name processing is missing strip, split, or join. Chain methods: name.strip().split(", ")',          test: c => /\.strip\s*\(/.test(c) && /\.split\s*\(/.test(c) },
+  { id: 'c5', label: 'All decisions correct',      hint: 'One or more structure choices are wrong. Consider: immutability for tuples, uniqueness for sets, ordering for lists.', test: c => /\.join\s*\(/.test(c) },
 ]
 
 const QUIZ = {

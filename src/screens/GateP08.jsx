@@ -37,12 +37,12 @@ class Citizen:
 `
 
 const CHECKS = [
-  { id: 'c1', label: '__init__ stores variables',   hint: 'In __init__, use self.name = name, self.level = level, self.sector = sector to store each parameter.', test: c => /def\s+__init__\s*\(/.test(c) && /self\.\w+\s*=\s*\w+/.test(c) },
-  { id: 'c2', label: 'describe() method written',   hint: 'def describe(self): must return an f-string like f"{self.name} (Level {self.level}) — Sector {self.sector}".', test: c => /def\s+describe\s*\(\s*self/.test(c) },
-  { id: 'c3', label: 'promote() changes level',     hint: 'def promote(self): should add 1: self.level += 1', test: c => /def\s+promote\s*\(\s*self/.test(c) && /self\.level\s*[+\-]?=/.test(c) },
-  { id: 'c4', label: '__str__ implemented',          hint: 'def __str__(self): return self.describe() — makes print(citizen) show a description instead of a memory address.', test: c => /def\s+__str__\s*\(\s*self/.test(c) },
-  { id: 'c5', label: 'Two Citizen objects created',  hint: 'Create at least two: c1 = Citizen("Lucy", 3, "Alpha") and c2 = Citizen("Alex", 1, "Gamma")', test: c => (c.match(/Citizen\s*\(/g) || []).length >= 2 },
-  { id: 'c6', label: 'Inheritance subclass present', hint: 'Write class SpecialCitizen(Citizen): with super().__init__(...) inside its __init__.', test: c => /class\s+\w+\s*\(\s*Citizen\s*\)/.test(c) && /super\s*\(\s*\)\s*\.__init__/.test(c) },
+  { id: 'c1', label: '__init__ sets up correctly',  hint: 'The Citizen class isn\'t storing the name, level, or sector. In __init__, use self.name = name to store each parameter.',      test: c => /def\s+__init__\s*\(/.test(c) && /self\.\w+\s*=\s*\w+/.test(c) },
+  { id: 'c2', label: 'describe method correct',     hint: 'describe() returns wrong format or doesn\'t exist. Return an f-string combining self.name, self.level, self.sector.',         test: c => /def\s+describe\s*\(\s*self/.test(c) },
+  { id: 'c3', label: 'promote changes level',       hint: 'promote() doesn\'t increase the level. Inside the method: self.level += 1',                                                   test: c => /def\s+promote\s*\(\s*self/.test(c) && /self\.level\s*[+\-]?=/.test(c) },
+  { id: 'c4', label: '__str__ implemented',          hint: 'print(citizen) shows a memory address instead of a description. Implement __str__ to return the describe() string.',          test: c => /def\s+__str__\s*\(\s*self/.test(c) },
+  { id: 'c5', label: 'Objects are independent',     hint: 'Each object should have its own independent data. Create at least two: c1 = Citizen("Lucy", 3, "Alpha") and c2 = Citizen(...).',   test: c => (c.match(/Citizen\s*\(/g) || []).length >= 2 },
+  { id: 'c6', label: 'Inheritance works',           hint: 'Write class SpecialCitizen(Citizen): with super().__init__(...) called correctly inside its __init__.',                         test: c => /class\s+\w+\s*\(\s*Citizen\s*\)/.test(c) && /super\s*\(\s*\)\s*\.__init__/.test(c) },
 ]
 
 const QUIZ = {
@@ -194,7 +194,7 @@ export default function GateP08() {
             <p className="ag-done-flavor">The Class Constructor runs. Citizens are blueprinted, built, and independent. Python objects are the Construct's citizens made real.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Blueprint Fragment</span>
-              <span className="ag-done-reward">Class Builder</span>
+              <span className="ag-done-reward">OOP Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

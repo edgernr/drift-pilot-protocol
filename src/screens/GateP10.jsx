@@ -34,11 +34,11 @@ with open("citizens.txt", "w") as f:
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Text file written (mode "w")',      hint: 'Use with open("file.txt", "w") as f: then f.write("data\\n") to write.',          test: c => /open\s*\([^)]*["']w["']/.test(c) },
-  { id: 'c2', label: 'File read (mode "r")',              hint: 'Use with open("file.txt", "r") as f: then f.read() or f.readlines().',              test: c => /open\s*\([^)]*["']r["']/.test(c) },
-  { id: 'c3', label: 'File appended (mode "a")',          hint: 'Use "a" mode — not "w" — to append without overwriting existing content.',          test: c => /open\s*\([^)]*["']a["']/.test(c) },
-  { id: 'c4', label: 'JSON saved with json.dump()',       hint: 'Use json.dump(data, f) inside with open("file.json", "w") as f:',                   test: c => /json\.dump\s*\(/.test(c) },
-  { id: 'c5', label: 'JSON loaded with json.load()',      hint: 'Use json.load(f) inside with open("file.json", "r") as f: to load back the data.', test: c => /json\.load\s*\(/.test(c) },
+  { id: 'c1', label: 'Text file written correctly',  hint: 'The citizens.txt file is empty or has wrong format. Use f.write() inside with open("file", "w").',     test: c => /open\s*\([^)]*["']w["']/.test(c) },
+  { id: 'c2', label: 'File read correctly',           hint: 'Reading the file raises an error or returns wrong data. Use open("file", "r") and f.readlines() or f.read().', test: c => /open\s*\([^)]*["']r["']/.test(c) },
+  { id: 'c3', label: 'File appended not overwritten', hint: 'Appending overwrites existing data. Use mode "a" not "w" to append.',                                 test: c => /open\s*\([^)]*["']a["']/.test(c) },
+  { id: 'c4', label: 'JSON saved correctly',          hint: 'The JSON file is empty or invalid. Use json.dump(data, f) inside with open("file", "w").',             test: c => /json\.dump\s*\(/.test(c) },
+  { id: 'c5', label: 'JSON loaded correctly',         hint: 'Loading the JSON raises an error. Use json.load(f) inside with open("file", "r").',                    test: c => /json\.load\s*\(/.test(c) },
 ]
 
 const QUIZ = {
@@ -189,7 +189,7 @@ export default function GateP10() {
             <p className="ag-done-flavor">The Construct remembers now. Data survives between sessions. Python file I/O gives the world permanent memory.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">File Fragment</span>
-              <span className="ag-done-reward">File Builder</span>
+              <span className="ag-done-reward">Persistence Badge I</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

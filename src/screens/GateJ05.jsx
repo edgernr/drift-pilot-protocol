@@ -33,20 +33,20 @@ const STARTER = `// The Module System — Organizing Code Across Files
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Default export written',        hint: 'Use export default ClassName or export default function — one per file.',                             test: c => /\bexport\s+default\b/.test(c) },
-  { id: 'c2', label: 'Named export written',           hint: 'Use export function name() or export const name — curly braces needed on import side.',              test: c => /\bexport\s+function\b/.test(c) },
-  { id: 'c3', label: 'Default import used',            hint: 'import Citizen from "./citizen.js" — no curly braces for default imports.',                          test: c => /\bimport\s+\w+\s+from\b/.test(c) && !/\bimport\s*\{/.test(c.split('\n').find(l => /\bimport\s+\w+\s+from\b/.test(l)) || '') },
-  { id: 'c4', label: 'Named import used',              hint: 'import { createCitizen } from "./citizen.js" — curly braces for named imports.',                    test: c => /\bimport\s*\{[^}]+\}\s*from\b/.test(c) },
-  { id: 'c5', label: 'Class instantiated with new',    hint: 'const eva = new Citizen("EVA", 1) — use the new keyword to create an instance.',                    test: c => /\bnew\s+\w+\s*\(/.test(c) },
+  { id: 'c1', label: 'Citizen class default exported',  hint: 'The Citizen class isn\'t exported. Add export default before the class definition, or export at the end.',             test: c => /\bexport\s+default\b/.test(c) },
+  { id: 'c2', label: 'Utilities named exported',        hint: 'The utility functions aren\'t exported with names. Use export function name() { } syntax.',                            test: c => /\bexport\s+function\b/.test(c) },
+  { id: 'c3', label: 'Default import correct in main',  hint: 'Importing the Citizen class is failing. Default imports don\'t use curly braces: import Citizen from \'./citizen.js\'',test: c => /\bimport\s+\w+\s+from\b/.test(c) && !/\bimport\s*\{/.test(c.split('\n').find(l => /\bimport\s+\w+\s+from\b/.test(l)) || '') },
+  { id: 'c4', label: 'Named imports correct in main',   hint: 'Named imports need curly braces: import { addCitizen } from \'./citizen-manager.js\'',                                test: c => /\bimport\s*\{[^}]+\}\s*from\b/.test(c) },
+  { id: 'c5', label: 'Modules work without errors',     hint: 'One or more import/export paths are wrong. Check file names match exactly including case.',                            test: c => /\bnew\s+\w+\s*\(/.test(c) },
 ]
 
 const QUIZ = {
-  q: 'A file has both export default Citizen and export function createCitizen(). How do you import both in one line?',
+  q: 'Variables defined in a module don\'t automatically become global variables. Why is this better than the old script tag approach where everything was global?',
   opts: [
-    'import { Citizen, createCitizen } from "./citizen.js" — both in curly braces.',
-    'import Citizen, { createCitizen } from "./citizen.js" — default first, then named in braces.',
-    'import * from "./citizen.js" — the star grabs everything automatically.',
-    'import default Citizen and named createCitizen from "./citizen.js" — use the keywords.',
+    'Global variables are slower because JavaScript must search the entire global scope every time they\'re accessed.',
+    'With global variables from multiple scripts, two files using the same variable name would overwrite each other silently — modules prevent this by keeping each file\'s variables private by default.',
+    'Module variables are automatically cleaned up by the garbage collector, while global variables persist forever.',
+    'Global variables can\'t store objects or arrays — only primitive values.',
   ],
   correct: 1,
 }
@@ -188,7 +188,7 @@ export default function GateJ05() {
             <p className="ag-done-flavor">The Module System links. Each file a focused unit. Exports flow between them. The Construct grows without collapsing into chaos.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">Module Fragment</span>
-              <span className="ag-done-reward">Module Badge I</span>
+              <span className="ag-done-reward">Module Badge II</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

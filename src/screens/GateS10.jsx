@@ -157,7 +157,7 @@ export default function GateS10() {
             <p className="ag-done-flavor">The Complete World exists. You built it. All of it. Every part working together. You are ready for what comes next.</p>
             <div className="ag-done-rewards">
               <span className="ag-done-reward">World Fragment</span>
-              <span className="ag-done-reward">Scratch Graduate</span>
+              <span className="ag-done-reward">Scratch Graduate Badge</span>
             </div>
             <button className="ag-done-btn" onClick={() => goto('academy/dashboard')}>Builder HQ →</button>
           </div>

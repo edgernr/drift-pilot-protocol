@@ -50,12 +50,12 @@ class Citizen:
 `
 
 const CHECKS = [
-  { id: 'c1', label: 'Citizen class complete',     hint: 'Add def promote(self): self.level += 1 inside the Citizen class.',                     test: c => /class\s+Citizen/.test(c) && /def\s+__init__/.test(c) && /def\s+__str__/.test(c) && /def\s+promote/.test(c) },
-  { id: 'c2', label: 'File persistence works',     hint: 'Use json.dump() to save and json.load() to load citizen data.',                        test: c => /json\.dump\s*\(/.test(c) && /json\.load\s*\(/.test(c) },
-  { id: 'c3', label: 'Menu loop with break',       hint: 'Wrap the menu in while True: and use break to exit on the user\'s exit choice.',        test: c => /while\s+True/.test(c) && /\bbreak\b/.test(c) },
-  { id: 'c4', label: 'Error handling on load',     hint: 'Wrap file load in try: / except FileNotFoundError: — handle missing data gracefully.', test: c => /\btry\s*:/.test(c) && /\bexcept\b/.test(c) },
-  { id: 'c5', label: 'List comprehension used',    hint: 'Filter citizens with a comprehension: [c for c in citizens if c.level > 2]',           test: c => /\[\s*\w+\s+for\s+\w+\s+in\s+\w+/.test(c) },
-  { id: 'c6', label: 'from...import for modules',  hint: 'Use from module_name import function_name to split code into separate files.',          test: c => /\bfrom\s+\w+\s+import\b/.test(c) },
+  { id: 'c1', label: 'Citizen class complete',    hint: 'The Citizen class is missing required methods or __str__. Add __init__, describe, promote, and __str__.',               test: c => /class\s+Citizen/.test(c) && /def\s+__init__/.test(c) && /def\s+__str__/.test(c) && /def\s+promote/.test(c) },
+  { id: 'c2', label: 'File persistence works',    hint: 'Data doesn\'t save or load correctly. Use json.dump to save and json.load to load citizen data.',                      test: c => /json\.dump\s*\(/.test(c) && /json\.load\s*\(/.test(c) },
+  { id: 'c3', label: 'Menu loop functional',      hint: 'The menu shows once and exits. Wrap the menu in while True: and add a break for exit option.',                         test: c => /while\s+True/.test(c) && /\bbreak\b/.test(c) },
+  { id: 'c4', label: 'Error handling present',    hint: 'File operations have no try/except. Wrap load_file() in try/except FileNotFoundError.',                                test: c => /\btry\s*:/.test(c) && /\bexcept\b/.test(c) },
+  { id: 'c5', label: 'List comprehension used',   hint: 'No list comprehension found. Use one to filter or transform the citizen list: [c for c in citizens if ...]',           test: c => /\[\s*\w+\s+for\s+\w+\s+in\s+\w+/.test(c) },
+  { id: 'c6', label: 'Code split into modules',   hint: 'All code is in one file. Move the Citizen class and file operations to separate modules.',                              test: c => /\bfrom\s+\w+\s+import\b/.test(c) },
 ]
 
 const QUIZ = {
