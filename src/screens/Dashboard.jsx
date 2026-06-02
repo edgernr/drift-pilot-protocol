@@ -189,7 +189,7 @@ export default function Dashboard() {
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
-    if (count >= 2) { setBugStatus('ratelimit'); return }
+    if (count >= 3) { setBugStatus('ratelimit'); return }
 
     const { error } = await supabase.from('bug_reports').insert({
       user_id: user.id,
