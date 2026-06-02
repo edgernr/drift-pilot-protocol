@@ -33,6 +33,16 @@
   --f-display: "Space Grotesk", "Inter", sans-serif;
   --f-body: "Inter", system-ui, sans-serif;
   --f-mono: "JetBrains Mono", "Menlo", monospace;
+
+  /* Popup / dropdown panels */
+  --bg-popup: oklch(0.16 0.02 250);
+  --border-popup: oklch(1 0 0 / 0.08);
+  --line-popup: oklch(1 0 0 / 0.07);
+  --shadow-popup: 0 8px 32px oklch(0 0 0 / 0.4);
+  /* Modal overlay */
+  --bg-overlay: rgba(5, 7, 13, 0.85);
+  /* Code / textarea inputs */
+  --bg-input: rgba(180, 200, 255, 0.03);
 }
 
 /* ============= LIGHT MODE ============= */
@@ -63,6 +73,13 @@
   --glow-teal:    0 0 16px oklch(0.46 0.18 185 / 0.18);
   --glow-violet:  0 0 16px oklch(0.44 0.24 295 / 0.18);
   --glow-magenta: 0 0 16px oklch(0.48 0.27 340 / 0.18);
+
+  --bg-popup:    rgba(255, 255, 255, 0.98);
+  --border-popup: rgba(0, 8, 40, 0.12);
+  --line-popup:   rgba(0, 8, 40, 0.07);
+  --shadow-popup: 0 8px 32px rgba(0, 8, 40, 0.12);
+  --bg-overlay:   rgba(200, 205, 230, 0.72);
+  --bg-input:     rgba(0, 8, 40, 0.04);
 }
 
 [data-theme="light"] body {
@@ -126,6 +143,53 @@
 [data-theme="light"] .top-actions .bell {
   border-color: var(--line-2);
 }
+
+/* --- Dashboard hero + progress bars --- */
+[data-theme="light"] .hero-banner {
+  background: linear-gradient(120deg, oklch(0.88 0.08 295 / 0.28), oklch(0.88 0.07 220 / 0.20));
+  border-color: var(--line-2);
+}
+[data-theme="light"] .hero-banner::before {
+  background-image:
+    linear-gradient(to right, rgba(0,8,40,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,8,40,0.04) 1px, transparent 1px);
+}
+[data-theme="light"] .hero-xp-track { background: rgba(0,8,40,0.10); }
+[data-theme="light"] .aq .pr .bar   { background: rgba(0,8,40,0.08); }
+[data-theme="light"] .wmap-bar-wrap { background: rgba(0,8,40,0.08); }
+[data-theme="light"] .xp-bar        { background: rgba(0,8,40,0.08); }
+[data-theme="light"] .dq-xp-bar-wrap{ background: rgba(0,8,40,0.08); }
+
+/* --- Quest editor (Quest.css hardcoded darks) --- */
+[data-theme="light"] .dq-topbar {
+  background: rgba(242,243,250,0.96);
+  border-bottom-color: var(--line-2);
+}
+[data-theme="light"] .dq-back:hover { background: rgba(0,8,40,0.05); }
+[data-theme="light"] .dq-editor-wrap { background: #f0f1f8; }
+[data-theme="light"] .dq-tabs {
+  background: rgba(234,235,246,0.95);
+  border-bottom-color: var(--line-2);
+}
+[data-theme="light"] .dq-editor-footer {
+  background: rgba(232,233,244,0.95);
+  border-top-color: var(--line-2);
+}
+[data-theme="light"] .dq-textarea { color: var(--ink-0); }
+[data-theme="light"] .dq-textarea::selection { background: oklch(0.46 0.18 185 / 0.18); }
+[data-theme="light"] .dq-narrator-box { background: rgba(0,8,40,0.03); }
+[data-theme="light"] .dq-narrator-text code {
+  background: rgba(0,8,40,0.06);
+  color: var(--teal);
+}
+[data-theme="light"] .dq-objectives li code {
+  background: rgba(0,8,40,0.06);
+  color: var(--teal);
+}
+[data-theme="light"] .dq-complete-modal { background: rgba(200,205,230,0.85); }
+[data-theme="light"] .dq-complete-rewards .r { background: rgba(0,8,40,0.04); }
+[data-theme="light"] .dq-nq-card { background: rgba(0,8,40,0.04); }
+[data-theme="light"] .dq-reward { background: rgba(0,8,40,0.03); }
 /* ====================================== */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
