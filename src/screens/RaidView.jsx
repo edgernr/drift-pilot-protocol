@@ -905,14 +905,15 @@ export default function RaidView() {
       : h >= 400  ? { label: 'PARTIAL', color: 'var(--teal)',    sub: 'District held — barely. Partial credit.' }
       :             { label: 'FAILED',  color: 'var(--magenta)', sub: 'District fell. Entry fee burned.' }
 
+    const isAdminForced = events.some(e => e.label?.includes('[ADMIN] Raid force-completed'))
+
     const payoutKey   = `raid:${activeRaid.id}`
-    const driftEarned = RAID_DRIFT_PAYOUT[tier.label] ?? 0
-    const xpEarned    = RAID_XP_REWARDS[tier.label] ?? 0
+    const driftEarned = isAdminForced ? 0 : (RAID_DRIFT_PAYOUT[tier.label] ?? 0)
+    const xpEarned    = isAdminForced ? 0 : (RAID_XP_REWARDS[tier.label] ?? 0)
     const alreadyPaid = profile?.completedQuestIds?.has(payoutKey) ?? false
 
-    // Auto-claim once — each member triggers their own payout on first view
-    // xpEarned is stored in quest_completions.xp_earned; AuthContext derives DRIFT from it
-    if (xpEarned > 0 && !alreadyPaid && myMembership) {
+    // Auto-claim once — blocked for admin force-completed raids
+    if (xpEarned > 0 && !alreadyPaid && myMembership && !isAdminForced) {
       completeQuest(payoutKey, xpEarned, {})
     }
 
@@ -927,29 +928,38 @@ export default function RaidView() {
 
         {/* Payout badges */}
         <div className="raid-payout-row">
-          {xpEarned > 0 ? (
-            <div className="raid-payout-badge raid-payout-xp">
-              <span className="raid-payout-icon">⟐</span>
-              <span className="raid-payout-amount">+{xpEarned} XP</span>
-              <span className="raid-payout-label">{alreadyPaid ? 'already claimed' : 'experience earned'}</span>
+          {isAdminForced ? (
+            <div className="raid-payout-badge raid-payout-zero" style={{ gridColumn: '1 / -1' }}>
+              <span className="raid-payout-icon">⚑</span>
+              <span className="raid-payout-label">ADMIN TEST — no XP or $DRIFT awarded</span>
             </div>
-          ) : myMembership && (
-            <div className="raid-payout-badge raid-payout-zero">
-              <span className="raid-payout-icon">⊘</span>
-              <span className="raid-payout-label">0 XP — district fell</span>
-            </div>
-          )}
-          {driftEarned > 0 ? (
-            <div className="raid-payout-badge">
-              <span className="raid-payout-icon">◈</span>
-              <span className="raid-payout-amount">+{driftEarned} $DRIFT</span>
-              <span className="raid-payout-label">{alreadyPaid ? 'already claimed' : 'credited to wallet'}</span>
-            </div>
-          ) : myMembership && (
-            <div className="raid-payout-badge raid-payout-zero">
-              <span className="raid-payout-icon">⊘</span>
-              <span className="raid-payout-label">−150 $DRIFT — entry fee burned</span>
-            </div>
+          ) : (
+            <>
+              {xpEarned > 0 ? (
+                <div className="raid-payout-badge raid-payout-xp">
+                  <span className="raid-payout-icon">⟐</span>
+                  <span className="raid-payout-amount">+{xpEarned} XP</span>
+                  <span className="raid-payout-label">{alreadyPaid ? 'already claimed' : 'experience earned'}</span>
+                </div>
+              ) : myMembership && (
+                <div className="raid-payout-badge raid-payout-zero">
+                  <span className="raid-payout-icon">⊘</span>
+                  <span className="raid-payout-label">0 XP — district fell</span>
+                </div>
+              )}
+              {driftEarned > 0 ? (
+                <div className="raid-payout-badge">
+                  <span className="raid-payout-icon">◈</span>
+                  <span className="raid-payout-amount">+{driftEarned} $DRIFT</span>
+                  <span className="raid-payout-label">{alreadyPaid ? 'already claimed' : 'credited to wallet'}</span>
+                </div>
+              ) : myMembership && (
+                <div className="raid-payout-badge raid-payout-zero">
+                  <span className="raid-payout-icon">⊘</span>
+                  <span className="raid-payout-label">−150 $DRIFT — entry fee burned</span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
