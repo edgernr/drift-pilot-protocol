@@ -201,16 +201,27 @@ export default function Dashboard() {
     })
 
     if (!error) {
-      supabase.functions.invoke('notify-discord', {
-        body: {
-          description: bugText.trim(),
-          user_name: profile?.name ?? user.email,
-          view,
-          url: window.location.href,
-          screenshot_base64: bugPreview ?? null,
-          created_at: new Date().toISOString(),
-        },
-      }).catch(() => {})
+      const webhookUrl = import.meta.env.VITE_DISCORD_WEBHOOK
+      if (webhookUrl) {
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            embeds: [{
+              title: '⚠ Bug Report',
+              description: bugText.trim(),
+              color: 0xe63946,
+              fields: [
+                { name: 'Pilot', value: profile?.name ?? user?.email ?? 'unknown', inline: true },
+                { name: 'View', value: view, inline: true },
+                { name: 'URL', value: window.location.href, inline: false },
+                ...(bugPreview ? [{ name: 'Screenshot', value: '📎 attached (see admin panel)', inline: false }] : []),
+              ],
+              timestamp: new Date().toISOString(),
+            }],
+          }),
+        }).catch(() => {})
+      }
       setBugStatus('sent')
       setBugText('')
       setBugScreenshot(null)
@@ -445,7 +456,7 @@ export default function Dashboard() {
       {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
 
       {bugModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(5,7,13,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg-overlay)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={e => { if (e.target === e.currentTarget) setBugModalOpen(false) }}>
           <div className="panel" style={{ width: '100%', maxWidth: 460, padding: '32px 28px' }}>
             <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>⚠ Bug Report</div>
@@ -456,11 +467,11 @@ export default function Dashboard() {
               onChange={e => setBugText(e.target.value)}
               placeholder="e.g. Clicking 'Resume Quest' does nothing after completing Gate 02..."
               rows={4}
-              style={{ width: '100%', background: 'rgba(180,200,255,0.03)', border: '1px solid var(--line-2)', borderRadius: 10, padding: '12px 14px', color: 'var(--ink-0)', fontFamily: 'var(--f-body)', fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--line-2)', borderRadius: 10, padding: '12px 14px', color: 'var(--ink-0)', fontFamily: 'var(--f-body)', fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
             />
 
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, cursor: 'pointer' }}>
-              <div style={{ flex: 1, background: 'rgba(180,200,255,0.03)', border: '1px dashed var(--line-2)', borderRadius: 8, padding: '10px 14px', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.06em' }}>
+              <div style={{ flex: 1, background: 'var(--bg-input)', border: '1px dashed var(--line-2)', borderRadius: 8, padding: '10px 14px', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.06em' }}>
                 {bugScreenshot ? `📎 ${bugScreenshot.name}` : '📎 Attach screenshot (optional)'}
               </div>
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
@@ -567,14 +578,14 @@ export default function Dashboard() {
                 {completions.length > 0 && <span style={{ position: 'absolute', top: 1, right: 1, width: 7, height: 7, borderRadius: '50%', background: 'var(--magenta)', border: '1px solid oklch(0.14 0.02 250)' }} />}
               </div>
               {notifOpen && (
-                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 300, zIndex: 100, background: 'oklch(0.16 0.02 250)', border: '1px solid oklch(1 0 0 / 0.08)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px oklch(0 0 0 / 0.4)' }}>
-                  <div style={{ padding: '11px 16px', borderBottom: '1px solid oklch(1 0 0 / 0.07)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Notifications</div>
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 300, zIndex: 100, background: 'var(--bg-popup)', border: '1px solid var(--border-popup)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-popup)' }}>
+                  <div style={{ padding: '11px 16px', borderBottom: '1px solid var(--line-popup)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Notifications</div>
                   {completions.length === 0 && streak === 0 ? (
                     <div style={{ padding: '14px 16px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No notifications yet.</div>
                   ) : (
                     <>
                       {streak > 0 && (
-                        <div style={{ display: 'flex', gap: 10, padding: '11px 16px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
                           <span style={{ fontSize: 18, flexShrink: 0 }}>🔥</span>
                           <div>
                             <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'oklch(0.82 0.18 75)' }}>{streak}-day streak active</div>
@@ -585,7 +596,7 @@ export default function Dashboard() {
                       {completions.slice().reverse().slice(0, 4).map((c, i) => {
                         const meta = resolveQuestMeta(c.quest_id, c.xp_earned)
                         return (
-                          <div key={i} style={{ display: 'flex', gap: 10, padding: '11px 16px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center' }}>
+                          <div key={i} style={{ display: 'flex', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
                             <span style={{ fontSize: 18, flexShrink: 0 }}>{meta.icon}</span>
                             <div>
                               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>{meta.label} cleared</div>
@@ -605,8 +616,8 @@ export default function Dashboard() {
               {profileOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setProfileOpen(false)} />}
               <div className="dash-avatar" style={{ cursor: 'pointer' }} onClick={() => { setProfileOpen(o => !o); setNotifOpen(false) }}>{initials(pilotName)}</div>
               {profileOpen && (
-                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 220, zIndex: 100, background: 'oklch(0.16 0.02 250)', border: '1px solid oklch(1 0 0 / 0.08)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px oklch(0 0 0 / 0.4)' }}>
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid oklch(1 0 0 / 0.07)' }}>
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 220, zIndex: 100, background: 'var(--bg-popup)', border: '1px solid var(--border-popup)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-popup)' }}>
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line-popup)' }}>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink-1)', fontWeight: 600 }}>{pilotName}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', marginTop: 3 }}>{user?.email}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: levelData.color, marginTop: 5, letterSpacing: '0.08em' }}>
@@ -618,7 +629,7 @@ export default function Dashboard() {
                       onClick={() => { openSettings(); setProfileOpen(false) }}>
                       <span style={{ color: 'var(--ink-3)' }}>◐</span> Settings
                     </div>
-                    <div style={{ height: 1, background: 'oklch(1 0 0 / 0.07)', margin: '4px 0' }} />
+                    <div style={{ height: 1, background: 'var(--line-popup)', margin: '4px 0' }} />
                     <div style={{ padding: '9px 16px', fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--magenta)', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center' }}
                       onClick={() => { logout(); goto('landing') }}>
                       <span>↩</span> Sign out
@@ -1079,7 +1090,7 @@ export default function Dashboard() {
                             : { label: DRIFT_GATE_NAMES[tx.quest_id]?.label ?? tx.quest_id, icon: '🔓' }
                         const date = new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                         return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.05)' }}>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--line-popup)' }}>
                             <div style={{ fontSize: 20, width: 30, textAlign: 'center', flexShrink: 0 }}>{meta.icon}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 2 }}>{meta.label}</div>
@@ -1164,7 +1175,7 @@ export default function Dashboard() {
                       <span>Description</span><span>Pilot</span><span>View</span><span>Date</span><span>Status</span>
                     </div>
                     {bugReports.map((b, i) => (
-                      <div key={b.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '12px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center', gap: 8 }}>
+                      <div key={b.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center', gap: 8 }}>
                         <div>
                           <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 3 }}>{b.description}</div>
                           <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)' }}>{b.user_agent?.slice(0, 60)}…</div>
@@ -1202,7 +1213,7 @@ export default function Dashboard() {
                       <span>Pilot</span><span>Gate</span><span>Time</span><span>Pastes</span><span>Date</span><span>Action</span>
                     </div>
                     {flaggedRows.map((row, i) => (
-                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 64px 64px 90px 72px', padding: '12px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center' }}>
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 64px 64px 90px 72px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
                         <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>{allPilots.find(p => p.id === row.user_id)?.name ?? 'Unknown'}</span>
                         <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-2)' }}>{GATE_SHORT[row.quest_id] ?? row.quest_id}</span>
                         <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: row.time_taken < 90 ? 'var(--magenta)' : 'var(--ink-2)' }}>{fmtTime(row.time_taken)}</span>
@@ -1234,7 +1245,7 @@ export default function Dashboard() {
                     ? new Date(p.banned_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     : null
                   return (
-                    <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 170px', padding: '12px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center' }}>
+                    <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 170px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
                       <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>
                         {p.name ?? 'Unnamed'}
                         {p.is_admin && <span className="chip" style={{ marginLeft: 8, padding: '1px 5px', fontSize: 8 }}>ADMIN</span>}

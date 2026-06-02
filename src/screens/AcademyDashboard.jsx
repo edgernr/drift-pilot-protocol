@@ -408,13 +408,13 @@ export default function AcademyDashboard() {
               {notifOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setNotifOpen(false)} />}
               <div className="bell" style={{ cursor: 'pointer' }} onClick={() => { setNotifOpen(o => !o); setProfileOpen(false) }}>🔔</div>
               {notifOpen && (
-                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 280, zIndex: 100, background: 'oklch(0.16 0.02 250)', border: '1px solid oklch(1 0 0 / 0.08)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px oklch(0 0 0 / 0.4)' }}>
-                  <div style={{ padding: '11px 16px', borderBottom: '1px solid oklch(1 0 0 / 0.07)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Builder Activity</div>
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 280, zIndex: 100, background: 'var(--bg-popup)', border: '1px solid var(--border-popup)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-popup)' }}>
+                  <div style={{ padding: '11px 16px', borderBottom: '1px solid var(--line-popup)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Builder Activity</div>
                   {completedGateIds.size === 0 ? (
                     <div style={{ padding: '14px 16px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No gates cleared yet. Enter Gate 01!</div>
                   ) : (
                     gates.filter(g => completedGateIds.has(g.id)).slice().reverse().slice(0, 4).map((g, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 10, padding: '11px 16px', borderBottom: '1px solid oklch(1 0 0 / 0.05)', alignItems: 'center' }}>
+                      <div key={i} style={{ display: 'flex', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
                         <span style={{ fontSize: 18, flexShrink: 0 }}>{g.icon}</span>
                         <div>
                           <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>{g.id} — {g.name} cleared</div>
@@ -432,8 +432,8 @@ export default function AcademyDashboard() {
               {profileOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setProfileOpen(false)} />}
               <div className="dash-avatar" style={{ cursor: 'pointer' }} onClick={() => { setProfileOpen(o => !o); setNotifOpen(false) }}>{initials(pilotName)}</div>
               {profileOpen && (
-                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 220, zIndex: 100, background: 'oklch(0.16 0.02 250)', border: '1px solid oklch(1 0 0 / 0.08)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px oklch(0 0 0 / 0.4)' }}>
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid oklch(1 0 0 / 0.07)' }}>
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 220, zIndex: 100, background: 'var(--bg-popup)', border: '1px solid var(--border-popup)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-popup)' }}>
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line-popup)' }}>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink-1)', fontWeight: 600 }}>{pilotName}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', marginTop: 3 }}>{user?.email}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: meta.color, marginTop: 5, letterSpacing: '0.08em' }}>
@@ -445,7 +445,7 @@ export default function AcademyDashboard() {
                       onClick={() => { openSettings(); setProfileOpen(false) }}>
                       <span style={{ color: 'var(--ink-3)' }}>◐</span> Settings
                     </div>
-                    <div style={{ height: 1, background: 'oklch(1 0 0 / 0.07)', margin: '4px 0' }} />
+                    <div style={{ height: 1, background: 'var(--line-popup)', margin: '4px 0' }} />
                     <div style={{ padding: '9px 16px', fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--magenta)', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center' }}
                       onClick={() => { logout(); goto('landing') }}>
                       <span>↩</span> Sign out
