@@ -4,6 +4,7 @@ import './AcademyDashboard.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useAcademy } from '../context/AcademyContext'
+import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../lib/supabase'
 
 function fmt(n) { return (n ?? 0).toLocaleString() }
@@ -95,6 +96,7 @@ export default function AcademyDashboard() {
   const { user, profile, logout, updateProfile, updatePassword, updateEmail } = useAuth()
   const { childProfiles, activeChild, setActiveChild, completedGateIds, totalAcademyXp, loading } = useAcademy()
   const { goto } = useNav()
+  const { theme, toggleTheme } = useTheme()
 
   const [view, setView]               = useState(() => localStorage.getItem('acd-view') ?? 'home')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -394,6 +396,13 @@ export default function AcademyDashboard() {
             <span className="kbd">⌘K</span>
           </div>
           <div className="top-actions">
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--line-2)', background: 'none', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', transition: 'color 0.15s, border-color 0.15s' }}
+            >
+              {theme === 'dark' ? '☀' : '◑'}
+            </button>
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               {notifOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setNotifOpen(false)} />}

@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext'
 import { useAcademy } from '../context/AcademyContext'
 import { useNav } from '../context/NavigationContext'
+import { useTheme } from '../hooks/useTheme'
 import './AcademyLanding.css'
 
 const TRACKS = [
@@ -28,6 +29,7 @@ export default function AcademyLanding() {
   const { user } = useAuth()
   const { childProfiles, loading } = useAcademy()
   const { goto } = useNav()
+  const { theme, toggleTheme } = useTheme()
 
   function handleEnter() {
     if (!user) { goto('academy/signup'); return }
@@ -46,6 +48,14 @@ export default function AcademyLanding() {
           <li><a href="#tracks">Tracks</a></li>
           <li><a href="#howto">How It Works</a></li>
         </ul>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={toggleTheme}
+          style={{ padding: '8px 12px', fontSize: 15, lineHeight: 1 }}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀' : '◑'}
+        </button>
         {user
           ? <button className="btn btn-ghost btn-sm" onClick={handleEnter}>Enter Academy →</button>
           : <button className="btn btn-ghost btn-sm" onClick={() => goto('academy/signup')}>Sign Up →</button>

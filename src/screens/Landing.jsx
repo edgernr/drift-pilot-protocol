@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../lib/supabase'
 
 export default function Landing() {
   const { goto } = useNav()
   const { user } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   useScrollReveal()
 
   const [stats, setStats] = useState({ pilots: null, xp: null, gates: null })
@@ -35,6 +37,14 @@ export default function Landing() {
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#academy" style={{ color: 'var(--builder-gold, oklch(0.86 0.19 80))' }}>Academy</a></li>
         </ul>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={toggleTheme}
+          style={{ padding: '8px 12px', fontSize: 15, lineHeight: 1 }}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀' : '◑'}
+        </button>
         {user
           ? <button className="btn btn-ghost btn-sm" onClick={() => goto('dashboard')}>Dashboard →</button>
           : <button className="btn btn-ghost btn-sm" onClick={() => goto('signup')}>Sign Up / Log In →</button>

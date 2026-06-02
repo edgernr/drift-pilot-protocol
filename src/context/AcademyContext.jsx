@@ -90,6 +90,7 @@ export function AcademyProvider({ children }) {
         : (error.message || 'Something went wrong.')
       return { ok: false, error: msg }
     }
+    await supabase.from('profiles').update({ is_parent: true }).eq('id', user.id)
     setChildProfiles(prev => [...prev, data])
     setActiveChild(data)
     return { ok: true, child: data }
