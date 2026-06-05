@@ -5,6 +5,8 @@ const SCREEN_NAMES = {
   '/': 'HOME',
   '/login': 'LOGIN',
   '/signup': 'ENLISTMENT',
+  '/terms': 'FLIGHT RULES — TERMS OF SERVICE',
+  '/privacy': 'PRIVACY POLICY',
   '/dashboard': 'PILOT HQ',
   '/quest': 'GATE 01 — THE DOCUMENT TOMB',
   '/quest2': 'GATE 02 — THE SEMANTIC CRYPT',
@@ -14,6 +16,8 @@ const SCREEN_NAMES = {
   '/quest6': 'GATE 06 — THE INFINITE GRID',
   '/quest7': 'GATE 07 — GHOST FEEDBACK',
   '/quest8': 'GATE 08 — THE COLLAPSE',
+  '/quest9': 'GATE 09 — THE CONTROL ROOM',
+  '/quest10': 'GATE 10 — THE STATIC CITY',
   // Drift Builders Academy
   '/academy': 'THE CONSTRUCT',
   '/academy/onboarding': 'BUILDER SETUP',

@@ -459,7 +459,7 @@ VITE_API_URL=https://your-api-domain.com`,
 
 function allFiles(files) { return Object.values(files || {}).join('\n') }
 
-const SYNC_CODE_CHECKS = [
+export const SYNC_CODE_CHECKS = [
   {
     vault:     [{ label: 'users table defined',          ok: f => /CREATE TABLE.*users/is.test(allFiles(f)) },
                 { label: 'refresh_tokens table defined', ok: f => /CREATE TABLE.*refresh_tokens/is.test(allFiles(f)) },

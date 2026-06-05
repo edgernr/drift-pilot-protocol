@@ -401,7 +401,7 @@ export default function Quest2() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+160 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+350 DRIFT</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+200</div></div>
           </div>
         </aside>
@@ -481,7 +481,7 @@ export default function Quest2() {
           <h2>The Crypt yields.</h2>
           <p>The divs fell. The elements rose. The dungeon cannot consume what has identity. <strong>What you cannot see is more real than what you can.</strong></p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+160</div></div>
+            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+350</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+200</div></div>
             <div className="r"><div className="l">CORE</div><div className="v">Semantic Core</div></div>
             <div className="r"><div className="l">FRAGMENT</div><div className="v">Identity Fragment</div></div>

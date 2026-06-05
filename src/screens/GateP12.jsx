@@ -1,7 +1,9 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import './AcademyGate.css'
 import { useNav } from '../context/NavigationContext'
 import { useAcademy } from '../context/AcademyContext'
+import { stripComments } from '../lib/codeUtils'
+import GateAIHint from '../components/GateAIHint'
 
 const GATE_ID = 'P-12'
 const GATE_XP = 300
@@ -15,7 +17,7 @@ def find_citizen(citizens, target):
             return i
     return -1
 
-# 2. Binary search: find sector ID in a SORTED list
+# 2. Binary search: find sector ID (list must meet a key requirement)
 # def binary_search(sorted_ids, target):
 #     left, right = 0, len(sorted_ids) - 1
 #     while left <= right:
@@ -43,7 +45,7 @@ def find_citizen(citizens, target):
 const CHECKS = [
   { id: 'c1', label: 'Linear search correct',           hint: 'The search returns wrong index or doesn\'t handle not-found case. Return -1 when the item isn\'t found.',        test: c => /return\s+-1/.test(c) },
   { id: 'c2', label: 'Binary search correct',           hint: 'Binary search returns wrong index or doesn\'t halve the search range. Calculate mid = (left + right) // 2',      test: c => /\/\/\s*2/.test(c) },
-  { id: 'c3', label: 'Binary search explanation present',hint: 'No comment explaining why sorted is required. Add a comment: # Binary search only works because the list is sorted.', test: c => /#[^\n]*\bbinary\b[^\n]*\b(sort|order)\b/i.test(c) },
+  { id: 'c3', label: 'Binary search explanation present',hint: 'No comment explaining why sorted is required. Add a comment: # Binary search only works because the list is sorted.', raw: true, test: c => /#[^\n]*\bbinary\b[^\n]*\b(sort|order)\b/i.test(c) },
   { id: 'c4', label: 'Bubble sort uses nested loops',   hint: 'The sort uses .sort() instead of nested loops. Implement the comparison and swap manually.',                      test: c => (c.match(/for\s+\w+\s+in\s+range\s*\(/g) || []).length >= 2 },
 ]
 
@@ -91,7 +93,7 @@ export default function GateP12() {
   const [quizWrong, setQuizWrong] = useState(false)
   const [done, setDone]           = useState(false)
 
-  const checks    = CHECKS.map(c => ({ ...c, passed: c.test(code) }))
+  const checks    = CHECKS.map(c => ({ ...c, passed: c.test(c.raw ? code : stripComments(code)) }))
   const allPassed = checks.every(c => c.passed)
   const passCount = checks.filter(c => c.passed).length
 
@@ -146,6 +148,7 @@ export default function GateP12() {
           >
             {running ? '⟳ Running checks…' : allPassed ? '▶ RUN ALGORITHMS' : `○ ${4 - passCount} check${4 - passCount !== 1 ? 's' : ''} remaining`}
           </button>
+          <GateAIHint code={code} checks={checks} gateId={GATE_ID} lang="python" done={done} />
         </div>
 
         <div className="ag-right">

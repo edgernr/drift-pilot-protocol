@@ -40,6 +40,8 @@
 
 .signup-footer { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); text-align: center; font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); }
 .signup-footer a { color: var(--teal); }
+.signup-legal-link { color: var(--teal); cursor: pointer; }
+.signup-legal-link:hover { text-decoration: underline; }
 
 .back-link { font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .back-link:hover { color: var(--teal); }

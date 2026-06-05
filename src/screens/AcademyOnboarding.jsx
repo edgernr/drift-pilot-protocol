@@ -42,17 +42,17 @@ function determineTrack(age, experience) {
     return { track: 'scratch', startGate: 'S-01', tierLabel: 'Junior', language: 'Block Coding', gateCount: 15 }
   }
   if (age === '11-13') {
-    if (experience === 'never')  return { track: 'python',     startGate: 'P-01', tierLabel: 'Junior', language: 'Python',      gateCount: 15 }
-    if (experience === 'little') return { track: 'python',     startGate: 'P-03', tierLabel: 'Junior', language: 'Python',      gateCount: 15 }
-    if (experience === 'basics') return { track: 'python',     startGate: 'P-06', tierLabel: 'Junior', language: 'Python',      gateCount: 15 }
-    if (experience === 'knows')  return { track: 'javascript', startGate: 'J-01', tierLabel: 'Junior', language: 'JavaScript',  gateCount: 10 }
+    if (experience === 'never')  return { track: 'python',     startGate: 'P-01', tierLabel: 'Junior', language: 'Python',      gateCount: 24 }
+    if (experience === 'little') return { track: 'python',     startGate: 'P-03', tierLabel: 'Junior', language: 'Python',      gateCount: 24 }
+    if (experience === 'basics') return { track: 'python',     startGate: 'P-06', tierLabel: 'Junior', language: 'Python',      gateCount: 24 }
+    if (experience === 'knows')  return { track: 'javascript', startGate: 'J-01', tierLabel: 'Junior', language: 'JavaScript',  gateCount: 21 }
   }
   if (age === '14-16') {
-    if (experience === 'never')  return { track: 'python',     startGate: 'P-01', tierLabel: 'Teen', language: 'Python',      gateCount: 15 }
-    if (experience === 'little') return { track: 'python',     startGate: 'P-03', tierLabel: 'Teen', language: 'Python',      gateCount: 15 }
-    if (experience === 'basics') return { track: 'javascript', startGate: 'J-01', tierLabel: 'Teen', language: 'JavaScript',  gateCount: 10 }
+    if (experience === 'never')  return { track: 'python',     startGate: 'P-01', tierLabel: 'Teen', language: 'Python',      gateCount: 24 }
+    if (experience === 'little') return { track: 'python',     startGate: 'P-03', tierLabel: 'Teen', language: 'Python',      gateCount: 24 }
+    if (experience === 'basics') return { track: 'javascript', startGate: 'J-01', tierLabel: 'Teen', language: 'JavaScript',  gateCount: 21 }
   }
-  return { track: 'python', startGate: 'P-01', tierLabel: 'Junior', language: 'Python', gateCount: 15 }
+  return { track: 'python', startGate: 'P-01', tierLabel: 'Junior', language: 'Python', gateCount: 24 }
 }
 
 const TRACK_COLORS = {

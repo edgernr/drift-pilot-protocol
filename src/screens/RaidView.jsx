@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth, RAID_XP_REWARDS } from '../context/AuthContext'
-import RaidIDE from './RaidIDE'
+import { useAuth } from '../context/AuthContext'
+import RaidIDE, { SYNC_CODE_CHECKS } from './RaidIDE'
 import './RaidView.css'
 
 const ROLES = {
@@ -465,7 +465,7 @@ export default function RaidView() {
   const { user, profile, completeQuest, burnRaidEntry } = useAuth()
   const isAdmin = profile?.is_admin ?? false
   const spendableDrift = (profile?.totalDrift ?? 0) - (profile?.totalDriftSpent ?? 0)
-  const RAID_ENTRY_COST = 150
+  const RAID_ENTRY_COST = 1000
 
   const [activeRaid, setActiveRaid] = useState(null)
   const [myMembership, setMyMembership] = useState(null)
@@ -486,6 +486,8 @@ export default function RaidView() {
   const [briefRole, setBriefRole] = useState(null)
   const [syncEvidence, setSyncEvidence] = useState({ 1: '', 2: '', 3: '', 4: '' })
   const [myFlagged, setMyFlagged] = useState(0)
+  const [raidFiles, setRaidFiles] = useState([])
+  const [raidFilesLoaded, setRaidFilesLoaded] = useState(false)
   const raidChannel = useRef(null)
   const lobbyChannel = useRef(null)
 
@@ -583,6 +585,77 @@ export default function RaidView() {
     supabase.from('quest_completions').select('id').eq('user_id', user.id).eq('flagged', true)
       .then(({ data }) => setMyFlagged(data?.length ?? 0))
   }, [user])
+
+  // Load all raid_files when raid ends, for code-check scoring
+  useEffect(() => {
+    if (!activeRaid?.id) return
+    if (activeRaid.status !== 'complete' && activeRaid.status !== 'failed') return
+    if (raidFilesLoaded) return
+    supabase.from('raid_files').select('user_id, path, content').eq('raid_id', activeRaid.id)
+      .then(({ data }) => {
+        setRaidFiles(data ?? [])
+        setRaidFilesLoaded(true)
+      })
+  }, [activeRaid?.id, activeRaid?.status, raidFilesLoaded])
+
+  // Per-member code check score: fraction of checks that pass (0..1)
+  const memberScores = useMemo(() => {
+    if (!raidFilesLoaded || !members.length) return {}
+    const scores = {}
+    for (const mem of members) {
+      const myFiles = raidFiles.filter(f => f.user_id === mem.user_id)
+      const fileMap = Object.fromEntries(myFiles.map(f => [f.path, f.content ?? '']))
+      const role = mem.role
+      let total = 0; let passed = 0
+      for (const syncSet of SYNC_CODE_CHECKS) {
+        const checks = syncSet[role] ?? []
+        for (const c of checks) {
+          total++
+          if (c.ok(fileMap)) passed++
+        }
+      }
+      scores[mem.user_id] = total > 0 ? passed / total : 0
+    }
+    return scores
+  }, [raidFilesLoaded, members, raidFiles])
+
+  // Auto-claim payouts once the raid reaches result/complete status.
+  // Runs as a side effect (not during render) and is gated on the already-paid
+  // flags from completedQuestIds, so it does not refire on every render. The
+  // quest_completions UNIQUE (user_id, quest_id) constraint + upsert onConflict
+  // keep this idempotent even if it fires twice before the profile refreshes.
+  useEffect(() => {
+    if (activeRaid?.status !== 'complete' && activeRaid?.status !== 'failed') return
+    if (!myMembership) return
+
+    const isAdminForced = events.some(e => e.label?.includes('[ADMIN] Raid force-completed'))
+    if (isAdminForced) return
+
+    const bankPot    = members.length * 1000
+    const myScore    = memberScores[user?.id] ?? 0
+    const myXpEarned = Math.round(myScore * 500)
+
+    const sorted = [...members].sort((a, b) => {
+      const diff = (memberScores[b.user_id] ?? 0) - (memberScores[a.user_id] ?? 0)
+      return diff !== 0 ? diff : a.user_id.localeCompare(b.user_id)
+    })
+    const winnerId = sorted[0]?.user_id ?? null
+    const iWin     = user?.id === winnerId && myScore > 0
+
+    const payoutKey       = `raid:${activeRaid.id}`
+    const bankKey         = `raid:${activeRaid.id}:bank`
+    const alreadyPaid     = profile?.completedQuestIds?.has(payoutKey) ?? false
+    const bankAlreadyPaid = profile?.completedQuestIds?.has(bankKey) ?? false
+
+    // Auto-claim XP once per member
+    if (myXpEarned > 0 && !alreadyPaid) {
+      completeQuest(payoutKey, myXpEarned, {})
+    }
+    // Auto-claim bank for winner once
+    if (iWin && !bankAlreadyPaid) {
+      completeQuest(bankKey, bankPot, {})
+    }
+  }, [activeRaid?.status, activeRaid?.id, myMembership, members, events, memberScores, user?.id, profile?.completedQuestIds, completeQuest])
 
   // ── Integrity helpers ─────────────────────────────────────────────────
 
@@ -836,7 +909,6 @@ export default function RaidView() {
 
   const isLeader = activeRaid?.created_by === user?.id
   const myRole = myMembership?.role
-  const roleInfo = myRole ? ROLES[myRole] : null
   const passedSyncs = new Set(
     events.filter(e => e.type === 'sync_passed').map(e => {
       const m = e.label?.match(/Sync Ritual (IV|III|II|I)/)
@@ -862,9 +934,28 @@ export default function RaidView() {
   if (activeRaid?.status === 'complete' || activeRaid?.status === 'failed') {
     const cleared = activeRaid.status === 'complete'
     const h = activeRaid.health ?? 0
+    const isAdminForced = events.some(e => e.label?.includes('[ADMIN] Raid force-completed'))
 
-    // ── Payout ──────────────────────────────────────────────────────────
-    const RAID_DRIFT_PAYOUT = { PERFECT: 2350, PASSED: 1050, PARTIAL: 250, FAILED: 0 }
+    // ── Payout — score-based ────────────────────────────────────────────
+    const bankPot    = members.length * 1000
+    const myScore    = myMembership ? (memberScores[user?.id] ?? 0) : 0
+    const myXpEarned = isAdminForced ? 0 : Math.round(myScore * 500)
+
+    // Winner = member with highest score (first by score desc, then by user_id for tie-break)
+    const sorted     = [...members].sort((a, b) => {
+      const diff = (memberScores[b.user_id] ?? 0) - (memberScores[a.user_id] ?? 0)
+      return diff !== 0 ? diff : a.user_id.localeCompare(b.user_id)
+    })
+    const winnerId   = sorted[0]?.user_id ?? null
+    const iWin       = !isAdminForced && myMembership && user?.id === winnerId && myScore > 0
+
+    const payoutKey  = `raid:${activeRaid.id}`
+    const bankKey    = `raid:${activeRaid.id}:bank`
+    const alreadyPaid = profile?.completedQuestIds?.has(payoutKey) ?? false
+    const bankAlreadyPaid = profile?.completedQuestIds?.has(bankKey) ?? false
+    // NOTE: the actual payout (completeQuest) is fired by the auto-claim
+    // useEffect above — never during this render body. These flags only drive
+    // the display labels below ("already claimed" / "bank already claimed").
 
     // Timing analysis
 
@@ -906,18 +997,6 @@ export default function RaidView() {
       : h >= 400  ? { label: 'PARTIAL', color: 'var(--teal)',    sub: 'District held — barely. Partial credit.' }
       :             { label: 'FAILED',  color: 'var(--magenta)', sub: 'District fell. Entry fee burned.' }
 
-    const isAdminForced = events.some(e => e.label?.includes('[ADMIN] Raid force-completed'))
-
-    const payoutKey   = `raid:${activeRaid.id}`
-    const driftEarned = isAdminForced ? 0 : (RAID_DRIFT_PAYOUT[tier.label] ?? 0)
-    const xpEarned    = isAdminForced ? 0 : (RAID_XP_REWARDS[tier.label] ?? 0)
-    const alreadyPaid = profile?.completedQuestIds?.has(payoutKey) ?? false
-
-    // Auto-claim once — blocked for admin force-completed raids
-    if (xpEarned > 0 && !alreadyPaid && myMembership && !isAdminForced) {
-      completeQuest(payoutKey, xpEarned, {})
-    }
-
     return (
       <div className="raid-result">
         <div className={`raid-result-glyph ${cleared ? 'raid-glyph-clear' : 'raid-glyph-fail'}`}>{cleared ? '◈' : '⊘'}</div>
@@ -934,35 +1013,61 @@ export default function RaidView() {
               <span className="raid-payout-icon">⚑</span>
               <span className="raid-payout-label">ADMIN TEST — no XP or $DRIFT awarded</span>
             </div>
-          ) : (
+          ) : myMembership ? (
             <>
-              {xpEarned > 0 ? (
+              {myXpEarned > 0 ? (
                 <div className="raid-payout-badge raid-payout-xp">
                   <span className="raid-payout-icon">⟐</span>
-                  <span className="raid-payout-amount">+{xpEarned} XP</span>
-                  <span className="raid-payout-label">{alreadyPaid ? 'already claimed' : 'experience earned'}</span>
+                  <span className="raid-payout-amount">+{myXpEarned} XP</span>
+                  <span className="raid-payout-label">{alreadyPaid ? 'already claimed' : `${Math.round(myScore * 100)}% checks passed`}</span>
                 </div>
-              ) : myMembership && (
+              ) : (
                 <div className="raid-payout-badge raid-payout-zero">
                   <span className="raid-payout-icon">⊘</span>
-                  <span className="raid-payout-label">0 XP — district fell</span>
+                  <span className="raid-payout-label">0 XP — no checks passed</span>
                 </div>
               )}
-              {driftEarned > 0 ? (
-                <div className="raid-payout-badge">
-                  <span className="raid-payout-icon">◈</span>
-                  <span className="raid-payout-amount">+{driftEarned} $DRIFT</span>
-                  <span className="raid-payout-label">{alreadyPaid ? 'already claimed' : 'credited to wallet'}</span>
+              {iWin ? (
+                <div className="raid-payout-badge" style={{ borderColor: 'oklch(0.82 0.18 75 / 0.5)', background: 'oklch(0.82 0.18 75 / 0.08)' }}>
+                  <span className="raid-payout-icon" style={{ color: 'var(--amber)' }}>◈</span>
+                  <span className="raid-payout-amount" style={{ color: 'var(--amber)' }}>+{bankPot} $DRIFT</span>
+                  <span className="raid-payout-label">{bankAlreadyPaid ? 'bank already claimed' : 'BANK WON — highest score'}</span>
                 </div>
-              ) : myMembership && (
+              ) : (
                 <div className="raid-payout-badge raid-payout-zero">
                   <span className="raid-payout-icon">⊘</span>
-                  <span className="raid-payout-label">−150 $DRIFT — entry fee burned</span>
+                  <span className="raid-payout-label">−1000 $DRIFT — entry fee burned</span>
                 </div>
               )}
             </>
-          )}
+          ) : null}
         </div>
+
+        {/* Per-player score table */}
+        {raidFilesLoaded && members.length > 0 && !isAdminForced && (
+          <div className="score-table" style={{ marginBottom: 0 }}>
+            <div className="score-table-head"><span>HUNTER</span><span>CHECKS</span></div>
+            {sorted.map((mem) => {
+              const pct = memberScores[mem.user_id] ?? 0
+              const xp  = Math.round(pct * 500)
+              const isWinner = mem.user_id === winnerId && pct > 0
+              return (
+                <div key={mem.user_id} className="score-row" style={isWinner ? { background: 'oklch(0.82 0.18 75 / 0.06)' } : undefined}>
+                  <span className="score-row-label">
+                    {isWinner && <span style={{ color: 'var(--amber)', marginRight: 6 }}>★</span>}
+                    {mem.profiles?.name ?? 'Hunter'}
+                    <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--ink-3)', fontFamily: 'var(--f-mono)' }}>
+                      [{ROLES[mem.role]?.label ?? mem.role}]
+                    </span>
+                  </span>
+                  <span className="score-row-delta" style={{ color: pct >= 0.7 ? 'var(--lime)' : pct >= 0.4 ? 'var(--amber)' : 'var(--magenta)' }}>
+                    {Math.round(pct * 100)}% · +{xp} XP
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         <div className="score-table">
           <div className="score-table-head">

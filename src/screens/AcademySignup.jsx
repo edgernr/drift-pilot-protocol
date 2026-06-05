@@ -81,7 +81,7 @@ export default function AcademySignup() {
         </div>
         <div className="signup-stats">
           <div><span className="n">3 tracks</span><span className="s">Scratch · Python · JS</span></div>
-          <div><span className="n gradient-text">61</span><span className="s">Academy gates</span></div>
+          <div><span className="n gradient-text">60</span><span className="s">Academy gates</span></div>
           <div><span className="n">Ages 8–16</span><span className="s">no token economy</span></div>
         </div>
       </div>
@@ -145,7 +145,7 @@ export default function AcademySignup() {
           </form>
 
           <div className="signup-footer">
-            By continuing you agree to the <a href="#">Academy Terms</a> &amp; <a href="#">Privacy Policy</a>
+            By continuing you agree to the <span className="signup-login-link" onClick={() => goto('terms')}>Academy Terms</span> &amp; <span className="signup-login-link" onClick={() => goto('privacy')}>Privacy Policy</span>
           </div>
         </div>
       </div>

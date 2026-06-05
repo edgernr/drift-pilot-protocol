@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import './AcademyGate.css'
 import { useNav } from '../context/NavigationContext'
 import { useAcademy } from '../context/AcademyContext'

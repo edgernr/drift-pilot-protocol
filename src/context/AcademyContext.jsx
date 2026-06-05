@@ -14,15 +14,21 @@ export function AcademyProvider({ children }) {
     } catch { return null }
   })
   const [childCompletions, setChildCompletions] = useState([])
-  const [loading, setLoading] = useState(false)
+  // Start true so the AcademyDashboard guard (!loading && childProfiles.length===0)
+  // never fires on the first render after auth, before profiles have loaded.
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) {
       setChildProfiles([])
       setActiveChildState(null)
       setChildCompletions([])
+      setLoading(false)
       return
     }
+    // Re-enter loading state before fetching this user's profiles so the guard
+    // can't see a stale empty list as "no children → onboarding".
+    setLoading(true)
     loadChildProfiles()
   }, [user?.id])
 

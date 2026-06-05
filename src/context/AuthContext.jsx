@@ -28,6 +28,41 @@ export const XP_LEVELS = [
   { level: 10, min: 5000, label: 'LEGEND',    color: 'oklch(0.90 0.28 340)'  },
 ]
 
+// Streak XP multiplier — "Gentle" tiers. Applies to gate completions only (not raids).
+// Highest qualifying tier wins; below 3-day streak there is no bonus.
+export const STREAK_TIERS = [
+  { min: 14, mult: 1.5  },
+  { min: 7,  mult: 1.25 },
+  { min: 3,  mult: 1.1  },
+]
+
+export function computeStreakMultiplier(streak) {
+  for (const t of STREAK_TIERS) if (streak >= t.min) return t.mult
+  return 1
+}
+
+// Season Pass XP boost — a flat multiplier for subscribers (is_subscribed).
+// Stacks multiplicatively with the streak multiplier; gate completions only.
+export const SEASON_PASS_XP_MULT = 1.25
+
+// Combined gate-XP multiplier: streak bonus × Season Pass boost.
+export function computeXpMultiplier({ streak = 0, isSubscribed = false } = {}) {
+  return computeStreakMultiplier(streak) * (isSubscribed ? SEASON_PASS_XP_MULT : 1)
+}
+
+// Season Pass benefit: custom username colour. Curated brand-token palette only
+// (respects the design system — no arbitrary hex). DB stores the key; UI maps to value.
+export const USERNAME_COLORS = {
+  default: { label: 'Default', value: null },
+  teal:    { label: 'Teal',    value: 'var(--teal)'    },
+  violet:  { label: 'Violet',  value: 'var(--violet)'  },
+  magenta: { label: 'Magenta', value: 'var(--magenta)' },
+  lime:    { label: 'Lime',    value: 'var(--lime)'    },
+  amber:   { label: 'Amber',   value: 'var(--amber)'   },
+  cyan:    { label: 'Cyan',    value: 'var(--cyan)'    },
+  orange:  { label: 'Orange',  value: 'var(--orange)'  },
+}
+
 export function computeLevelData(xp) {
   let cur = XP_LEVELS[0]
   for (const lvl of XP_LEVELS) {
@@ -64,11 +99,32 @@ export function AuthProvider({ children }) {
   const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   const fetchProfile = useCallback(async (userId) => {
-    const [{ data: prof }, { data: xpRows, count }, { data: unlockRows }] = await Promise.all([
+    let [{ data: prof, error: profErr }, { data: xpRows, count }, { data: unlockRows }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).single(),
       supabase.from('quest_completions').select('xp_earned,quest_id,completed_at', { count: 'exact' }).eq('user_id', userId),
       supabase.from('gate_unlocks').select('quest_id,drift_cost,unlocked_at').eq('user_id', userId),
     ])
+    // A logged-in user with no profiles row would otherwise get a silent null
+    // profile (blank, nameless, all-zeros dashboard). Defensively create a
+    // minimal profile so a fresh user is never stuck. PGRST116 = "no rows".
+    if (!prof && profErr) {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const fallbackName = authUser?.email ?? 'Pilot'
+      const { data: created, error: upsertErr } = await supabase
+        .from('profiles')
+        .upsert({ id: userId, name: fallbackName }, { onConflict: 'id' })
+        .select('*')
+        .single()
+      if (created) {
+        prof = created
+      } else {
+        // Could not self-heal — surface an error the UI can show instead of
+        // leaving the dashboard silently blank.
+        setError(upsertErr?.message ?? profErr.message)
+        setLoading(false)
+        return
+      }
+    }
     if (prof) {
       const isPermanentBan = prof.banned_until === '2099-01-01T00:00:00Z'
       const isTempBan = prof.banned_until && new Date(prof.banned_until) > new Date()
@@ -81,6 +137,7 @@ export function AuthProvider({ children }) {
       }
       const totalXp = xpRows?.reduce((s, r) => {
         if (r.quest_id?.startsWith('raid:')) {
+          if (r.quest_id.endsWith(':bank')) return s  // bank = DRIFT only, no XP
           if (r.xp_earned === 0) return s
           // New format: xp_earned is actual XP (100/300/500 only)
           if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + r.xp_earned
@@ -92,6 +149,7 @@ export function AuthProvider({ children }) {
       const totalDrift = xpRows?.reduce((s, r) => {
         if (DRIFT_REWARDS[r.quest_id]) return s + DRIFT_REWARDS[r.quest_id]
         if (r.quest_id?.startsWith('raid:')) {
+          if (r.quest_id.endsWith(':bank')) return s + r.xp_earned  // bank: xp_earned = direct DRIFT
           if (r.xp_earned === 0) return s
           // New format: derive DRIFT from XP amount
           if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + (RAID_XP_TO_DRIFT[r.xp_earned] ?? 0)
@@ -104,10 +162,14 @@ export function AuthProvider({ children }) {
       const completedQuestIds = new Set(xpRows?.map(r => r.quest_id) ?? [])
       const unlockedGateIds = new Set(unlockRows?.map(r => r.quest_id) ?? [])
       const streak = computeStreak(xpRows)
+      const streakMultiplier = computeStreakMultiplier(streak)
+      const subscriberMultiplier = prof.is_subscribed ? SEASON_PASS_XP_MULT : 1
+      const xpMultiplier = streakMultiplier * subscriberMultiplier
       const ld = computeLevelData(totalXp)
       setProfile({
         ...prof, questsCompleted: count ?? 0, totalXp, totalDrift, totalDriftSpent,
-        completedQuestIds, unlockedGateIds, streak, completions: xpRows ?? [], unlocks: unlockRows ?? [],
+        completedQuestIds, unlockedGateIds, streak, streakMultiplier, subscriberMultiplier, xpMultiplier,
+        completions: xpRows ?? [], unlocks: unlockRows ?? [],
         level: ld.level, levelLabel: ld.label, levelColor: ld.color,
         levelProgress: ld.progress, xpInLevel: ld.xpInLevel, xpNeeded: ld.xpNeeded,
         nextLevelLabel: ld.nextLabel,
@@ -153,10 +215,18 @@ export function AuthProvider({ children }) {
 
   async function completeQuest(questId, xpEarned, analytics = {}) {
     if (!user) return false
+    // Gate XP multiplier = streak bonus × Season Pass boost. Gates only — raid
+    // rows ('raid:*') keep their fixed tier XP so the new/old-format detection in
+    // fetchProfile stays valid. Locked in at earn time (stored in xp_earned).
+    const isGate = !questId.startsWith('raid')
+    const mult = isGate
+      ? computeXpMultiplier({ streak: profile?.streak ?? 0, isSubscribed: profile?.is_subscribed })
+      : 1
+    const finalXp = Math.round(xpEarned * mult)
     const { error } = await supabase
       .from('quest_completions')
       .upsert(
-        { user_id: user.id, quest_id: questId, xp_earned: xpEarned, ...analytics },
+        { user_id: user.id, quest_id: questId, xp_earned: finalXp, ...analytics },
         { onConflict: 'user_id,quest_id' }
       )
     if (!error) {
@@ -180,7 +250,7 @@ export function AuthProvider({ children }) {
 
   async function burnRaidEntry(raidId) {
     if (!user) return { ok: false, reason: 'not-logged-in' }
-    const ENTRY_COST = 150
+    const ENTRY_COST = 1000
     const spendable = (profile?.totalDrift ?? 0) - (profile?.totalDriftSpent ?? 0)
     if (spendable < ENTRY_COST) return { ok: false, reason: 'insufficient' }
     const questId = `raid-entry:${raidId}`
@@ -258,6 +328,19 @@ export function AuthProvider({ children }) {
     return !error
   }
 
+  // Season Pass benefit: set the custom username colour (stores a USERNAME_COLORS
+  // key, or null for default). Cosmetic — gated to subscribers in the UI.
+  async function updateUsernameColor(colorKey) {
+    if (!user) return false
+    const value = colorKey && colorKey !== 'default' && USERNAME_COLORS[colorKey] ? colorKey : null
+    const { error } = await supabase
+      .from('profiles')
+      .update({ username_color: value })
+      .eq('id', user.id)
+    if (!error) await fetchProfile(user.id)
+    return !error
+  }
+
   async function sendPasswordReset() {
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
       redirectTo: `${window.location.origin}/dashboard`,
@@ -287,7 +370,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, updateUsernameColor, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )

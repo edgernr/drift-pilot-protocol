@@ -1,7 +1,9 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import './AcademyGate.css'
 import { useNav } from '../context/NavigationContext'
 import { useAcademy } from '../context/AcademyContext'
+import { stripComments } from '../lib/codeUtils'
+import GateAIHint from '../components/GateAIHint'
 
 const GATE_ID = 'P-01'
 const GATE_XP = 200
@@ -14,7 +16,7 @@ const STARTER = `# Write your Python program below!
 const CHECKS = [
   { id: 'c1', label: 'print() used correctly',              hint: 'Nothing appears in the output. print() shows text in the terminal — put your message inside the parentheses.',                 test: c => /print\s*\(/.test(c) },
   { id: 'c2', label: 'Name stored in variable',             hint: 'The Builder name is written directly in the print statement instead of stored first. Create a variable: name = "YourName"',    test: c => /\b\w+\s*=\s*["']/.test(c) },
-  { id: 'c3', label: 'Comment present',                     hint: 'No comment found in the code. Start a line with # to write a note the Construct ignores.',                                      test: c => /#[^\n]+/.test(c) },
+  { id: 'c3', label: 'Comment present',                     hint: 'No comment found in the code. Start a line with # to write a note the Construct ignores.',                                      raw: true, test: c => /#[^\n]+/.test(c) },
   { id: 'c4', label: 'f-string combines text and variable', hint: 'The name and greeting are in separate print statements. Use f"Hello {name}" to combine them.',                                  test: c => /f["']/.test(c) },
   { id: 'c5', label: 'Variable in f-string braces',         hint: 'Put your variable name inside curly braces in the f-string: f"Hello {name}"',                                                   test: c => /\{[a-z_]\w*\}/.test(c) },
 ]
@@ -64,7 +66,7 @@ export default function GateP01() {
   const [quizWrong, setQuizWrong] = useState(false)
   const [done, setDone]         = useState(false)
 
-  const checks   = CHECKS.map(c => ({ ...c, passed: c.test(code) }))
+  const checks   = CHECKS.map(c => ({ ...c, passed: c.test(c.raw ? code : stripComments(code)) }))
   const allPassed = checks.every(c => c.passed)
   const passCount = checks.filter(c => c.passed).length
 
@@ -119,6 +121,7 @@ export default function GateP01() {
           >
             {running ? '⟳ Running checks…' : allPassed ? '▶ RUN PROGRAM' : `○ ${5 - passCount} check${5 - passCount !== 1 ? 's' : ''} remaining`}
           </button>
+          <GateAIHint code={code} checks={checks} gateId={GATE_ID} lang="python" done={done} />
         </div>
 
         <div className="ag-right">

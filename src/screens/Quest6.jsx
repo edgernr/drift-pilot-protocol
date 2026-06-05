@@ -86,8 +86,6 @@ const VARIANT_HTML = [
 </div>`,
 ]
 
-const VARIANT_NAMES = ['Sector Dashboard', 'Command Dashboard', 'Reactor Dashboard']
-
 // ─── Starting CSS scaffold ─────────────────────────────────────────────────────
 
 const START_CSS = `/* Gate 06 — The Infinite Grid

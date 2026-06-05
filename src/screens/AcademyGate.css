@@ -450,6 +450,67 @@
 .ag-run-btn:hover:not(:disabled) { transform: translateY(-2px); }
 .ag-run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+/* ── AI Hint ─────────────────────────────────────────── */
+.ag-ai { margin-top: 2px; }
+
+.ag-ai-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px 18px;
+  background: oklch(0.46 0.18 185 / 0.08);
+  border: 1px dashed oklch(0.46 0.18 185 / 0.4);
+  border-radius: 10px; color: var(--teal);
+  font-family: var(--f-mono); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  animation: ag-ai-fadein 0.5s ease;
+}
+.ag-ai-btn:hover:not(:disabled) {
+  background: oklch(0.46 0.18 185 / 0.14);
+  border-color: oklch(0.46 0.18 185 / 0.65);
+}
+.ag-ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ag-ai-spin { display: inline-block; animation: ag-spin 1s linear infinite; }
+
+.ag-ai-panel {
+  border-radius: 10px;
+  background: oklch(0.46 0.18 185 / 0.06);
+  border: 1px solid oklch(0.46 0.18 185 / 0.22);
+  overflow: hidden;
+  animation: ag-ai-fadein 0.3s ease;
+}
+.ag-ai-head {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 14px;
+  border-bottom: 1px solid oklch(0.46 0.18 185 / 0.15);
+  font-family: var(--f-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.14em; color: var(--teal);
+}
+.ag-ai-icon { font-size: 11px; }
+.ag-ai-uses { margin-left: auto; color: var(--ink-3); font-weight: 400; }
+.ag-ai-body {
+  padding: 12px 14px;
+  font-size: 13px; color: var(--ink-1); line-height: 1.6;
+  margin: 0;
+}
+.ag-ai-refresh {
+  display: block; width: 100%;
+  padding: 7px 14px;
+  background: none; border: none; border-top: 1px solid oklch(0.46 0.18 185 / 0.12);
+  color: var(--teal); font-family: var(--f-mono); font-size: 10px;
+  letter-spacing: 0.08em; cursor: pointer; text-align: right;
+  transition: background 0.15s;
+}
+.ag-ai-refresh:hover:not(:disabled) { background: oklch(0.46 0.18 185 / 0.06); }
+.ag-ai-refresh:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@keyframes ag-ai-fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ag-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Right panel ─────────────────────────────────────── */
 .ag-right { display: flex; flex-direction: column; gap: 14px; }
 .ag-instruction {

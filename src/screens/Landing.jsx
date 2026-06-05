@@ -13,14 +13,15 @@ export default function Landing() {
 
   const [stats, setStats] = useState({ pilots: null, xp: null, gates: null })
   useEffect(() => {
-    Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }),
-      supabase.from('quest_completions').select('xp_earned, quest_id'),
-    ]).then(([{ count }, { data: qc }]) => {
-      const totalXp = qc?.reduce((s, r) => s + r.xp_earned, 0) ?? 0
-      const gatesCleared = qc?.length ?? 0
-      setStats({ pilots: count ?? 0, xp: totalXp, gates: gatesCleared })
-    })
+    // platform_stats is a privacy-safe public view (pretest_setup.sql) that
+    // aggregates platform-wide totals server-side — quest_completions RLS
+    // (correctly) blocks anon/cross-user reads, so we cannot sum them client-side.
+    supabase.from('platform_stats').select('pilots, total_xp, gates_cleared').single()
+      .then(({ data }) => {
+        setStats(data
+          ? { pilots: Number(data.pilots) || 0, xp: Number(data.total_xp) || 0, gates: Number(data.gates_cleared) || 0 }
+          : { pilots: 0, xp: 0, gates: 0 })
+      }, () => setStats({ pilots: 0, xp: 0, gates: 0 }))
   }, [])
 
   return (
@@ -32,8 +33,7 @@ export default function Landing() {
         </div>
         <ul>
           <li><a href="#worlds">Worlds</a></li>
-          <li><a href="#quests">Quests</a></li>
-          <li><a href="#token">Token</a></li>
+          <li><a href="#worlds">Quests</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#academy" style={{ color: 'var(--builder-gold, oklch(0.86 0.19 80))' }}>Academy</a></li>
         </ul>
@@ -71,7 +71,7 @@ export default function Landing() {
                   ? <button className="btn btn-primary" onClick={() => goto('dashboard')}>Go to Dashboard →</button>
                   : <button className="btn btn-primary" onClick={() => goto('signup')}>Start Season 01 →</button>
                 }
-                <button className="btn btn-ghost" onClick={() => goto('quest')}>Try a Quest</button>
+                <button className="btn btn-ghost" onClick={() => goto(user ? 'quest' : 'signup')}>Try a Quest</button>
               </div>
               <div className="hero-meta">
                 <div>
@@ -94,7 +94,6 @@ export default function Landing() {
                 <div className="hero-card-header">
                   <div className="hc-dots"><span /><span /><span /></div>
                   <div className="hc-title">quest_042 / flex-row-puzzle.tsx</div>
-                  <div className="hc-title teal-text">● LIVE</div>
                 </div>
                 <div className="hero-card-body">
                   <div className="quest-header">
@@ -235,51 +234,16 @@ export default function Landing() {
       </section>
 
 
-      {/* TOKENOMICS */}
-      <section id="token">
-        <div className="container">
-          <div className="section-head reveal">
-            <span className="eyebrow">$DRIFT TOKEN</span>
-            <h2>Earn by learning. Spend to level faster.</h2>
-            <p>Every quest cleared pays out $DRIFT. Stake it for XP multipliers, unlock premium quests, or burn it to reset gates and replay dungeons.</p>
-          </div>
-          <div className="token-wrap">
-            <div className="token-visual reveal">
-              <div className="token-ring token-ring-1" />
-              <div className="token-ring token-ring-2" />
-              <div className="token-coin" />
-            </div>
-            <div className="reveal">
-              <div className="token-stats">
-                <div className="token-stat"><div className="label">Total Supply</div><div className="value">100<span className="unit">M</span></div><div className="sub">fixed · no mint</div></div>
-                <div className="token-stat"><div className="label">Learn-to-Earn Pool</div><div className="value">60<span className="unit">%</span></div><div className="sub">60M reserved</div></div>
-                <div className="token-stat"><div className="label">Current Price</div><div className="value">$0.48</div><div className="sub teal-text">↑ 12.4% 24h</div></div>
-                <div className="token-stat"><div className="label">Staking APR</div><div className="value">18<span className="unit">%</span></div><div className="sub">+2x XP multiplier</div></div>
-              </div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                <button className="btn btn-primary">View Tokenomics →</button>
-                <button className="btn btn-ghost">Read Whitepaper</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* PARTNERS */}
       <section>
         <div className="container">
           <div className="section-head reveal">
-            <span className="eyebrow">NETWORKS &amp; PARTNERS</span>
-            <h2>Built on chains. Backed by builders.</h2>
+            <span className="eyebrow">CHAINS WE SUPPORT</span>
+            <h2>Built on Ethereum.</h2>
           </div>
           <div className="partners reveal">
             {[
-              { grad: 'oklch(0.7 0.25 295), oklch(0.5 0.2 200)', icon: '◎', name: 'Solana' },
               { grad: 'oklch(0.6 0.2 260), oklch(0.4 0.15 240)', icon: '◆', name: 'Ethereum' },
-              { grad: 'oklch(0.75 0.15 200), oklch(0.55 0.2 220)', icon: '◈', name: 'Base' },
-              { grad: 'oklch(0.65 0.22 320), oklch(0.45 0.2 290)', icon: '✦', name: 'Polygon' },
-              { grad: 'oklch(0.8 0.18 75), oklch(0.55 0.22 40)', icon: '▲', name: 'Avalanche' },
-              { grad: 'oklch(0.7 0.18 185), oklch(0.45 0.2 210)', icon: '◉', name: 'Arbitrum' },
             ].map(p => (
               <div key={p.name} className="partner">
                 <div className="partner-mark" style={{ background: `linear-gradient(135deg, ${p.grad})` }}>{p.icon}</div>
@@ -290,7 +254,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* PRICING */}
       {/* ACADEMY */}
       <section id="academy" style={{ padding: '100px 0', background: 'oklch(0.09 0.02 260)' }}>
         <div className="container">
@@ -342,27 +305,63 @@ export default function Landing() {
         <div className="container">
           <div className="section-head reveal">
             <span className="eyebrow">CHOOSE YOUR CLASS</span>
-            <h2>Free to start. Premium to fly.</h2>
-            <p>You keep every $DRIFT you earn, on every tier. Premium just makes you earn faster.</p>
+            <h2>Free to start. Season Pass to fly.</h2>
+            <p>Begin with the first gates for free. The Season Pass unlocks the full run, XP boosts, and pass-holder perks.</p>
           </div>
           <div className="pricing">
             <div className="panel price-card reveal">
-              <div><div className="tier">SCOUT</div><div className="amount" style={{ marginTop: 12 }}>$0<span className="period">/forever</span></div></div>
-              <h3>Learn the ropes.</h3>
-              <ul><li>Access to 20+ starter quests</li><li>Earn $DRIFT on every completion</li><li>1 streak freeze per week</li><li>Community leaderboard</li></ul>
-              <button className="btn btn-ghost" style={{ justifyContent: 'center' }} onClick={() => goto('signup')}>Start for Free</button>
+              <div><div className="tier">FREE</div><div className="amount" style={{ marginTop: 12 }}>$0</div></div>
+              <h3>Access to the first gates</h3>
+              <ul><li>Play the opening gates</li><li>Earn $DRIFT on every completion</li><li>Community leaderboard</li></ul>
+              <button className="btn btn-ghost" style={{ justifyContent: 'center' }} onClick={() => goto(user ? 'dashboard' : 'signup')}>Start Free →</button>
             </div>
             <div className="panel price-card featured reveal">
-              <div><div className="tier">★ PILOT · MOST POPULAR</div><div className="amount" style={{ marginTop: 12 }}>$19<span className="period">/month</span></div></div>
-              <h3>Unlock the full tree.</h3>
-              <ul><li>All 60+ quests + weekly drops</li><li>2x $DRIFT earn multiplier</li><li>Exclusive pilot badges</li><li>Priority raid matchmaking</li><li>Unlimited streak freezes</li></ul>
-              <button className="btn btn-primary" style={{ justifyContent: 'center' }} onClick={() => goto('signup')}>Become a Pilot →</button>
+              <div>
+                <div className="tier">★ SEASON PASS · MOST POPULAR</div>
+                <span className="chip chip-magenta" style={{ marginTop: 10 }}>Launch pricing · Phase 1</span>
+                <div className="amount" style={{ marginTop: 12 }}>$9.99<span className="period">/month</span></div>
+              </div>
+              <h3>The full season, every perk.</h3>
+              <ul><li>Everything in Free</li><li>×1.25 XP boost all season</li><li>Early access to new gates</li><li>Gate Zero Raid access</li></ul>
+              <button className="btn btn-primary" style={{ justifyContent: 'center' }} onClick={() => goto(user ? 'dashboard' : 'signup')}>Get Season Pass →</button>
             </div>
             <div className="panel price-card reveal">
-              <div><div className="tier">COMMANDER</div><div className="amount" style={{ marginTop: 12 }}>$79<span className="period">/month</span></div></div>
-              <h3>Build your own squadron.</h3>
-              <ul><li>Everything in Pilot</li><li>Host private raid rooms</li><li>1-on-1 mentor sessions</li><li>Early access to boss quests</li><li>Governance voting on $DRIFT</li></ul>
-              <button className="btn btn-ghost" style={{ justifyContent: 'center' }} onClick={() => goto('signup')}>Command →</button>
+              <div><div className="tier">SEASON PASS · SEASON</div><div className="amount" style={{ marginTop: 12 }}>$24.99<span className="period">/season</span></div></div>
+              <h3>3 months. Best value.</h3>
+              <ul><li>Everything in the monthly pass</li><li>One payment for the full season</li><li>Save ~17% vs monthly</li></ul>
+              <button className="btn btn-ghost" style={{ justifyContent: 'center' }} onClick={() => goto(user ? 'dashboard' : 'signup')}>Get Season Pass →</button>
+            </div>
+          </div>
+
+          <p className="reveal" style={{ marginTop: 20, textAlign: 'center', fontSize: 12, color: 'var(--ink-3)', maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
+            Pricing is reviewed at the end of Phase 1; on hitting retention benchmarks it transitions to Phase 2 ($20/month or $49/season).
+          </p>
+
+          <div className="reveal" style={{ marginTop: 56 }}>
+            <div className="section-head" style={{ marginBottom: 32 }}>
+              <span className="eyebrow">SEASON PASS BENEFITS</span>
+              <h2 style={{ fontSize: 28 }}>Everything you unlock.</h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+              {[
+                { cat: 'Gameplay', items: ['×1.25 XP boost for the full season', 'Early access to new gates before public release', 'Exclusive access to the Gate Zero Raid'] },
+                { cat: 'Profile',  items: ['Exclusive avatar frames (dark fantasy / cyberpunk)', 'Season badge on profile', 'Custom username color'] },
+                { cat: '$DRIFT',   items: ['Bonus $DRIFT airdrop at season start', 'Increased $DRIFT drop rate from quests'] },
+                { cat: 'Community',items: ['Private Discord channel for pass holders', 'Priority feedback'] },
+                { cat: 'Content',  items: ['Exclusive side quests', 'Access to the platform roadmap'] },
+              ].map(group => (
+                <div key={group.cat} className="panel" style={{ padding: '20px 22px' }}>
+                  <div className="tier" style={{ color: 'var(--teal)', marginBottom: 14 }}>{group.cat}</div>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, margin: 0, padding: 0 }}>
+                    {group.items.map(item => (
+                      <li key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14, color: 'var(--ink-1)' }}>
+                        <span style={{ color: 'var(--lime)', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -382,10 +381,8 @@ export default function Landing() {
         <div className="container inner">
           <div>© 2026 Drift Pilot Protocol · All missions reserved.</div>
           <div className="right">
-            <a href="#">Docs</a>
-            <a href="#">Discord</a>
-            <a href="#">X / Twitter</a>
-            <a href="#">GitHub</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); goto('terms') }}>Terms</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); goto('privacy') }}>Privacy</a>
           </div>
         </div>
       </footer>

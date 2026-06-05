@@ -107,8 +107,6 @@ export default function AcademyDashboard() {
   const [bugModalOpen, setBugModalOpen] = useState(false)
   const [bugText, setBugText]         = useState('')
   const [bugStatus, setBugStatus]     = useState(null)
-  const [bugScreenshot, setBugScreenshot] = useState(null)
-  const [bugPreview, setBugPreview]   = useState(null)
   const [lbData, setLbData]           = useState([])
   const [settingsName, setSettingsName]     = useState('')
   const [settingsEmail, setSettingsEmail]   = useState('')
@@ -167,7 +165,7 @@ export default function AcademyDashboard() {
     })
     if (!error) {
       setBugStatus('sent')
-      setBugText(''); setBugScreenshot(null); setBugPreview(null)
+      setBugText('')
       setTimeout(() => { setBugModalOpen(false); setBugStatus(null) }, 1800)
     } else {
       setBugStatus('error')
@@ -229,6 +227,8 @@ export default function AcademyDashboard() {
     return 'locked'
   }
   function gotoGate(gateId) {
+    const gate = gates.find(g => g.id === gateId)
+    if (gate && gateStatus(gate) === 'locked') return
     goto(`academy/gate/${gateId.toLowerCase().replace('-', '')}`)
   }
   function gotoActiveGate() {
@@ -312,25 +312,6 @@ export default function AcademyDashboard() {
               rows={4}
               style={{ width: '100%', background: 'rgba(180,200,255,0.03)', border: '1px solid var(--line-2)', borderRadius: 10, padding: '12px 14px', color: 'var(--ink-0)', fontFamily: 'var(--f-body)', fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
             />
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, cursor: 'pointer' }}>
-              <div style={{ flex: 1, background: 'rgba(180,200,255,0.03)', border: '1px dashed var(--line-2)', borderRadius: 8, padding: '10px 14px', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.06em' }}>
-                {bugScreenshot ? `📎 ${bugScreenshot.name}` : '📎 Attach screenshot (optional)'}
-              </div>
-              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-                const f = e.target.files?.[0]; if (!f) return
-                setBugScreenshot(f)
-                const reader = new FileReader()
-                reader.onload = ev => setBugPreview(ev.target.result)
-                reader.readAsDataURL(f)
-              }} />
-            </label>
-            {bugPreview && (
-              <div style={{ marginTop: 10, position: 'relative', display: 'inline-block' }}>
-                <img src={bugPreview} alt="screenshot" style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 8, border: '1px solid var(--line)' }} />
-                <button onClick={() => { setBugScreenshot(null); setBugPreview(null) }}
-                  style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(5,7,13,0.8)', border: 'none', color: 'var(--ink-1)', borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: 12 }}>×</button>
-              </div>
-            )}
             <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
               <button className="btn" onClick={() => setBugModalOpen(false)} style={{ fontSize: 12 }}>Cancel</button>
               <button className="btn btn-primary" onClick={submitBugReport} disabled={!bugText.trim() || bugStatus === 'sending'} style={{ fontSize: 12 }}>
@@ -360,9 +341,9 @@ export default function AcademyDashboard() {
         </div>
 
         <div>
-          <div className="section-label">Rankings</div>
+          <div className="section-label">Family</div>
           <div className="navlist">
-            <a className={view === 'leaderboard' ? 'active' : ''} onClick={() => setView('leaderboard')}><span className="ic">♦</span> Leaderboard</a>
+            <a className={view === 'leaderboard' ? 'active' : ''} onClick={() => setView('leaderboard')}><span className="ic">♦</span> Your Builders</a>
           </div>
         </div>
 
@@ -393,7 +374,6 @@ export default function AcademyDashboard() {
           <div className="search">
             <span>⌕</span>
             <input placeholder="Search gates, concepts..." readOnly />
-            <span className="kbd">⌘K</span>
           </div>
           <div className="top-actions">
             <button
@@ -508,7 +488,7 @@ export default function AcademyDashboard() {
               { color: meta.color,       label: 'XP EARNED',      val: fmt(totalAcademyXp),     delta: `of ${fmt(totalXpPoss)} total` },
               { color: 'var(--violet)',  label: 'TRACK PROGRESS', val: `${xpPct}%`,             delta: `${completedCount}/${gates.length} gates` },
               { color: 'var(--lime)',    label: 'GATES CLEARED',  val: String(completedCount),   delta: `${gates.length - completedCount} remaining` },
-              { color: 'var(--magenta)', label: 'LEADERBOARD',    val: myEntry ? `#${myEntry.rank}` : '—', delta: `of ${lbData.length} builders` },
+              { color: 'var(--magenta)', label: 'GATE XP',        val: myEntry ? fmt(myEntry.totalXp) : fmt(totalAcademyXp), delta: 'this builder' },
             ].map(s => (
               <div key={s.label} className="stat">
                 <div className="label"><span className="dot" style={{ color: s.color }} />{s.label}</div>
@@ -530,8 +510,8 @@ export default function AcademyDashboard() {
                     const status = gateStatus(gate)
                     const color = RANK_COLOR[gate.rank]
                     return (
-                      <div key={gate.id} className="aq" onClick={() => gotoGate(gate.id)}
-                        style={{ opacity: status === 'locked' ? 0.4 : 1, cursor: 'pointer' }}>
+                      <div key={gate.id} className="aq" onClick={status === 'locked' ? undefined : () => gotoGate(gate.id)}
+                        style={{ opacity: status === 'locked' ? 0.4 : 1, cursor: status === 'locked' ? 'not-allowed' : 'pointer' }}>
                         <div className="icon" style={{ background: `oklch(from ${color} l c h / 0.12)`, color }}>
                           {gate.icon}
                         </div>
@@ -580,7 +560,7 @@ export default function AcademyDashboard() {
               </div>
 
               <div className="section-block">
-                <div className="sb-head"><h3>Top Builders</h3><span className="more">Top {Math.min(lbData.length, 5)}</span></div>
+                <div className="sb-head"><h3>Your Builders</h3><span className="more">{lbData.length} in family</span></div>
                 <div className="panel lb">
                   {lbData.length === 0
                     ? <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', padding: '8px 0' }}>Loading...</div>
@@ -641,7 +621,8 @@ export default function AcademyDashboard() {
                 <div
                   key={gate.id}
                   className={`st-node${gate.boss ? ' st-boss' : ''}${stateCls}`}
-                  onClick={() => gotoGate(gate.id)}
+                  onClick={isLocked ? undefined : () => goto(`academy/gate/${gate.id.toLowerCase().replace('-', '')}`)}
+                  style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
                 >
                   <div className="st-node-top">
                     <span className="st-ch">{gate.boss ? 'BOSS' : gate.id}</span>
@@ -668,9 +649,9 @@ export default function AcademyDashboard() {
         {view === 'leaderboard' && (<>
           <div className="st-header">
             <div>
-              <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Leaderboard</h2>
+              <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Your Builders</h2>
               <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                Builders ranked by XP · {lbData.length} total
+                Your family's progress · {lbData.length} builder{lbData.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>

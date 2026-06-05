@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './Login.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 
 export default function Login() {
   const { goto } = useNav()
@@ -9,6 +10,7 @@ export default function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [resetMsg, setResetMsg] = useState(null)
   const [banMsg, setBanMsg] = useState(() => {
     const v = localStorage.getItem('dpp_ban_until')
     if (!v) return null
@@ -26,6 +28,17 @@ export default function Login() {
     if (ok) goto('dashboard')
   }
 
+  async function handleForgot() {
+    if (!email.trim()) {
+      setResetMsg('Enter your email above first, then tap Forgot.')
+      return
+    }
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/dashboard`,
+    })
+    setResetMsg(resetError ? resetError.message : 'Reset link sent — check your inbox.')
+  }
+
   return (
     <div className="login-wrap">
       <div className="login-left">
@@ -40,11 +53,6 @@ export default function Login() {
             <h1>Welcome back,<br /><span className="gradient-text">pilot.</span></h1>
             <p>Log in to resume your missions, claim your streak rewards, and push your rank up the leaderboard.</p>
           </div>
-        </div>
-        <div className="login-stats">
-          <div><span className="n">12</span><span className="s">day avg streak</span></div>
-          <div><span className="n gradient-text">#847</span><span className="s">your rank</span></div>
-          <div><span className="n">4,820</span><span className="s">$DRIFT balance</span></div>
         </div>
       </div>
 
@@ -62,6 +70,11 @@ export default function Login() {
             </div>
           )}
           {error && <div className="login-error">{error}</div>}
+          {resetMsg && (
+            <div className="login-error" style={{ color: 'var(--teal)', borderColor: 'var(--teal)', background: 'transparent' }}>
+              {resetMsg}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="login-field">
@@ -78,7 +91,7 @@ export default function Login() {
             <div className="login-field">
               <label>
                 Password
-                <span className="login-forgot">Forgot?</span>
+                <span className="login-forgot" role="button" tabIndex={0} onClick={handleForgot}>Forgot?</span>
               </label>
               <input
                 type="password"
@@ -95,13 +108,8 @@ export default function Login() {
           </form>
 
           <div className="login-footer">
-            By continuing you agree to the <a href="#">Flight Rules</a> &amp; <a href="#">Privacy Policy</a>
+            By continuing you agree to the <span className="link" style={{ color: 'var(--teal)', cursor: 'pointer' }} onClick={() => goto('terms')}>Flight Rules</span> &amp; <span className="link" style={{ color: 'var(--teal)', cursor: 'pointer' }} onClick={() => goto('privacy')}>Privacy Policy</span>
           </div>
-        </div>
-
-        <div className="pilot-preview">
-          <span className="dot" style={{ color: 'var(--lime)' }} />
-          <span>3,214 pilots online now</span>
         </div>
       </div>
     </div>

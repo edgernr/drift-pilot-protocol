@@ -9,19 +9,19 @@ const TRACKS = [
     n: '01', name: 'BLOCK LAYER', theme: 'Visual block coding. No typing. Pure logic. Build the Construct one block at a time.',
     color: 'var(--amber)',   glow: 'oklch(0.82 0.18 75 / 0.18)',
     skills: ['Sequences', 'Loops', 'Conditionals', 'Variables', 'Events'],
-    boss: 'THE GLITCH BLOCK', lang: 'Scratch · Ages 8–11', gates: 15,
+    boss: 'THE GLITCH BLOCK', lang: 'Scratch · Ages 8–10', gates: 15,
   },
   {
     n: '02', name: 'CODE LAYER', theme: 'First real language. Readable and forgiving. The Construct gains rules and written laws.',
     color: 'var(--lime)',    glow: 'oklch(0.9 0.22 135 / 0.15)',
     skills: ['Variables', 'Functions', 'Lists', 'Loops', 'Files'],
-    boss: 'THE RECURSION VAULT', lang: 'Python · Ages 11–14', gates: 15,
+    boss: 'THE ROT DETECTOR', lang: 'Python · Ages 11–13', gates: 24,
   },
   {
     n: '03', name: 'WEB LAYER', theme: 'First web language. Things appear in browsers. The Construct connects to the outside world.',
     color: 'var(--teal)',    glow: 'oklch(0.86 0.18 185 / 0.18)',
     skills: ['DOM', 'Events', 'Fetch', 'Components', 'State'],
-    boss: 'THE WHITE SCREEN', lang: 'JavaScript · Ages 14–16', gates: 10,
+    boss: 'THE HOOK CIRCUIT', lang: 'JavaScript · Ages 14–16', gates: 21,
   },
 ]
 
@@ -76,7 +76,7 @@ export default function AcademyLanding() {
                 <span className="line">From nothing.</span>
               </h1>
               <p className="lede">
-                A coding academy for ages 8–16. Three tracks. Fifty gates.
+                A coding academy for ages 8–16. Three tracks. Sixty gates.
                 One world that grows with every Builder who enters it.
               </p>
               <div className="hero-ctas">
@@ -93,7 +93,7 @@ export default function AcademyLanding() {
                   <div className="lbl">Tracks</div>
                 </div>
                 <div>
-                  <div className="num">50</div>
+                  <div className="num">60</div>
                   <div className="lbl">Gates total</div>
                 </div>
                 <div>
@@ -180,7 +180,7 @@ export default function AcademyLanding() {
         <div className="container">
           <div className="section-head reveal">
             <span className="eyebrow">HOW IT WORKS</span>
-            <h2>Three questions. Your track. Fifty gates.</h2>
+            <h2>Three questions. Your track. Sixty gates.</h2>
             <p>No placement test. No trial and error. Three questions place your builder exactly where they need to start.</p>
           </div>
           <div className="pricing reveal">
@@ -247,8 +247,8 @@ export default function AcademyLanding() {
           <div>© 2026 Drift Builders Academy · No token economy · Ages 8–16</div>
           <div className="right">
             <a onClick={() => goto('landing')} style={{ cursor: 'pointer' }}>Main Platform</a>
-            <a href="#">Discord</a>
-            <a href="#">Parents FAQ</a>
+            <a onClick={() => goto('terms')} style={{ cursor: 'pointer' }}>Terms</a>
+            <a onClick={() => goto('privacy')} style={{ cursor: 'pointer' }}>Privacy</a>
           </div>
         </div>
       </footer>

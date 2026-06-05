@@ -65,11 +65,6 @@ export default function Signup() {
             <p>Create your account and start earning $DRIFT from day one.</p>
           </div>
         </div>
-        <div className="signup-stats">
-          <div><span className="n">142k</span><span className="s">active pilots</span></div>
-          <div><span className="n gradient-text">2.4M</span><span className="s">$DRIFT earned</span></div>
-          <div><span className="n">24/7</span><span className="s">raid matchmaking</span></div>
-        </div>
       </div>
 
       <div className="signup-right">
@@ -142,13 +137,10 @@ export default function Signup() {
           </form>
 
           <div className="signup-footer">
-            By continuing you agree to the <a href="#">Flight Rules</a> &amp; <a href="#">Privacy Policy</a>
+            By continuing you agree to the{' '}
+            <span className="signup-legal-link" onClick={() => goto('terms')}>Flight Rules</span> &amp;{' '}
+            <span className="signup-legal-link" onClick={() => goto('privacy')}>Privacy Policy</span>
           </div>
-        </div>
-
-        <div className="pilot-preview">
-          <span className="dot" style={{ color: 'var(--lime)' }} />
-          <span>3,214 pilots online now</span>
         </div>
       </div>
     </div>

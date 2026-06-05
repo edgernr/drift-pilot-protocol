@@ -149,12 +149,6 @@ const VARIANT_HTML = [
 </div>`,
 ]
 
-const VARIANT_NAMES = [
-  'Sector Zero — District Status',
-  'Command Centre — Mission Board',
-  'Reactor Grid — System Monitor',
-]
-
 // ─── Starting CSS scaffold ─────────────────────────────────────────────────────
 
 const START_CSS = `/* EVA City — Color Protocol
@@ -430,8 +424,8 @@ export default function Quest4() {
   )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === CSS_CHECKS.length
-  const xpEarned = passCount * 25
-  const xpPct = (xpEarned / 200) * 100
+  const xpEarned = passCount * 30
+  const xpPct = (xpEarned / 240) * 100
   const failCount = CSS_CHECKS.length - passCount
 
   const updatePreview = useCallback((css, override = '') => {
@@ -464,7 +458,7 @@ export default function Quest4() {
     trackChange(val.length)
     const newPassed = CSS_CHECKS.filter(c => c.test(val)).length
     if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 25} XP`)
+      setXpPopText(`+${(newPassed - prevPassed) * 30} XP`)
       setXpPopKey(k => k + 1)
     }
   }
@@ -521,7 +515,7 @@ export default function Quest4() {
           <div className="dq-xp-bar-wrap">
             <div className="dq-xp-fill" style={{ width: `${xpPct}%` }} />
           </div>
-          <span className="dq-xp-text">{xpEarned} / 200 XP</span>
+          <span className="dq-xp-text">{xpEarned} / 240 XP</span>
         </div>
       </div>
 
@@ -579,8 +573,8 @@ export default function Quest4() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+200 DRIFT</div></div>
-            <div className="dq-reward xp"><div className="l">XP</div><div className="v">+200</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+195 DRIFT</div></div>
+            <div className="dq-reward xp"><div className="l">XP</div><div className="v">+240</div></div>
           </div>
         </aside>
 
@@ -664,7 +658,7 @@ export default function Quest4() {
           </div>
           <div className="dq-de-torch left" />
           <div className="dq-de-torch right" />
-          <div className="dq-de-xp">+200 XP</div>
+          <div className="dq-de-xp">+240 XP</div>
           <div className="dq-de-label">Color Protocol — Established</div>
         </div>
       )}
@@ -681,8 +675,8 @@ export default function Quest4() {
             <strong>That&apos;s the cascade working the way it was designed.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+200</div></div>
-            <div className="r"><div className="l">XP GAINED</div><div className="v">+200</div></div>
+            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+195</div></div>
+            <div className="r"><div className="l">XP GAINED</div><div className="v">+240</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Color Protocol</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">CSS Architect I</div></div>
           </div>

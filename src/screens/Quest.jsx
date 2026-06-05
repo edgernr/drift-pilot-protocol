@@ -275,7 +275,7 @@ export default function Quest() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+80 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+250 DRIFT</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+100</div></div>
           </div>
         </aside>
@@ -355,7 +355,7 @@ export default function Quest() {
           <h2>The Gate opens.</h2>
           <p>Most hunters left thinking it was dead. You stayed. The browser forgives everything. <strong>The Gate does not.</strong> You extracted what others dismissed as worthless.</p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+80</div></div>
+            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+250</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+100</div></div>
             <div className="r"><div className="l">FRAGMENT</div><div className="v">Signal Fragment</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">E License</div></div>

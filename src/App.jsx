@@ -8,6 +8,8 @@ import GateRoute from './components/GateRoute'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
 import Signup from './screens/Signup'
+import Terms from './screens/Terms'
+import Privacy from './screens/Privacy'
 import Dashboard from './screens/Dashboard'
 import Quest from './screens/Quest'
 import Quest2 from './screens/Quest2'
@@ -17,6 +19,8 @@ import Quest5 from './screens/Quest5'
 import Quest6 from './screens/Quest6'
 import Quest7 from './screens/Quest7'
 import Quest8 from './screens/Quest8'
+import Quest9 from './screens/Quest9'
+import Quest10 from './screens/Quest10'
 import PilotProfile from './screens/PilotProfile'
 import AcademyLanding from './screens/AcademyLanding'
 import AcademySignup from './screens/AcademySignup'
@@ -91,6 +95,8 @@ function AnimatedRoutes() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/quest" element={<ProtectedRoute><Quest /></ProtectedRoute>} />
         <Route path="/quest2" element={<GateRoute requires={['act1-ch01']}><Quest2 /></GateRoute>} />
@@ -100,6 +106,8 @@ function AnimatedRoutes() {
         <Route path="/quest6" element={<GateRoute requires={['act1-ch05']} unlockKey="act1-ch06"><Quest6 /></GateRoute>} />
         <Route path="/quest7" element={<GateRoute requires={['act1-ch06']} unlockKey="act1-ch07"><Quest7 /></GateRoute>} />
         <Route path="/quest8" element={<GateRoute requires={['act1-ch07']} unlockKey="act1-ch08"><Quest8 /></GateRoute>} />
+        <Route path="/quest9" element={<GateRoute requires={['act1-ch08']} unlockKey="act1-ch09"><Quest9 /></GateRoute>} />
+        <Route path="/quest10" element={<GateRoute requires={['act1-ch09']} unlockKey="act1-ch10"><Quest10 /></GateRoute>} />
         <Route path="/pilot/:id" element={<PilotProfile />} />
         {/* Drift Builders Academy */}
         <Route path="/academy" element={<AcademyLanding />} />

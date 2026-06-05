@@ -4,10 +4,11 @@ import { ethers } from "npm:ethers@6"
 const TOKEN_ADDRESS = "0x60FE1910182602942Bcf297fFF7244f6f4ed8633"
 const ABI = ["function mintReward(address pilot, uint256 amount) external"]
 
+// MUST match src/context/AuthContext.jsx DRIFT_REWARDS (canonical off-chain values).
 const DRIFT_REWARDS: Record<string, number> = {
   "act1-ch01": 250, "act1-ch02": 350, "act1-ch03": 700,
-  "act1-ch04": 400, "act1-ch05": 500, "act1-ch06": 900,
-  "act1-ch07": 550, "act1-ch08": 1000, "act1-ch09": 700, "act1-ch10": 1500,
+  "act1-ch04": 195, "act1-ch05": 225, "act1-ch06": 400,
+  "act1-ch07": 280, "act1-ch08": 400, "act1-ch09": 700, "act1-ch10": 1500,
 }
 
 const CORS = {

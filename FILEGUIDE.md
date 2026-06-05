@@ -78,6 +78,10 @@ eva-react/
 │       ├── Quest7.jsx             GATE 07 — Ghost Feedback. CSS Transitions → 7 checks → Ghost Signal.
 │       ├── Quest7.css             Gate 07-specific: ghost/white-blue accent, bar-chart figures scene art, ghost signal slot
 │       ├── Quest8.jsx             GATE 08 — The Collapse. Mobile-first responsive → 7 checks → Mobile Gate (Boss: The Stack).
+│       ├── Quest9.jsx             GATE 09 — The Control Room. Vanilla JS DOM → 8 checks → Control Room Slot.
+│       ├── Quest9.css             Gate 09-specific: lime accent, 4×2 monitor grid scene, control slot
+│       ├── Quest10.jsx            GATE 10 — The Static City. Fetch API → 6 checks → Signal Breach (Final Boss).
+│       ├── Quest10.css            Gate 10-specific: magenta accent, city skyline scene, boss HP bar, breach slot
 │       ├── Quest8.css             Gate 08-specific: orange accent, stacked panels scene art, boss HP bar, mobile gate slot
 │       ├── QuestQuiz.jsx          shared knowledge-check overlay — shown before completion animation on all gates
 │       ├── AcademyLanding.jsx     /academy — The Construct landing. Three tracks, auth-aware CTA, floating block decorations.
@@ -94,7 +98,9 @@ eva-react/
 
 | Route | Component | Auth | Notes |
 |---|---|---|---|
-| `/` | `Landing.jsx` | public | Auth-aware nav + hero CTAs. Real stats from Supabase. Worlds, skill tree preview, pricing. |
+| `/` | `Landing.jsx` | public | Auth-aware nav + hero CTAs. Real stats from `platform_stats` view. Worlds, skill tree preview, real Season-Pass pricing. (Tokenomics/partners sections removed.) |
+| `/terms` | `Terms.jsx` | public | In-app Terms of Service. *Draft — pending legal review.* Linked from footers + auth pages. |
+| `/privacy` | `Privacy.jsx` | public | In-app Privacy Policy (incl. children's data / parental rights). *Draft — pending legal review.* |
 | `/login` | `Login.jsx` | public | Email + password. Redirects to `/dashboard` on success. |
 | `/signup` | `Signup.jsx` | public | Name, email, wallet (optional), password. Trigger creates profile row. |
 | `/dashboard` | `Dashboard.jsx` | protected | 8-view SPA. View + card variant persisted in localStorage. Admin view only visible to `is_admin` pilots. |
@@ -106,6 +112,8 @@ eva-react/
 | `/quest6` | `Quest6.jsx` | `GateRoute` (ch05, or `unlockKey=act1-ch06`) | Gate 06 (Boss). CSS Grid dashboard. 7-check audit, boss HP bar, Grid Seal, records `act1-ch06`. |
 | `/quest7` | `Quest7.jsx` | `GateRoute` (ch06, or `unlockKey=act1-ch07`) | Gate 07. CSS Transitions. 7-check audit, Ghost Signal slot, records `act1-ch07`. |
 | `/quest8` | `Quest8.jsx` | `GateRoute` (ch07, or `unlockKey=act1-ch08`) | Gate 08 (Boss). Mobile-first responsive. Full HTML pages. 7-check audit, boss HP bar, Mobile Gate slot, records `act1-ch08`. |
+| `/quest9` | `Quest9.jsx` | `GateRoute` (ch08, or `unlockKey=act1-ch09`) | Gate 09. JS DOM manipulation. 3 HTML variants (same IDs). 8-check JS audit, 4×2 monitor grid scene, Control Room slot, records `act1-ch09`. |
+| `/quest10` | `Quest10.jsx` | `GateRoute` (ch09, or `unlockKey=act1-ch10`) | Gate 10 (Final Boss). Fetch API. Single intelligence dashboard HTML. 6-check JS audit, city skyline scene, boss HP bar, Signal Breach slot, records `act1-ch10`. |
 | `/academy` | `AcademyLanding.jsx` | public | The Construct landing. Three tracks, auth-aware CTA. |
 | `/academy/onboarding` | `AcademyOnboarding.jsx` | `ProtectedRoute` | 4-step Builder setup. Determines track + startGate. Creates `child_profiles` row. |
 | `/academy/dashboard` | `AcademyDashboard.jsx` | `ProtectedRoute` | Builder HQ. Active child card, gate grid, child switcher. |
@@ -180,6 +188,7 @@ const {
 | `clearQuest(questId)` | deletes from `quest_completions`; if new balance < spent, also wipes all `gate_unlocks`; refreshes profile |
 | `unlockGate(questId, driftCost)` | checks spendable balance, inserts into `gate_unlocks`, refreshes profile → `{ ok, reason }` |
 | `updateProfile(name, wallet)` | updates `public.profiles`, refreshes profile → returns `true/false` |
+| `updateUsernameColor(key)` | Season Pass benefit: sets `profiles.username_color` to a `USERNAME_COLORS` key (or null). UI gates it to subscribers |
 | `clearFlag(targetUserId, questId)` | admin-only: sets `flagged = false` on a specific completion row |
 | `toggleSubscription(targetUserId, currentValue)` | admin-only: flips `is_subscribed` on a pilot's profile |
 | `sendPasswordReset()` | `resetPasswordForEmail` to `user.email` with redirect to `/dashboard` |
@@ -190,19 +199,25 @@ const {
 ### $DRIFT rewards (AuthContext)
 ```js
 const DRIFT_REWARDS = {
-  'act1-ch01': 80,  'act1-ch02': 160, 'act1-ch03': 300,
-  'act1-ch04': 195, 'act1-ch05': 225, 'act1-ch06': 400,
-  'act1-ch07': 280, 'act1-ch08': 400,
+  'act1-ch01': 80,   'act1-ch02': 160,  'act1-ch03': 300,
+  'act1-ch04': 195,  'act1-ch05': 225,  'act1-ch06': 400,
+  'act1-ch07': 280,  'act1-ch08': 400,  'act1-ch09': 700, 'act1-ch10': 1500,
 }
 ```
-`totalDrift` is derived from completions — no DB column needed. Add new entries here when new gates are built. Max earnable across Gates 01-08: 2040 $DRIFT.
+`totalDrift` is derived from completions — no DB column needed. Add new entries here when new gates are built. Max earnable across Gates 01-10: 4240 $DRIFT.
 
 ### XP Level system (AuthContext)
 ```js
 export const XP_LEVELS   // 10-level array: CADET(0) → LEGEND(5000)
 export const RAID_XP_REWARDS  // { PERFECT:500, PASSED:300, PARTIAL:100, FAILED:0 }
+export const STREAK_TIERS         // [{min:14,mult:1.5},{min:7,mult:1.25},{min:3,mult:1.1}]
+export const SEASON_PASS_XP_MULT  // 1.25 — subscriber (is_subscribed) gate-XP boost
 export function computeLevelData(xp)  // returns { level, label, color, progress, xpInLevel, xpNeeded, nextLabel }
+export function computeStreakMultiplier(streak)  // highest qualifying tier mult, else 1
+export function computeXpMultiplier({ streak, isSubscribed })  // streakMult × (isSubscribed ? 1.25 : 1)
 ```
+- **Gate XP multiplier:** `completeQuest` boosts gate XP by `computeXpMultiplier({ streak, isSubscribed })` (rounded) at completion time — the boosted value is stored in `xp_earned`. It's the **streak bonus × Season Pass ×1.25**, multiplicative. Gates only (`raid:*` excluded so raid-format detection stays valid); XP-only ($DRIFT is computed from `DRIFT_REWARDS`, untouched). `profile.streakMultiplier`, `profile.subscriberMultiplier`, and combined `profile.xpMultiplier` are exposed for UI; the Dashboard hero shows the active boost and streak-art shows the streak mult.
+- **`USERNAME_COLORS`** (exported map): curated brand-token palette for the Season Pass custom-name-colour benefit. DB stores the key in `profiles.username_color`; UI maps key → `var(--token)` and only honours it while `is_subscribed`. Applied to the pilot's own name in Dashboard + the public `/pilot/:id` page.
 - `profile` exposes: `level`, `levelLabel`, `levelColor`, `levelProgress`, `xpInLevel`, `xpNeeded`, `nextLevelLabel`
 - Raid rows in `quest_completions` store actual XP in `xp_earned` (not DRIFT). `fetchProfile` derives DRIFT via `RAID_XP_TO_DRIFT` lookup.
 - Old raid rows (pre-level-system) that stored DRIFT as `xp_earned` are handled via `RAID_OLD_TO_XP` backward-compat map.
@@ -337,12 +352,23 @@ create policy "admin_update_profiles" on public.profiles
 ```
 Admin `is_admin` flag set manually: `UPDATE public.profiles SET is_admin = true WHERE id = (SELECT id FROM auth.users WHERE email = 'x@x.com');`
 
+### Pre-test SQL & public read views
+Run in this order in the Supabase SQL Editor (all idempotent) before testing:
+`supabase/pretest_setup.sql` → `supabase/quests_seed.sql` → `eva-react/academy_schema.sql` → `eva-react/raid_files_table.sql` → `supabase/security.sql`.
+Edge functions: deploy per `supabase/DEPLOY.md` (secrets + commands). `quests_seed.sql` seeds World-1 with the 10 built gates. `pretest_setup.sql` also adds the `username_color`/stripe/chain columns and the `quests` table.
+
+`pretest_setup.sql` provisions core tables (no-op if present), the on-signup `handle_new_user()` trigger, `raid_events` RLS, the `bug_reports` table + RLS, and three **definer views** that bypass the owner-only `quest_completions` RLS to expose only non-sensitive columns (no `time_taken`/`paste_count`/`flagged`):
+- `public.leaderboard` (id, name, total_xp) — Dashboard leaderboard + global rank query `from('leaderboard')`.
+- `public.platform_stats` (pilots, total_xp, gates_cleared) — Landing hero stats.
+- `public.public_completions` (user_id, quest_id, xp_earned, completed_at) — shared `/pilot/:id` profiles.
+
 ### Environment
 ```
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=sb_publishable_...
+VITE_ALCHEMY_RPC=https://...   # optional — on-chain $DRIFT balance; shows "—" if unset
 ```
-Restart `npm run dev` after editing `.env.local`.
+Restart `npm run dev` after editing `.env.local`. `supabase.js` throws a clear error at import if URL/ANON_KEY are missing (no silent white-screen).
 
 ---
 
@@ -486,11 +512,11 @@ Wallet view shows: card balance = spendable (`totalDrift - totalDriftSpent`), EA
 ### Smart quest routing
 ```js
 function gotoActiveQuest() {
-  // Routes to the first incomplete gate in sequence (ch01 → ch08)
-  // act1Done…act8Done derived from doneQuests Set in Dashboard
+  // Routes to the first incomplete gate in sequence (ch01 → ch10)
+  // act1Done…act10Done derived from doneQuests Set in Dashboard
 }
 ```
-`gotoActiveQuest()` checks act1Done through act8Done sequentially and routes to the first incomplete gate. `gotoQuestById(chKey)` maps `'act1-ch01'` through `'act1-ch08'` to their route names.
+`gotoActiveQuest()` checks act1Done through act10Done sequentially and routes to the first incomplete gate. `gotoQuestById(chKey)` maps `'act1-ch01'` through `'act1-ch10'` to their route names.
 
 ### Leaderboard fetch
 ```js
@@ -547,6 +573,10 @@ goto('quest5')     // → /quest5  (Gate 05)
 goto('quest6')     // → /quest6  (Gate 06)
 goto('quest7')     // → /quest7  (Gate 07)
 goto('quest8')     // → /quest8  (Gate 08)
+goto('quest9')     // → /quest9  (Gate 09)
+goto('quest10')    // → /quest10 (Gate 10)
+goto('terms')      // → /terms   (Terms of Service)
+goto('privacy')    // → /privacy (Privacy Policy)
 ```
 
 `goto()` runs a 380ms animation (progress bar + blur overlay) before calling `navigate()`.
@@ -560,7 +590,7 @@ goto('quest8')     // → /quest8  (Gate 08)
 - **Screen-specific styles** — co-located `ScreenName.css`. Flat class names (no CSS modules).
 - **Neon colors**: `--teal`, `--violet`, `--magenta`, `--lime`, `--amber`, `--cyan`, `--steel-blue`, `--ghost`, `--orange` in `oklch()`.
 - **Fonts**: `--f-display` (Space Grotesk), `--f-body` (Inter), `--f-mono` (JetBrains Mono).
-- **Gate accent colors**: Gate 01 teal · Gate 02 violet · Gate 03 crimson · Gate 04 amber · Gate 05 cyan · Gate 06 steel-blue · Gate 07 ghost · Gate 08 orange
+- **Gate accent colors**: Gate 01 teal · Gate 02 violet · Gate 03 crimson · Gate 04 amber · Gate 05 cyan · Gate 06 steel-blue · Gate 07 ghost · Gate 08 orange · Gate 09 lime · Gate 10 magenta
 
 ---
 

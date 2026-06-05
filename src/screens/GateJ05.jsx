@@ -1,7 +1,9 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import './AcademyGate.css'
 import { useNav } from '../context/NavigationContext'
 import { useAcademy } from '../context/AcademyContext'
+import { stripComments } from '../lib/codeUtils'
+import GateAIHint from '../components/GateAIHint'
 
 const GATE_ID = 'J-05'
 const GATE_XP = 300
@@ -85,7 +87,7 @@ export default function GateJ05() {
   const [quizWrong, setQuizWrong] = useState(false)
   const [done, setDone]           = useState(false)
 
-  const checks    = CHECKS.map(c => ({ ...c, passed: c.test(code) }))
+  const checks    = CHECKS.map(c => ({ ...c, passed: c.test(c.raw ? code : stripComments(code)) }))
   const allPassed = checks.every(c => c.passed)
   const passCount = checks.filter(c => c.passed).length
 
@@ -140,6 +142,7 @@ export default function GateJ05() {
           >
             {running ? '⟳ Running checks…' : allPassed ? '▶ LINK MODULES' : `○ ${5 - passCount} check${5 - passCount !== 1 ? 's' : ''} remaining`}
           </button>
+          <GateAIHint code={code} checks={checks} gateId={GATE_ID} lang="javascript" done={done} />
         </div>
 
         <div className="ag-right">

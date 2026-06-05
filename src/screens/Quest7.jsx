@@ -131,8 +131,6 @@ const VARIANT_HTML = [
 </div>`,
 ]
 
-const VARIANT_NAMES = ['Sector Zero', 'Command Centre', 'Reactor Grid']
-
 // ─── Starting CSS scaffold ─────────────────────────────────────────────────────
 
 const START_CSS = `/* Gate 07 — Ghost Feedback

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './PilotProfile.css'
 import { supabase } from '../lib/supabase'
 import { useParams } from 'react-router-dom'
-import { computeLevelData, DRIFT_REWARDS } from '../context/AuthContext'
+import { computeLevelData, DRIFT_REWARDS, USERNAME_COLORS } from '../context/AuthContext'
 
 const RAID_XP_TO_DRIFT = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
 const RAID_NEW_XP_SET   = new Set([100, 300, 500])
@@ -30,8 +30,8 @@ export default function PilotProfile() {
   useEffect(() => {
     async function load() {
       const [{ data: prof }, { data: rows }] = await Promise.all([
-        supabase.from('profiles').select('id, name, created_at').eq('id', id).single(),
-        supabase.from('quest_completions').select('quest_id, xp_earned, completed_at').eq('user_id', id),
+        supabase.from('profiles').select('id, name, created_at, is_subscribed, username_color').eq('id', id).single(),
+        supabase.from('public_completions').select('quest_id, xp_earned, completed_at').eq('user_id', id),
       ])
       if (!prof) { setNotFound(true); setLoading(false); return }
 
@@ -135,7 +135,8 @@ export default function PilotProfile() {
           LV.{pilot.level} {pilot.levelLabel}
         </div>
 
-        <h1 className="pp-name">{pilot.name ?? 'PILOT'}</h1>
+        <h1 className="pp-name" style={pilot.is_subscribed ? { color: USERNAME_COLORS[pilot.username_color]?.value ?? undefined } : undefined}>{pilot.name ?? 'PILOT'}</h1>
+        {pilot.is_subscribed && <div style={{ display: 'inline-block', marginTop: 8, fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', color: 'var(--magenta)', border: '1px solid color-mix(in oklch, var(--magenta) 45%, transparent)', background: 'color-mix(in oklch, var(--magenta) 12%, transparent)', borderRadius: 999, padding: '3px 10px' }}>◈ SEASON 01 PASS</div>}
         <div className="pp-since">Pilot since {joined}</div>
 
         {/* Stats row */}

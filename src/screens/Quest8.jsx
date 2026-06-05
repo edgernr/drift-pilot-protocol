@@ -146,8 +146,6 @@ const VARIANT_HTML = [
 </html>`,
 ]
 
-const VARIANT_NAMES = ['Sector Zero', 'Command Centre', 'Reactor Grid']
-
 // ─── Starting CSS scaffold ─────────────────────────────────────────────────────
 
 const START_CSS = `/* Gate 08 — The Collapse
@@ -326,11 +324,12 @@ const CSS_CHECKS = [
     hint: 'CSS Grid defaults to a single column when no column template is set. Define the base as one track, then use a media query to expand the number of columns for larger screens.',
     test: css => {
       const base = css.match(/\.features\s*\{([^}]+)\}/)
-      const inMedia = css.match(/@media[^{]*\{([^{}]*\.features[^{}]*\{[^}]+\}[^{}]*)\}/)
       if (!base) return false
       const baseHas1col = /grid-template-columns\s*:\s*1fr/.test(base[1]) ||
         !/grid-template-columns/.test(base[1])
-      const mediaHasMulti = inMedia ? /grid-template-columns[^;]*(?:repeat|4)/.test(inMedia[1]) : false
+      // Detect a multi-column .features rule inside ANY min-width @media block,
+      // regardless of other rules present in that block (idiomatic mobile-first).
+      const mediaHasMulti = /@media[^{]*min-width[\s\S]*?\.features\s*\{[^}]*grid-template-columns[^}]*(?:repeat|[2-9])[^}]*\}/.test(css)
       return baseHas1col && mediaHasMulti
     },
   },
@@ -413,8 +412,12 @@ export default function Quest8() {
   )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === CSS_CHECKS.length
-  const xpEarned = passCount * 50
-  const xpPct = (xpEarned / 350) * 100
+  // Gate 08 stores 500 XP via completeQuest('act1-ch08', 500, ...).
+  // Displayed XP total must match the stored value.
+  const GATE_XP = 500
+  const xpPerCheck = GATE_XP / CSS_CHECKS.length
+  const xpEarned = allPassed ? GATE_XP : Math.round(passCount * xpPerCheck)
+  const xpPct = (xpEarned / GATE_XP) * 100
   const failCount = CSS_CHECKS.length - passCount
   const bossHpPct = (failCount / CSS_CHECKS.length) * 100
 
@@ -453,7 +456,8 @@ export default function Quest8() {
     trackChange(val.length)
     const newPassed = CSS_CHECKS.filter(c => c.test(val)).length
     if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 50} XP`)
+      const gained = Math.round(newPassed * xpPerCheck) - Math.round(prevPassed * xpPerCheck)
+      setXpPopText(`+${gained} XP`)
       setXpPopKey(k => k + 1)
     }
   }
@@ -499,7 +503,7 @@ export default function Quest8() {
           <div className="dq-xp-bar-wrap">
             <div className="dq-xp-fill" style={{ width: `${xpPct}%` }} />
           </div>
-          <span className="dq-xp-text">{xpEarned} / 350 XP</span>
+          <span className="dq-xp-text">{xpEarned} / {GATE_XP} XP</span>
         </div>
       </div>
 
@@ -663,13 +667,13 @@ export default function Quest8() {
             <div className="r"><div className="l">ITEM</div><div className="v">Stack Fragment</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Responsive License I</div></div>
           </div>
-          <div className="dq-next-quest" style={{ opacity: 0.5 }}>
-            <div className="dq-nq-label">WORLD 02 COMPLETE</div>
-            <div className="dq-nq-card">
-              <span className="dq-nq-emoji">🔒</span>
+          <div className="dq-next-quest">
+            <div className="dq-nq-label">WORLD 02 COMPLETE — WORLD 03 UNLOCKED</div>
+            <div className="dq-nq-card" onClick={async () => { await completeQuest('act1-ch08', 500, getAnalytics()); goto('quest9') }} style={{ cursor: 'pointer' }}>
+              <span className="dq-nq-emoji">⬡</span>
               <div>
-                <div className="dq-nq-title">Gate 09 — Coming Soon</div>
-                <div className="dq-nq-sub">JavaScript fundamentals · World 03</div>
+                <div className="dq-nq-title">Gate 09 — The Control Room</div>
+                <div className="dq-nq-sub">JavaScript DOM · World 03 · The Living Layer</div>
               </div>
             </div>
           </div>

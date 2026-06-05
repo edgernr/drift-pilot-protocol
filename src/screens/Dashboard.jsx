@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './Dashboard.css'
 import { useNav } from '../context/NavigationContext'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, DRIFT_REWARDS, SEASON_PASS_XP_MULT, USERNAME_COLORS } from '../context/AuthContext'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../lib/supabase'
 import RaidView from './RaidView'
@@ -14,7 +14,7 @@ function fmtTime(s) { if (!s) return '—'; return `${Math.floor(s / 60)}:${Stri
 
 export default function Dashboard() {
   const { goto } = useNav()
-  const { user, profile, logout, updateProfile, refreshProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
+  const { user, profile, logout, updateProfile, updateUsernameColor, refreshProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const [resetConfirm, setResetConfirm] = useState(null)
   const [unlockStatus, setUnlockStatus] = useState({})
@@ -45,6 +45,7 @@ export default function Dashboard() {
   const [bugScreenshot, setBugScreenshot] = useState(null)
   const [bugPreview, setBugPreview] = useState(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState(null)
   // Read session_id BEFORE clearing URL in checkoutSuccess initializer
   const [checkoutSessionId] = useState(() => new URLSearchParams(window.location.search).get('session_id'))
   const [checkoutSuccess, setCheckoutSuccess] = useState(() => {
@@ -69,6 +70,8 @@ export default function Dashboard() {
     'act1-ch06': 'The Infinite Grid',
     'act1-ch07': 'Ghost Feedback',
     'act1-ch08': 'The Collapse',
+    'act1-ch09': 'The Control Room',
+    'act1-ch10': 'The Static City',
   }
 
   const KNOWN_GATES = [
@@ -80,11 +83,14 @@ export default function Dashboard() {
     { id: 'act1-ch06', label: 'Gate 06 — The Infinite Grid', xp: 500 },
     { id: 'act1-ch07', label: 'Gate 07 — Ghost Feedback', xp: 350 },
     { id: 'act1-ch08', label: 'Gate 08 — The Collapse', xp: 500 },
+    { id: 'act1-ch09', label: 'Gate 09 — The Control Room', xp: 450 },
+    { id: 'act1-ch10', label: 'Gate 10 — The Static City', xp: 600 },
   ]
   const [quests, setQuests] = useState([])
   const [lbData, setLbData] = useState([])
   const [settingsName, setSettingsName] = useState('')
   const [settingsWallet, setSettingsWallet] = useState('')
+  const [walletError, setWalletError] = useState(null)
   const [saveStatus, setSaveStatus] = useState(null)
   const [onChainBalance, setOnChainBalance] = useState(null)
 
@@ -116,6 +122,9 @@ export default function Dashboard() {
   const DRIFT_TOKEN_ADDRESS = '0x60FE1910182602942Bcf297fFF7244f6f4ed8633'
 
   async function fetchOnChainDrift(wallet) {
+    // No RPC configured → on-chain balance is unavailable (return null so the UI
+    // shows "—" rather than a misleading on-chain 0 or a fetch(undefined) error).
+    if (!import.meta.env.VITE_ALCHEMY_RPC) return null
     const data = '0x70a08231' + wallet.slice(2).toLowerCase().padStart(64, '0')
     try {
       const res = await fetch(import.meta.env.VITE_ALCHEMY_RPC, {
@@ -130,9 +139,17 @@ export default function Dashboard() {
   }
 
   async function connectMetaMask() {
-    if (!window.ethereum) { alert('MetaMask not installed'); return }
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-    if (accounts[0]) setSettingsWallet(accounts[0])
+    setWalletError(null)
+    if (!window.ethereum) {
+      setWalletError('MetaMask not detected — install it to link a wallet.')
+      return
+    }
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      if (accounts[0]) setSettingsWallet(accounts[0])
+    } catch {
+      setWalletError('Wallet connection cancelled.')
+    }
   }
 
   useEffect(() => {
@@ -201,27 +218,17 @@ export default function Dashboard() {
     })
 
     if (!error) {
-      const webhookUrl = import.meta.env.VITE_DISCORD_WEBHOOK
-      if (webhookUrl) {
-        fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            embeds: [{
-              title: '⚠ Bug Report',
-              description: bugText.trim(),
-              color: 0xe63946,
-              fields: [
-                { name: 'Pilot', value: profile?.name ?? user?.email ?? 'unknown', inline: true },
-                { name: 'View', value: view, inline: true },
-                { name: 'URL', value: window.location.href, inline: false },
-                ...(bugPreview ? [{ name: 'Screenshot', value: '📎 attached (see admin panel)', inline: false }] : []),
-              ],
-              timestamp: new Date().toISOString(),
-            }],
-          }),
-        }).catch(() => {})
-      }
+      // Flat shape matches the notify-discord edge function, which builds the embed.
+      supabase.functions.invoke('notify-discord', {
+        body: {
+          description: bugText.trim(),
+          user_name: profile?.name ?? user?.email ?? 'unknown',
+          view,
+          url: window.location.href,
+          screenshot_base64: bugPreview || undefined,
+          created_at: new Date().toISOString(),
+        },
+      }).catch(() => {})
       setBugStatus('sent')
       setBugText('')
       setBugScreenshot(null)
@@ -244,29 +251,40 @@ export default function Dashboard() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCheckout() {
+    setCheckoutError(null)
     setCheckoutLoading(true)
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
       body: { user_id: user.id, email: user.email },
     })
-    if (error || !data?.url) { setCheckoutLoading(false); return }
+    if (error || !data?.url) {
+      setCheckoutLoading(false)
+      setCheckoutError('Checkout is not available yet — try again later.')
+      return
+    }
     window.location.href = data.url
   }
 
 
   useEffect(() => {
+    // Use the SQL `leaderboard` view: nested quest_completions are blocked by
+    // RLS cross-user (every pilot would read 0). The view aggregates total_xp
+    // server-side. Degrade gracefully if the view isn't provisioned yet.
     supabase
-      .from('profiles')
-      .select('id, name, quest_completions(xp_earned)')
-      .then(({ data }) => {
-        if (!data) return
-        const ranked = data
-          .map(p => ({
-            id: p.id,
-            name: p.name || 'Pilot',
-            totalXp: (p.quest_completions || []).reduce((s, r) => s + r.xp_earned, 0),
-          }))
-          .sort((a, b) => b.totalXp - a.totalXp)
-          .map((p, i) => ({ ...p, rank: i + 1 }))
+      .from('leaderboard')
+      .select('id,name,total_xp')
+      .order('total_xp', { ascending: false })
+      .then(({ data, error }) => {
+        if (error || !data) {
+          if (error) console.warn('leaderboard view unavailable:', error.message)
+          setLbData([])
+          return
+        }
+        const ranked = data.map((p, i) => ({
+          id: p.id,
+          name: p.name || 'Pilot',
+          totalXp: p.total_xp ?? 0,
+          rank: i + 1,
+        }))
         setLbData(ranked)
       })
   }, [profile])
@@ -274,6 +292,7 @@ export default function Dashboard() {
   function openSettings() {
     setSettingsName(profile?.name ?? '')
     setSettingsWallet(profile?.wallet ?? '')
+    setWalletError(null)
     setSaveStatus(null)
     setView('settings')
   }
@@ -286,6 +305,9 @@ export default function Dashboard() {
   }
 
   const questsDone = profile?.questsCompleted ?? 0
+  // questsCompleted counts raid rows too, so it can exceed the gate denominator.
+  // Count only Act I gate completions for the "QUESTS CLEARED" stat.
+  const gatesDone = [...(profile?.completedQuestIds ?? [])].filter(id => id.startsWith('act1-ch')).length
   const totalXp = profile?.totalXp ?? 0
   const totalDrift = profile?.totalDrift ?? 0
   const totalDriftSpent = profile?.totalDriftSpent ?? 0
@@ -294,11 +316,14 @@ export default function Dashboard() {
   const unlocks = profile?.unlocks ?? []
   const unlockedGateIds = profile?.unlockedGateIds ?? new Set()
 
-  const GATE_SHORT = {
-    'act1-ch01': 'Gate 01',
-    'act1-ch02': 'Gate 02',
-    'act1-ch03': 'Gate 03',
-  }
+  // Readable gate labels for the admin flagged-completions table — covers all
+  // of Act I (ch01–ch10) by reusing the GATE_NAMES titles.
+  const GATE_SHORT = Object.fromEntries(
+    Object.entries(GATE_NAMES).map(([id, name]) => {
+      const ch = id.slice(-2)
+      return [id, `Gate ${ch} — ${name}`]
+    })
+  )
 
   async function handleUnlock(chKey, driftCost) {
     setUnlockStatus(s => ({ ...s, [chKey]: 'unlocking' }))
@@ -320,14 +345,12 @@ export default function Dashboard() {
     'act1-ch06': { label: 'Gate 06 — The Infinite Grid',  icon: '⬛' },
     'act1-ch07': { label: 'Gate 07 — Ghost Feedback',     icon: '👻' },
     'act1-ch08': { label: 'Gate 08 — The Collapse',       icon: '📱' },
-    'act1-ch09': { label: 'Gate 09',                     icon: '◈' },
-    'act1-ch10': { label: 'Gate 10 — Boss',              icon: '💀' },
+    'act1-ch09': { label: 'Gate 09 — The Control Room',  icon: '⬡' },
+    'act1-ch10': { label: 'Gate 10 — The Static City',   icon: '📡' },
   }
-  const DRIFT_REWARDS_UI = {
-    'act1-ch01': 80,  'act1-ch02': 160, 'act1-ch03': 300,
-    'act1-ch04': 195, 'act1-ch05': 225, 'act1-ch06': 400,
-    'act1-ch07': 280, 'act1-ch08': 400, 'act1-ch09': 700, 'act1-ch10': 1500,
-  }
+  // Source of truth for $DRIFT payouts lives in AuthContext.DRIFT_REWARDS —
+  // mirror it directly so wallet credits, transactions, and notifications match.
+  const DRIFT_REWARDS_UI = DRIFT_REWARDS
   function resolveQuestMeta(questId, xpEarned) {
     if (DRIFT_GATE_NAMES[questId]) return { ...DRIFT_GATE_NAMES[questId], drift: DRIFT_REWARDS_UI[questId] ?? 0, kind: 'gate' }
     if (questId?.startsWith('raid:')) return { label: 'Raid completed', icon: '⚔️', drift: xpEarned ?? 0, kind: 'raid' }
@@ -335,6 +358,11 @@ export default function Dashboard() {
   }
   const pilotName = profile?.name ?? 'Pilot'
   const streak = profile?.streak ?? 0
+  const streakMult = profile?.streakMultiplier ?? 1
+  const xpMult = profile?.xpMultiplier ?? 1
+  const fmtMult = (m) => Number(m.toFixed(3)).toString()
+  // Season Pass: custom name colour (only honoured while subscribed)
+  const nameColor = isSubscribed ? (USERNAME_COLORS[profile?.username_color]?.value ?? undefined) : undefined
   const doneQuests = profile?.completedQuestIds ?? new Set()
   const levelData = {
     level:    profile?.level ?? 1,
@@ -353,9 +381,13 @@ export default function Dashboard() {
   const act6Done = doneQuests.has('act1-ch06')
   const act7Done = doneQuests.has('act1-ch07')
   const act8Done = doneQuests.has('act1-ch08')
+  const act9Done = doneQuests.has('act1-ch09')
+  const act10Done = doneQuests.has('act1-ch10')
   const myRank = lbData.find(r => r.id === user?.id)?.rank ?? null
 
   function gotoActiveQuest() {
+    if (act9Done && !act10Done) return goto('quest10')
+    if (act8Done && !act9Done) return goto('quest9')
     if (act7Done && !act8Done) return goto('quest8')
     if (act6Done && !act7Done) return goto('quest7')
     if (act5Done && !act6Done) return goto('quest6')
@@ -367,6 +399,8 @@ export default function Dashboard() {
   }
 
   function gotoQuestById(id) {
+    if (id === 'act1-ch10') return goto('quest10')
+    if (id === 'act1-ch09') return goto('quest9')
     if (id === 'act1-ch08') return goto('quest8')
     if (id === 'act1-ch07') return goto('quest7')
     if (id === 'act1-ch06') return goto('quest6')
@@ -374,7 +408,10 @@ export default function Dashboard() {
     if (id === 'act1-ch04') return goto('quest4')
     if (id === 'act1-ch03') return goto('quest3')
     if (id === 'act1-ch02') return goto('quest2')
-    return goto('quest')
+    if (id === 'act1-ch01') return goto('quest')
+    // Unmapped chapter (e.g. ch11–ch15 has no screen yet) — do nothing rather
+    // than silently opening Gate 01.
+    return
   }
 
   return (
@@ -390,7 +427,7 @@ export default function Dashboard() {
               <h2 className="welcome-title">Welcome, Pilot.</h2>
               <p className="welcome-body">
                 EVA City is a neon district where the old code has corrupted. As a Drift Pilot you'll clear the Gates — debugging sectors, building real projects, and earning $DRIFT.<br /><br />
-                Clear all 15 gates in Act I to unlock the Reactive Sector. Raid the tower for bonus rewards.
+                Clear all 10 gates in Act I to unlock the Reactive Sector. Raid the tower for bonus rewards.
               </p>
               <div className="onboard-dots">
                 <span className="onboard-dot onboard-dot-on" /><span className="onboard-dot" /><span className="onboard-dot" />
@@ -556,11 +593,6 @@ export default function Dashboard() {
           <div className="hamburger" onClick={() => setSidebarOpen(o => !o)}>
             <span /><span /><span />
           </div>
-          <div className="search">
-            <span>⌕</span>
-            <input placeholder="Search quests, skills, pilots..." />
-            <span className="kbd">⌘K</span>
-          </div>
           <div className="top-actions">
             <button
               onClick={toggleTheme}
@@ -618,7 +650,7 @@ export default function Dashboard() {
               {profileOpen && (
                 <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 220, zIndex: 100, background: 'var(--bg-popup)', border: '1px solid var(--border-popup)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-popup)' }}>
                   <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line-popup)' }}>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink-1)', fontWeight: 600 }}>{pilotName}</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: nameColor ?? 'var(--ink-1)', fontWeight: 600 }}>{pilotName}{isSubscribed && <span className="pilot-badge badge-season1" style={{ marginLeft: 6, fontSize: 8, verticalAlign: 'middle' }}>◈ S01</span>}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', marginTop: 3 }}>{user?.email}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: levelData.color, marginTop: 5, letterSpacing: '0.08em' }}>
                       LV.{levelData.level} {levelData.label} · {levelData.level < 10 ? `${levelData.progress}%` : 'MAX'}
@@ -647,7 +679,7 @@ export default function Dashboard() {
             <span style={{ fontSize: 20 }}>✓</span>
             <div style={{ flex: 1 }}>
               <div style={{ color: 'var(--lime)', fontWeight: 600, marginBottom: 2 }}>Season Pass activated!</div>
-              <div style={{ color: 'var(--ink-2)', fontSize: 11 }}>All 15 gates are now unlocked. Welcome to the full protocol.</div>
+              <div style={{ color: 'var(--ink-2)', fontSize: 11 }}>All 10 gates are now unlocked. Welcome to the full protocol.</div>
             </div>
             <button style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 16 }} onClick={() => setCheckoutSuccess(false)}>×</button>
           </div>
@@ -660,19 +692,33 @@ export default function Dashboard() {
                 <span className="chip chip-amber" style={{ display: 'inline-flex' }}>
                   <span className="dot dot-pulse" /> {streak > 0 ? `${streak}-DAY STREAK` : 'START YOUR STREAK'}
                 </span>
-                <h1 style={{ marginTop: 16 }}>GM, {pilotName}.<br /><span className="gradient-text">Ready for today's mission?</span></h1>
+                <h1 style={{ marginTop: 16 }}>GM, <span style={nameColor ? { color: nameColor } : undefined}>{pilotName}</span>.<br /><span className="gradient-text">Ready for today's mission?</span></h1>
                 {(isFounder || isSubscribed) && (
                   <div className="pilot-badges">
                     {isFounder && <span className="pilot-badge badge-founder">⬡ EDGERNR</span>}
                     {isSubscribed && <span className="pilot-badge badge-season1">◈ SEASON 01</span>}
                   </div>
                 )}
-                <p>{questsDone === 0
-                  ? <>Your first mission awaits. Complete Act I to unlock <strong>React Act II</strong>.</>
-                  : questsDone < 15
-                  ? <>You're {15 - questsDone} quest{15 - questsDone !== 1 ? 's' : ''} away from unlocking <strong>React Act II</strong>. Keep the streak alive to 2x your rewards.</>
-                  : <>Act I complete. <strong>React Act II</strong> is now unlocked. Ready for the next challenge?</>
-                }</p>
+                {(() => {
+                  const totalGates = quests.length || 10
+                  const remaining = Math.max(0, totalGates - gatesDone)
+                  return (
+                    <p>{gatesDone === 0
+                      ? <>Your first mission awaits. Complete Act I to unlock <strong>React Act II</strong>.</>
+                      : remaining > 0
+                      ? <>You're {remaining} quest{remaining !== 1 ? 's' : ''} away from unlocking <strong>React Act II</strong>. {
+                          xpMult > 1
+                            ? (isSubscribed && streakMult > 1
+                                ? <>Season Pass <strong>×{fmtMult(SEASON_PASS_XP_MULT)}</strong> + streak <strong>×{fmtMult(streakMult)}</strong> = <strong>×{fmtMult(xpMult)} XP</strong>.</>
+                                : isSubscribed
+                                  ? <>Your Season Pass is earning <strong>×{fmtMult(SEASON_PASS_XP_MULT)} XP</strong>.</>
+                                  : <>Your streak is earning <strong>×{fmtMult(streakMult)} XP</strong> — keep it alive.</>)
+                            : <>Build a <strong>3-day streak</strong> to start earning bonus XP.</>
+                        }</>
+                      : <>Act I complete. <strong>React Act II</strong> is now unlocked. Ready for the next challenge?</>
+                    }</p>
+                  )
+                })()}
 
                 {/* XP Level progress bar */}
                 <div className="hero-xp-bar">
@@ -696,7 +742,7 @@ export default function Dashboard() {
               </div>
               <div className="streak-art">
                 <div className="streak-flame">{streak || '—'}</div>
-                <div className="streak-lbl">{streak > 0 ? 'DAY STREAK · ×2 MULT' : 'NO STREAK YET'}</div>
+                <div className="streak-lbl">{streak > 0 ? (streakMult > 1 ? `DAY STREAK · ×${streakMult} XP` : 'DAY STREAK') : 'NO STREAK YET'}</div>
               </div>
             </div>
 
@@ -704,7 +750,7 @@ export default function Dashboard() {
               {[
                 { color: 'var(--teal)',    label: 'TOTAL XP',        val: fmt(totalXp),       delta: 'lifetime earned' },
                 { color: 'var(--magenta)', label: '$DRIFT BALANCE',   val: fmt(spendableDrift), unit: 'DRIFT', delta: `${fmt(totalDrift)} earned · ${fmt(totalDriftSpent)} spent` },
-                { color: 'var(--violet)',  label: 'QUESTS CLEARED',  val: String(questsDone), unit: `/${quests.length || 15}`, delta: `${Math.round(questsDone / (quests.length || 15) * 100)}% of Act I` },
+                { color: 'var(--violet)',  label: 'QUESTS CLEARED',  val: String(gatesDone), unit: `/${quests.length || 10}`, delta: `${Math.min(100, Math.round(gatesDone / (quests.length || 10) * 100))}% of Act I` },
                 { color: 'var(--amber)',   label: 'GLOBAL RANK',     val: myRank ? `#${myRank}` : '—', delta: myRank ? `of ${lbData.length} pilots` : lbData.length > 0 ? 'not ranked yet' : 'loading...' },
               ].map(s => (
                 <div key={s.label} className="stat">
@@ -876,10 +922,10 @@ export default function Dashboard() {
               <div className="sb-head"><h3>World Map</h3><span className="more">Season 01</span></div>
               <div className="panel wmap-grid">
                 {[
-                  { n:'01', name:'HTML Ruins',      color:'var(--amber)',   quests: Math.min(questsDone, quests.length || 15), total: quests.length || 15, boss:'DIV EATER',        active:true  },
-                  { n:'02', name:'Reactive Sector', color:'var(--violet)',  quests: 0, total:18, boss:'STATE OVERFLOW',   active:false },
-                  { n:'03', name:'Router Maze',     color:'var(--teal)',    quests: 0, total:12, boss:'404 PHANTOM',      active:false },
-                  { n:'04', name:'Immersive Grid',  color:'var(--magenta)', quests: 0, total:15, boss:'THE WHITE SCREEN', active:false },
+                  { n:'01', name:'HTML Ruins',      color:'var(--amber)',   quests: Math.min(gatesDone, quests.length || 10), total: quests.length || 10, boss:'DIV EATER', active:true  },
+                  { n:'02', name:'Reactive Sector', color:'var(--violet)',  active:false },
+                  { n:'03', name:'Router Maze',     color:'var(--teal)',    active:false },
+                  { n:'04', name:'Immersive Grid',  color:'var(--magenta)', active:false },
                 ].map(w => (
                   <div key={w.n} className={`wmap-world${w.active ? ' wmap-active' : ''}`} style={{ '--wc': w.color }}>
                     <div className="wmap-header">
@@ -888,11 +934,17 @@ export default function Dashboard() {
                     </div>
                     <div className="wmap-name">{w.name}</div>
                     <div className="wmap-bar-wrap">
-                      <div className="wmap-fill" style={{ width: `${Math.round(w.quests / w.total * 100)}%` }} />
+                      <div className="wmap-fill" style={{ width: w.active ? `${Math.round(w.quests / w.total * 100)}%` : '0%' }} />
                     </div>
                     <div className="wmap-foot">
-                      <span>{w.quests}/{w.total} quests</span>
-                      <span className="wmap-boss">{w.boss}</span>
+                      {w.active ? (
+                        <>
+                          <span>{w.quests}/{w.total} quests</span>
+                          <span className="wmap-boss">{w.boss}</span>
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--ink-3)' }}>Coming in Season 02</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -917,12 +969,15 @@ export default function Dashboard() {
             </div>
 
             {!isSubscribed && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'oklch(0.72 0.28 340 / 0.06)', border: '1px solid oklch(0.72 0.28 340 / 0.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 16, fontFamily: 'var(--f-mono)', fontSize: 11 }}>
-                <span style={{ fontSize: 20 }}>🔓</span>
-                <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 15 gates</strong> sequentially with a Season Pass — no $DRIFT spend needed.</span>
-                <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px', flexShrink: 0 }} onClick={handleCheckout} disabled={checkoutLoading}>
-                  {checkoutLoading ? 'Loading…' : 'Get Season Pass →'}
-                </button>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'oklch(0.72 0.28 340 / 0.06)', border: '1px solid oklch(0.72 0.28 340 / 0.2)', borderRadius: 10, padding: '12px 18px', fontFamily: 'var(--f-mono)', fontSize: 11 }}>
+                  <span style={{ fontSize: 20 }}>🔓</span>
+                  <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 10 gates</strong> sequentially with a Season Pass — no $DRIFT spend needed.</span>
+                  <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px', flexShrink: 0 }} onClick={handleCheckout} disabled={checkoutLoading}>
+                    {checkoutLoading ? 'Loading…' : 'Get Season Pass →'}
+                  </button>
+                </div>
+                {checkoutError && <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)', marginTop: 8 }}>{checkoutError}</div>}
               </div>
             )}
 
@@ -1018,7 +1073,7 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
                   <div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>PILOT</div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'oklch(1 0 0 / 0.85)' }}>{pilotName.toUpperCase()}</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: nameColor ?? 'oklch(1 0 0 / 0.85)' }}>{pilotName.toUpperCase()}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>WALLET</div>
@@ -1057,7 +1112,7 @@ export default function Dashboard() {
                   <div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', marginBottom: 4 }}>ON-CHAIN · SEPOLIA TESTNET</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--amber)' }}>
-                      {onChainBalance === null ? '...' : fmt(onChainBalance)}
+                      {onChainBalance === null ? '—' : fmt(onChainBalance)}
                       <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--ink-3)', marginLeft: 6 }}>$DRIFT</span>
                     </div>
                   </div>
@@ -1307,7 +1362,7 @@ export default function Dashboard() {
             <div className="set-hero">
               <div className="set-avatar">{initials(pilotName)}</div>
               <div>
-                <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 4 }}>{pilotName}</h2>
+                <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 4, color: nameColor ?? undefined }}>{pilotName}</h2>
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{user?.email}</p>
               </div>
             </div>
@@ -1339,6 +1394,7 @@ export default function Dashboard() {
                         🦊
                       </button>
                     </div>
+                    {walletError && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)', marginTop: 6, display: 'block' }}>{walletError}</span>}
                   </div>
                   <div className="set-field">
                     <label className="set-label">Season Pass</label>
@@ -1350,10 +1406,36 @@ export default function Dashboard() {
                       {isSubscribed
                         ? <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>Full access to all worlds</span>
                         : <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px' }} onClick={handleCheckout} disabled={checkoutLoading}>
-                            {checkoutLoading ? 'Loading…' : 'Get Season Pass — $19/mo →'}
+                            {checkoutLoading ? 'Loading…' : 'Get Season Pass — $9.99/mo →'}
                           </button>
                       }
                     </div>
+                    {!isSubscribed && checkoutError && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)', marginTop: 6, display: 'block' }}>{checkoutError}</span>}
+                  </div>
+                  <div className="set-field">
+                    <label className="set-label">Name Colour {!isSubscribed && <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>· Season Pass</span>}</label>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', opacity: isSubscribed ? 1 : 0.5 }}>
+                      {Object.entries(USERNAME_COLORS).map(([key, c]) => {
+                        const selected = (profile?.username_color ?? 'default') === key
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            title={c.label}
+                            disabled={!isSubscribed}
+                            onClick={() => { if (isSubscribed) updateUsernameColor(key) }}
+                            style={{
+                              width: 28, height: 28, borderRadius: '50%', padding: 0,
+                              background: c.value ?? 'var(--ink-3)',
+                              border: selected ? '2px solid var(--ink-1)' : '2px solid transparent',
+                              boxShadow: selected ? '0 0 0 2px var(--bg-popup)' : 'none',
+                              cursor: isSubscribed ? 'pointer' : 'not-allowed',
+                            }}
+                          />
+                        )
+                      })}
+                    </div>
+                    {!isSubscribed && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', marginTop: 6, display: 'block' }}>Unlock custom name colours with a Season Pass.</span>}
                   </div>
                   <div className="set-actions">
                     <button className="btn btn-primary" onClick={handleSave} disabled={saveStatus === 'saving'}>
