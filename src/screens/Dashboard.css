@@ -131,11 +131,10 @@
 .st-tab-active { border-color: var(--amber); color: var(--amber); background: oklch(0.82 0.18 75 / 0.08); }
 .st-tab-locked { opacity: 0.4; pointer-events: none; }
 
-/* flex-wrap (not grid) so gate clusters before a full-width boss center cleanly
-   instead of leaving empty grid cells — bosses fall at gates 3/6/8/10 (clusters of 2,2,1,1). */
-.st-grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+/* uniform 3-per-row grid; boss gates (3/6/8/10) are highlighted in place, same size as regular nodes */
+.st-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 
-.st-node { flex: 0 1 calc(33.333% - 10px); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line); background: rgba(180,200,255,0.02); display: flex; flex-direction: column; gap: 8px; transition: all 0.15s; }
+.st-node { padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line); background: rgba(180,200,255,0.02); display: flex; flex-direction: column; gap: 8px; transition: all 0.15s; }
 
 .st-node.st-done { border-color: oklch(0.9 0.22 135 / 0.4); background: oklch(0.9 0.22 135 / 0.04); }
 .st-node.st-done:hover { background: oklch(0.9 0.22 135 / 0.08); cursor: pointer; }
@@ -145,7 +144,7 @@
 
 .st-node.st-locked { opacity: 0.38; }
 
-.st-node.st-boss { flex-basis: 100%; align-items: center; text-align: center; padding: 32px 28px; border-color: oklch(0.72 0.28 340 / 0.45); background: linear-gradient(120deg, oklch(0.72 0.28 340 / 0.07), oklch(0.55 0.26 290 / 0.05)); }
+.st-node.st-boss { align-items: center; text-align: center; border-color: oklch(0.72 0.28 340 / 0.45); background: linear-gradient(120deg, oklch(0.72 0.28 340 / 0.07), oklch(0.55 0.26 290 / 0.05)); }
 .st-node.st-boss.st-locked { opacity: 0.35; }
 
 .st-node-top { display: flex; justify-content: space-between; align-items: center; }
@@ -162,12 +161,12 @@
 .st-node.st-boss .st-status-icon   { color: var(--magenta); }
 
 .st-icon { font-size: 28px; line-height: 1; }
-.st-node.st-boss .st-icon { font-size: 52px; margin: 8px 0; }
+.st-node.st-boss .st-icon { font-size: 32px; }
 
 .st-title { font-size: 15px; font-weight: 500; color: var(--ink-1); }
 .st-node.st-done .st-title   { color: var(--lime); }
 .st-node.st-active .st-title { color: var(--amber); }
-.st-node.st-boss .st-title   { font-size: 24px; color: var(--magenta); }
+.st-node.st-boss .st-title   { font-size: 16px; color: var(--magenta); }
 
 .st-topic { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; }
 .st-node.st-boss .st-topic { color: oklch(0.72 0.28 340 / 0.7); font-size: 11px; }
@@ -216,7 +215,7 @@
   .dash-cols { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .wmap-grid { grid-template-columns: repeat(2, 1fr); }
-  .st-node { flex-basis: calc(50% - 7px); }
+  .st-grid { grid-template-columns: repeat(2, 1fr); }
   .set-grid { grid-template-columns: 1fr; }
 }
 
@@ -251,7 +250,7 @@
   .stat { padding: 12px 12px; }
   .stat .val { font-size: 20px; }
   .wmap-grid { grid-template-columns: 1fr; }
-  .st-node { flex-basis: 100%; }
+  .st-grid { grid-template-columns: 1fr; }
   .hero-banner h1 { font-size: 22px; }
 }
 
