@@ -36,10 +36,12 @@ alter table public.child_profiles    enable row level security;
 alter table public.academy_completions enable row level security;
 
 -- Parents can only access their own children
+drop policy if exists "parent_child_profiles" on public.child_profiles;
 create policy "parent_child_profiles" on public.child_profiles
   for all using (auth.uid() = parent_id);
 
 -- Parents can access completions for their children only
+drop policy if exists "parent_academy_completions" on public.academy_completions;
 create policy "parent_academy_completions" on public.academy_completions
   for all using (
     exists (

@@ -26,7 +26,7 @@
 .search { flex: 1; max-width: 400px; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(180,200,255,0.03); border: 1px solid var(--line); border-radius: 999px; font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); }
 .search input { flex: 1; background: none; border: none; color: var(--ink-0); font-family: inherit; font-size: inherit; outline: none; }
 .search .kbd { padding: 2px 6px; border: 1px solid var(--line-2); border-radius: 4px; font-size: 10px; }
-.top-actions { display: flex; align-items: center; gap: 14px; }
+.top-actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
 .top-actions .bell { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
 .dash-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--violet), var(--magenta)); box-shadow: var(--glow-violet); display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-weight: 600; font-size: 14px; color: #fff; }
 
@@ -131,9 +131,11 @@
 .st-tab-active { border-color: var(--amber); color: var(--amber); background: oklch(0.82 0.18 75 / 0.08); }
 .st-tab-locked { opacity: 0.4; pointer-events: none; }
 
-.st-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+/* flex-wrap (not grid) so gate clusters before a full-width boss center cleanly
+   instead of leaving empty grid cells — bosses fall at gates 3/6/8/10 (clusters of 2,2,1,1). */
+.st-grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
 
-.st-node { padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line); background: rgba(180,200,255,0.02); display: flex; flex-direction: column; gap: 8px; transition: all 0.15s; }
+.st-node { flex: 0 1 calc(33.333% - 10px); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line); background: rgba(180,200,255,0.02); display: flex; flex-direction: column; gap: 8px; transition: all 0.15s; }
 
 .st-node.st-done { border-color: oklch(0.9 0.22 135 / 0.4); background: oklch(0.9 0.22 135 / 0.04); }
 .st-node.st-done:hover { background: oklch(0.9 0.22 135 / 0.08); cursor: pointer; }
@@ -143,7 +145,7 @@
 
 .st-node.st-locked { opacity: 0.38; }
 
-.st-node.st-boss { grid-column: 1 / -1; align-items: center; text-align: center; padding: 32px 28px; border-color: oklch(0.72 0.28 340 / 0.45); background: linear-gradient(120deg, oklch(0.72 0.28 340 / 0.07), oklch(0.55 0.26 290 / 0.05)); }
+.st-node.st-boss { flex-basis: 100%; align-items: center; text-align: center; padding: 32px 28px; border-color: oklch(0.72 0.28 340 / 0.45); background: linear-gradient(120deg, oklch(0.72 0.28 340 / 0.07), oklch(0.55 0.26 290 / 0.05)); }
 .st-node.st-boss.st-locked { opacity: 0.35; }
 
 .st-node-top { display: flex; justify-content: space-between; align-items: center; }
@@ -214,7 +216,7 @@
   .dash-cols { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .wmap-grid { grid-template-columns: repeat(2, 1fr); }
-  .st-grid { grid-template-columns: repeat(2, 1fr); }
+  .st-node { flex-basis: calc(50% - 7px); }
   .set-grid { grid-template-columns: 1fr; }
 }
 
@@ -249,7 +251,7 @@
   .stat { padding: 12px 12px; }
   .stat .val { font-size: 20px; }
   .wmap-grid { grid-template-columns: 1fr; }
-  .st-grid { grid-template-columns: 1fr; }
+  .st-node { flex-basis: 100%; }
   .hero-banner h1 { font-size: 22px; }
 }
 

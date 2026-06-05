@@ -15,13 +15,20 @@ create table if not exists public.raid_files (
 alter table public.raid_files enable row level security;
 
 -- All authenticated users can read files in raids they are members of
+drop policy if exists "raid_files_read" on public.raid_files;
 create policy "raid_files_read" on public.raid_files
   for select using (auth.uid() is not null);
 
 -- Any authenticated user can write files (role-trust enforced client-side)
+drop policy if exists "raid_files_write" on public.raid_files;
 create policy "raid_files_write" on public.raid_files
   for all using (auth.uid() is not null)
   with check (auth.uid() is not null);
 
--- Enable realtime on raid_files
-alter publication supabase_realtime add table public.raid_files;
+-- Enable realtime on raid_files (ignore if already added — no IF NOT EXISTS for this)
+do $$
+begin
+  alter publication supabase_realtime add table public.raid_files;
+exception
+  when duplicate_object then null;
+end $$;
