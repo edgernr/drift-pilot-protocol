@@ -6,6 +6,8 @@ export default function GateRoute({ requires = [], unlockKey = null, children })
   if (loading) return null
   if (!user) return <Navigate to="/login" replace />
   if (!profile) return null
+  // Admins can open any gate regardless of prerequisites.
+  if (profile.is_admin) return children
   const hasUnlock = unlockKey ? profile.unlockedGateIds?.has(unlockKey) : false
   if (!hasUnlock && requires.some(id => !profile.completedQuestIds?.has(id))) {
     return <Navigate to="/dashboard" replace />
