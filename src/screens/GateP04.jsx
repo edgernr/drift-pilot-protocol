@@ -131,6 +131,7 @@ export default function GateP04() {
           <div className="ag-py-editor">
             <div className="ag-py-editor-head">🐍 loops.py</div>
             <textarea
+              onPaste={e => e.preventDefault()}
               className="ag-py-code"
               value={code}
               onChange={e => setCode(e.target.value)}

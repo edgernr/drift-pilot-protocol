@@ -150,6 +150,7 @@ export default function GateP06() {
           <div className="ag-py-editor">
             <div className="ag-py-editor-head">🐍 registry.py</div>
             <textarea
+              onPaste={e => e.preventDefault()}
               className="ag-py-code"
               value={code}
               onChange={e => setCode(e.target.value)}

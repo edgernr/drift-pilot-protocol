@@ -170,6 +170,7 @@ export default function GateJ11() {
           <div className="ag-py-editor">
             <div className="ag-py-editor-head">⚡ scope.js</div>
             <textarea
+              onPaste={e => e.preventDefault()}
               className="ag-py-code"
               value={code}
               onChange={e => setCode(e.target.value)}

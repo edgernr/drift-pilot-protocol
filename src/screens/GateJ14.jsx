@@ -158,6 +158,7 @@ export default function GateJ14() {
           <div className="ag-py-editor">
             <div className="ag-py-editor-head">⚡ regex.js</div>
             <textarea
+              onPaste={e => e.preventDefault()}
               className="ag-py-code"
               value={code}
               onChange={e => setCode(e.target.value)}
