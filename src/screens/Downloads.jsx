@@ -44,17 +44,13 @@ export default function Downloads() {
   const assetFor = (target) => assets.find(a => target.match(a.name))
 
   return (
-    <>
-      <nav className="nav">
-        <div className="logo" onClick={() => goto('landing')} style={{ cursor: 'pointer' }}>
-          <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 40 }} />
+    <div className="container" style={{ maxWidth: 980, paddingTop: 48, paddingBottom: 80 }}>
+      <nav className="nav" style={{ marginBottom: 32 }}>
+        <div className="logo" style={{ cursor: 'pointer' }} onClick={() => goto('landing')}>
+          <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 36 }} />
         </div>
-        <ul>
-          <li><span style={{ cursor: 'pointer' }} onClick={() => goto('landing')}>← Home</span></li>
-        </ul>
+        <button className="btn btn-ghost btn-sm" onClick={() => goto('landing')}>← Back to home</button>
       </nav>
-
-      <div className="container" style={{ maxWidth: 980, margin: '0 auto', padding: '48px 24px 80px' }}>
         <div className="eyebrow" style={{ color: 'var(--teal)', fontFamily: 'var(--f-mono)', fontSize: 12, letterSpacing: '0.16em' }}>DESKTOP APP</div>
         <h1 style={{ fontSize: 40, margin: '10px 0 8px' }}>
           Download <span className="gradient-text">Drift Pilot Protocol</span>
@@ -118,7 +114,6 @@ export default function Downloads() {
             <div style={{ marginTop: 6 }}>All builds: <a href={RELEASES_PAGE} target="_blank" rel="noreferrer" style={{ color: 'var(--teal)' }}>{RELEASES_PAGE}</a></div>
           </div>
         )}
-      </div>
-    </>
+    </div>
   )
 }
