@@ -462,7 +462,7 @@ function healthColor(h) {
 }
 
 export default function RaidView() {
-  const { user, profile, completeQuest, burnRaidEntry } = useAuth()
+  const { user, profile, completeQuest, burnRaidEntry, refundRaidEntry } = useAuth()
   const isAdmin = profile?.is_admin ?? false
   const spendableDrift = (profile?.totalDrift ?? 0) - (profile?.totalDriftSpent ?? 0)
   const RAID_ENTRY_COST = 1000
@@ -729,9 +729,18 @@ export default function RaidView() {
     if (!activeRaid || !myMembership) return
     setBusy(true)
     try {
+      // Entry is only refundable before the raid starts (lobby). Admins never paid.
+      const refundable = activeRaid.status === 'lobby' && !isAdmin
       if (activeRaid.created_by === user.id) {
+        // Leader disbands: refund everyone (RPC, best-effort for joiners) + self (always),
+        // BEFORE deleting the raid (the RPC authorizes against the raids row).
+        if (refundable) {
+          try { await supabase.rpc('refund_raid_entries', { p_raid_id: activeRaid.id }) } catch { /* RPC optional — self-refund below still covers the leader */ }
+          await refundRaidEntry(activeRaid.id)
+        }
         await supabase.from('raids').delete().eq('id', activeRaid.id)
       } else {
+        if (refundable) await refundRaidEntry(activeRaid.id)
         await supabase.from('raid_members').delete().eq('raid_id', activeRaid.id).eq('user_id', user.id)
       }
       if (raidChannel.current) raidChannel.current.unsubscribe()

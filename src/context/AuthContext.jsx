@@ -267,6 +267,19 @@ export function AuthProvider({ children }) {
     return { ok: !error, reason: error ? 'error' : null }
   }
 
+  // Refund THIS user's raid entry cost (deletes their own raid-entry gate_unlock row —
+  // RLS-safe). Used when leaving/disbanding a raid before it starts.
+  async function refundRaidEntry(raidId) {
+    if (!user) return false
+    const { error } = await supabase
+      .from('gate_unlocks')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('quest_id', `raid-entry:${raidId}`)
+    if (!error) await fetchProfile(user.id)
+    return !error
+  }
+
   async function clearFlag(targetUserId, questId) {
     if (!user || !profile?.is_admin) return false
     const { error } = await supabase
@@ -374,7 +387,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, updateUsernameColor, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, updateUsernameColor, refundRaidEntry, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )
