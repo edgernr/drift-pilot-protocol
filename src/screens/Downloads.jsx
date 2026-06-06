@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNav } from '../context/NavigationContext'
+import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../hooks/useTheme'
 
 // Installers are published to GitHub Releases by the desktop-release CI workflow.
 // NOTE: the repo/releases must be PUBLIC for these (unauthenticated) reads to work.
@@ -27,6 +29,8 @@ function fmtSize(bytes) {
 
 export default function Downloads() {
   const { goto } = useNav()
+  const { user } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [state, setState] = useState({ status: 'loading', release: null })
   const myOS = detectOS()
 
@@ -44,12 +48,30 @@ export default function Downloads() {
   const assetFor = (target) => assets.find(a => target.match(a.name))
 
   return (
-    <div className="container" style={{ maxWidth: 980, paddingTop: 48, paddingBottom: 80 }}>
-      <nav className="nav" style={{ marginBottom: 32 }}>
+    <div className="container" style={{ maxWidth: 980, paddingTop: 110, paddingBottom: 80 }}>
+      <nav className="nav">
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => goto('landing')}>
-          <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 36 }} />
+          <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 40 }} />
+          <span className="chip chip-teal" style={{ fontSize: 9, padding: '2px 8px' }}>BETA</span>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => goto('landing')}>← Back to home</button>
+        <ul>
+          <li><a href="/#worlds">Worlds</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li><a href="/#academy" style={{ color: 'var(--builder-gold, oklch(0.86 0.19 80))' }}>Academy</a></li>
+          <li><a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--teal)' }}>Download</a></li>
+        </ul>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={toggleTheme}
+          style={{ padding: '8px 12px', fontSize: 15, lineHeight: 1 }}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀' : '◑'}
+        </button>
+        {user
+          ? <button className="btn btn-ghost btn-sm" onClick={() => goto('dashboard')}>Dashboard →</button>
+          : <button className="btn btn-ghost btn-sm" onClick={() => goto('signup')}>Sign Up / Log In →</button>
+        }
       </nav>
         <div className="eyebrow" style={{ color: 'var(--teal)', fontFamily: 'var(--f-mono)', fontSize: 12, letterSpacing: '0.16em' }}>DESKTOP APP</div>
         <h1 style={{ fontSize: 40, margin: '10px 0 8px' }}>
