@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { authRedirectTo, initDesktopAuth, setTrayStreak } from '../lib/desktop'
 
 const AuthContext = createContext(null)
 
@@ -162,6 +163,7 @@ export function AuthProvider({ children }) {
       const completedQuestIds = new Set(xpRows?.map(r => r.quest_id) ?? [])
       const unlockedGateIds = new Set(unlockRows?.map(r => r.quest_id) ?? [])
       const streak = computeStreak(xpRows)
+      setTrayStreak(streak)   // desktop tray indicator (no-op on web)
       const streakMultiplier = computeStreakMultiplier(streak)
       const subscriberMultiplier = prof.is_subscribed ? SEASON_PASS_XP_MULT : 1
       const xpMultiplier = streakMultiplier * subscriberMultiplier
@@ -185,7 +187,9 @@ export function AuthProvider({ children }) {
       else { setProfile(null); setLoading(false) }
       if (event === 'INITIAL_SESSION') setLoading(false)
     })
-    return () => subscription.unsubscribe()
+    // Desktop only (no-op on web): handle driftpilot:// auth-callback deep links.
+    const offDeepLink = initDesktopAuth(supabase)
+    return () => { subscription.unsubscribe(); offDeepLink?.() }
   }, [fetchProfile])
 
   function clearError() { setError(null) }
@@ -205,7 +209,7 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, wallet: wallet || null }, emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { data: { name, wallet: wallet || null }, emailRedirectTo: authRedirectTo() },
     })
     if (error) setError(error.message)
     setLoading(false)
@@ -343,7 +347,7 @@ export function AuthProvider({ children }) {
 
   async function sendPasswordReset() {
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: authRedirectTo(),
     })
     return !error
   }

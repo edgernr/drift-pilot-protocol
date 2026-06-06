@@ -1,0 +1,39 @@
+name: Desktop Release
+
+# Build + publish Linux / Windows / macOS installers on a version tag (e.g. v1.0.0),
+# or manually via the Actions tab. Each OS builds on its own runner (macOS can't be
+# built on Linux), and electron-builder uploads artifacts to a GitHub Release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create/upload the GitHub Release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Build & publish desktop installers
+        run: npx electron-builder --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Skip macOS code-signing until an Apple Developer cert is configured (see DESKTOP.md).
+          CSC_IDENTITY_AUTO_DISCOVERY: false

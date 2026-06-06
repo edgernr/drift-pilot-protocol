@@ -1,0 +1,43 @@
+appId: net.driftprotocol.app
+productName: Drift Pilot Protocol
+copyright: © Drift Pilot Protocol
+
+directories:
+  output: release
+  buildResources: build   # put icon.png (1024x1024) / icon.ico / icon.icns here
+
+# What gets packaged into the app (the Vite build + the Electron shell).
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+# OS-level deep link: driftpilot://auth-callback (Supabase auth redirects)
+protocols:
+  - name: Drift Pilot Protocol
+    schemes: [driftpilot]
+
+# Auto-update + release hosting via GitHub Releases (free).
+publish:
+  provider: github
+  owner: edgernr
+  repo: drift-pilot-protocol
+
+linux:
+  target: [AppImage, deb]
+  category: Education
+  maintainer: Drift Pilot Protocol
+  synopsis: Gamified coding academy — learn, build, earn.
+
+win:
+  target: [nsis]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+
+mac:
+  target: [dmg]
+  category: public.app-category.education
+  # hardenedRuntime + notarization require an Apple Developer account — see DESKTOP.md.

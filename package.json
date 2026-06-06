@@ -3,17 +3,23 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:127.0.0.1:5173 && cross-env electron .\"",
+    "electron:preview": "vite build && cross-env ELECTRON_BUNDLE=1 electron .",
+    "desktop:build": "vite build && electron-builder",
+    "desktop:dir": "vite build && electron-builder --dir"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",
     "@electric-sql/pglite": "^0.4.5",
     "@monaco-editor/react": "^4.7.0",
     "@supabase/supabase-js": "^2.105.4",
+    "electron-updater": "^6.3.9",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.1"
@@ -23,10 +29,15 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "wait-on": "^8.0.2"
   }
 }

@@ -25,3 +25,6 @@ dist-ssr
 
 .vercel
 supabase/.temp/
+
+# electron-builder output
+release
