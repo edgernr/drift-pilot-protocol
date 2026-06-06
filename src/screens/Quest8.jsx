@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest8.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -309,20 +310,32 @@ const QUIZ = {
   correct: 1,
 }
 
-// ─── CSS checks ───────────────────────────────────────────────────────────────
+// ─── CSS checks (mixed: execution where reliable, regex fallback otherwise) ──────
+// Gate 08 is mobile-first responsive — the HARDEST to execution-check, because most
+// requirements (min-width direction, clamp() usage, breakpoint thresholds) are
+// authoring-intent that the browser flattens away once rendered (clamp() resolves to
+// px, media-query direction can't be told apart at a single viewport). Verifying those
+// by execution while built BLIND risks an UNCOMPLETABLE gate, so per the gate rules we
+// KEEP their original regex tests. The one requirement that IS a genuine rendered
+// result — "nothing overflows the viewport" — is converted to a real execution check
+// against the offscreen iframe.
+//
+// Each test receives (doc, win, css). Regex checks ignore doc/win and read `css`.
 
 const CSS_CHECKS = [
   {
     id: 'min_width',
     label: 'min-width queries used',
     hint: 'Mobile-first means base styles are for small screens, and overrides kick in as screens get wider — not narrower. Which direction should your media condition check?',
-    test: css => /@media[^{]*min-width/.test(css) && !/@media[^{]*max-width/.test(css),
+    mode: 'regex',
+    test: (doc, win, css) => /@media[^{]*min-width/.test(css) && !/@media[^{]*max-width/.test(css),
   },
   {
     id: 'grid_one_col',
     label: 'Grid starts single column',
     hint: 'CSS Grid defaults to a single column when no column template is set. Define the base as one track, then use a media query to expand the number of columns for larger screens.',
-    test: css => {
+    mode: 'regex',
+    test: (doc, win, css) => {
       const base = css.match(/\.features\s*\{([^}]+)\}/)
       if (!base) return false
       const baseHas1col = /grid-template-columns\s*:\s*1fr/.test(base[1]) ||
@@ -337,7 +350,8 @@ const CSS_CHECKS = [
     id: 'nav_collapse',
     label: 'Navigation collapses on mobile',
     hint: 'The HTML already has a hidden checkbox and a burger label wired up. In CSS, there\'s a combinator that selects a sibling element that follows a :checked element. How do you combine :checked with a sibling selector?',
-    test: css => /nav-toggle\s*:\s*checked[^{]*~[^{]*nav-menu/.test(css) ||
+    mode: 'regex',
+    test: (doc, win, css) => /nav-toggle\s*:\s*checked[^{]*~[^{]*nav-menu/.test(css) ||
       /#nav-toggle\s*:\s*checked[^{]*~[^{]*\.nav-menu/.test(css) ||
       /\.nav-toggle\s*:\s*checked[^{]*~[^{]*\.nav-menu/.test(css),
   },
@@ -345,25 +359,40 @@ const CSS_CHECKS = [
     id: 'clamp_used',
     label: 'clamp() used for fluid sizing',
     hint: 'There\'s a CSS function that locks a value between a minimum and maximum while allowing a preferred middle value — often viewport-based — to scale between them.',
-    test: css => /clamp\s*\(/.test(css),
+    mode: 'regex',
+    test: (doc, win, css) => /clamp\s*\(/.test(css),
   },
   {
     id: 'no_overflow',
     label: 'No fixed widths wider than viewport',
     hint: 'Fixed pixel widths that exceed the viewport width force horizontal scrolling on small screens. Fluid elements should use relative units or a max-width so they adapt to the available space.',
-    test: css => !/width\s*:\s*[0-9]{4,}px/.test(css),
+    mode: 'exec',
+    // EXECUTION: render the page in the narrow offscreen iframe and confirm the
+    // document doesn't scroll horizontally. A genuine rendered-result test —
+    // any over-wide fixed element would push scrollWidth past the viewport.
+    test: (doc, win) => {
+      const de = doc.documentElement
+      const body = doc.body
+      if (!de || !body) return false
+      const viewport = de.clientWidth
+      if (!viewport) return false
+      const overflow = Math.max(de.scrollWidth, body.scrollWidth) - viewport
+      return overflow <= 2 // 2px tolerance for sub-pixel rounding
+    },
   },
   {
     id: 'desktop_breakpoint',
     label: 'Desktop breakpoint at 768px+',
     hint: 'Your expanded desktop layout needs a threshold — a specific viewport width where it kicks in. Write a min-width media query at 768px or higher to contain those overrides.',
-    test: css => /@media[^{]*min-width\s*:\s*(?:768|800|900|960|1024|1100|1200)px/.test(css),
+    mode: 'regex',
+    test: (doc, win, css) => /@media[^{]*min-width\s*:\s*(?:768|800|900|960|1024|1100|1200)px/.test(css),
   },
   {
     id: 'fluid_hero',
     label: 'Hero title uses fluid sizing',
     hint: 'A truly responsive title shouldn\'t be locked to a fixed pixel size. Use a relative unit or a function that lets the size scale fluidly between a minimum and maximum.',
-    test: css => {
+    mode: 'regex',
+    test: (doc, win, css) => {
       const m = css.match(/\.hero-title\s*\{([^}]+)\}/)
       if (!m) return false
       return /font-size\s*:[^;]*(?:clamp|rem|em|vw)/.test(m[1])
@@ -377,11 +406,6 @@ function buildPreview(css, variantIndex) {
   const fullHtml = VARIANT_HTML[variantIndex]
   // Inject CSS before closing </head>
   return fullHtml.replace('</head>', `<style>${css}</style></head>`)
-}
-
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -401,15 +425,12 @@ export default function Quest8() {
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [aiReview, setAiReview] = useState(null)
+  const [checks, setChecks] = useState(() => CSS_CHECKS.map(c => ({ ...c, passed: false })))
 
-  const iframeRef = useRef(null)
-  const cssLnRef = useRef(null)
-  const cssTaRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (on Preview tab)
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
 
-  const checks = useMemo(
-    () => CSS_CHECKS.map(c => ({ ...c, passed: c.test(cssCode) })),
-    [cssCode]
-  )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === CSS_CHECKS.length
   // Gate 08 stores 500 XP via completeQuest('act1-ch08', 500, ...).
@@ -430,6 +451,42 @@ export default function Quest8() {
     if (tab === 'preview') updatePreview(cssCode)
   }, [cssCode, tab, updatePreview])
 
+  // Run the checks against the offscreen iframe whenever the CSS settles.
+  // Execution checks read the RENDERED result (doc + win); regex-fallback checks read
+  // the raw source. Every test gets (doc, win, css) — `cssCode` is captured from this
+  // callback's closure, which is the exact source the iframe was just told to render.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    // The page must have actually rendered before any exec check can run.
+    if (!doc || !win || !doc.querySelector('.page-wrap')) return
+    const results = CSS_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc, win, cssCode) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      const gained = Math.round(newPass * xpPerCheck) - Math.round(prevPassRef.current * xpPerCheck)
+      setXpPopText(`+${gained} XP`)
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [cssCode, xpPerCheck])
+
+  // Debounced: render the student's CSS into the offscreen iframe, then check.
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(cssCode, variantIdx)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [cssCode, variantIdx, runChecks])
+
   useEffect(() => {
     if (!allPassed) { setAiReview(null); return }
     setAiReview('loading')
@@ -449,31 +506,27 @@ export default function Quest8() {
     ? 'Stack collapsed — mobile gate sealed'
     : `${failCount} check${failCount !== 1 ? 's' : ''} failing — THE STACK feeds`
 
-  function handleCssChange(e) {
-    const val = e.target.value
-    const prevPassed = passCount
+  function handleCssChange(value) {
+    const val = value ?? ''
     setCssCode(val)
     trackChange(val.length)
-    const newPassed = CSS_CHECKS.filter(c => c.test(val)).length
-    if (newPassed > prevPassed) {
-      const gained = Math.round(newPassed * xpPerCheck) - Math.round(prevPassed * xpPerCheck)
-      setXpPopText(`+${gained} XP`)
-      setXpPopKey(k => k + 1)
+    // XP-pop is fired from runChecks once the iframe re-renders and re-evaluates.
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setCssCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleActivate() {
@@ -492,6 +545,17 @@ export default function Quest8() {
 
   return (
     <div className="dq-wrap dq-wrap-g8">
+
+      {/* Offscreen iframe that actually renders the student's CSS for the exec checks.
+          Sized to a NARROW mobile viewport so the overflow check is a real mobile test.
+          No sandbox attribute → stays same-origin readable (no scripts run here). */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 390, height: 1400, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
@@ -593,19 +657,27 @@ export default function Quest8() {
           </div>
 
           <div className={`dq-editor-pane${tab === 'code' ? ' active' : ''}`}>
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={cssLnRef}>{lineNumbers(cssCode)}</div>
-              <textarea
-                ref={cssTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="css"
                 value={cssCode}
                 onChange={handleCssChange}
-                onKeyDown={handleTabKey}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(cssTaRef, cssLnRef)}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
             <div className="dq-editor-footer">

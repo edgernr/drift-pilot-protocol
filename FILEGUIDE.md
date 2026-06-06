@@ -377,6 +377,8 @@ Restart `npm run dev` after editing `.env.local`. `supabase.js` throws a clear e
 
 `Quest.css` holds all shared styles (editor, topbar, brief panel, modal, dungeon entry animation). Each quest has its own CSS file for screen-specific visuals.
 
+**Editor + validation (all main gates, Gate 5 is the reference):** the code editor is **Monaco** (`@monaco-editor/react`), not a textarea. Paste is blocked via `handleEditorMount` (3 layers: `editor.addCommand` override of Ctrl/Cmd+V & Shift+Insert, DOM `paste`/`drop` capture listeners, and `contextmenu:false`), reusing `useQuestAnalytics().onPaste`. Checks are **execution-based** where reliable: an offscreen `<iframe ref={checkIframeRef}>` renders the student's code (CSS/HTML gates: no sandbox so it's same-origin readable; JS gates 9/10: `sandbox="allow-scripts allow-same-origin"`), then each check's `test(doc, win, code)` inspects the *rendered result* (computed styles, real geometry, DOM structure, or post-run behavior). Checks that can't be verified blind (media-query viewport, async fetch, declaration-only CSS rules, pseudo-class states) keep their original **regex fallback** so every gate stays completable. Pattern: `checks` state + `runChecks()` + a 350ms-debounced render effect + xp-pop in `runChecks`.
+
 ### Gate 01 — The Document Tomb (`/quest`) — HTML validator mechanic
 - **Concept:** Player receives a pre-filled corrupted HTML document and must fix all structural errors
 - **`VARIANTS`** — 3 randomised starting templates (same 4 errors, different content/context). Picked randomly on mount.

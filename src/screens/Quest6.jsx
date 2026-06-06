@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest6.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -199,59 +200,106 @@ const QUIZ = {
   correct: 1,
 }
 
-// ─── CSS checks ───────────────────────────────────────────────────────────────
+// ─── CSS checks (EXECUTION-BASED) ───────────────────────────────────────────────
+// Each test runs against the RENDERED iframe (doc + its window) — it inspects the
+// actual computed styles / real element geometry, so the CSS has to genuinely work.
+// Two checks stay source-based (regex on `css`) by their nature: minmax() resolves to
+// raw px tracks in computed values (undetectable post-render), and "no @media on grid
+// columns" is purely a source-shape rule. Those keep the original regex tests.
 
 const CSS_CHECKS = [
   {
     id: 'grid_container',
     label: 'Grid container established',
     hint: 'CSS Grid is activated on the parent — not the children. To create the dashboard grid, set the display mode on the outermost wrapper element.',
-    test: css => {
-      const m = css.match(/\.dashboard\s*\{([^}]+)\}/)
-      return m ? /display\s*:\s*grid/.test(m[1]) : false
+    // EXECUTION: the rendered .dashboard must actually be a grid container.
+    test: (doc, win) => {
+      const el = doc.querySelector('.dashboard')
+      return !!el && win.getComputedStyle(el).display === 'grid'
     },
   },
   {
     id: 'sidebar_width',
     label: 'Sidebar fixed width defined',
     hint: 'Use grid-template-columns on .dashboard to define the column widths. The sidebar needs a fixed pixel value; the content area should fill the remaining space.',
-    test: css => /grid-template-columns\s*:[^;]*240px/.test(css),
+    // EXECUTION: the resolved column track list must include a 240px track. The browser
+    // reports grid-template-columns as resolved pixel widths, so a 240px sidebar column
+    // shows up literally as "240px" in the computed track string.
+    test: (doc, win) => {
+      const el = doc.querySelector('.dashboard')
+      if (!el) return false
+      const cs = win.getComputedStyle(el)
+      if (cs.display !== 'grid') return false
+      return /(^|\s)240px(\s|$)/.test(cs.gridTemplateColumns)
+    },
   },
   {
     id: 'topbar_span',
     label: 'Top bar spans full width',
     hint: 'To make a grid item stretch across every column, use grid-column with a starting line of 1 and a special end value that always means "the last line" regardless of column count.',
-    test: css => {
-      const m = css.match(/\.top-bar\s*\{([^}]+)\}/)
-      return m ? /grid-column\s*:\s*1\s*\/\s*-1/.test(m[1]) : false
+    // EXECUTION: a full-width (1 / -1) top bar renders as wide as the whole dashboard
+    // grid, not just the sidebar/first column. Compare real rendered widths.
+    test: (doc, win) => {
+      const dash = doc.querySelector('.dashboard')
+      const bar = doc.querySelector('.top-bar')
+      if (!dash || !bar) return false
+      if (win.getComputedStyle(dash).display !== 'grid') return false
+      const dashW = dash.getBoundingClientRect().width
+      const barW = bar.getBoundingClientRect().width
+      return dashW > 0 && barW >= dashW - 2
     },
   },
   {
     id: 'auto_fit',
     label: 'Card grid uses auto-fit',
     hint: 'Instead of a fixed number of columns, CSS Grid can calculate how many will fit automatically. There\'s a keyword used inside repeat() that means "as many columns as will fit." Look it up.',
-    test: css => /auto-fit/.test(css),
+    // EXECUTION: auto-fit produces multiple resolved column tracks in a wide container,
+    // and the cards actually sit side-by-side (multiple cards share a row top). A single
+    // fixed/one-column grid would fail this.
+    test: (doc, win) => {
+      const grid = doc.querySelector('.card-grid')
+      if (!grid) return false
+      const cs = win.getComputedStyle(grid)
+      if (cs.display !== 'grid') return false
+      const tracks = cs.gridTemplateColumns.trim().split(/\s+/).filter(Boolean)
+      if (tracks.length < 2) return false
+      const cards = grid.querySelectorAll('.card')
+      if (cards.length >= 2) {
+        return Math.abs(cards[0].getBoundingClientRect().top - cards[1].getBoundingClientRect().top) < 5
+      }
+      return true
+    },
   },
   {
     id: 'minmax',
     label: 'Card columns use minmax()',
     hint: 'When using auto-fit, each column needs a size range — a floor it won\'t shrink below, and a ceiling it can grow to. One CSS function defines both bounds in a single expression.',
-    test: css => /minmax\s*\(/.test(css),
+    // REGEX FALLBACK: minmax() resolves to plain px tracks in computed styles, so it
+    // can't be reliably detected post-render. Keep the original source-based test.
+    test: (doc, win, css) => /minmax\s*\(/.test(css),
   },
   {
     id: 'footer_span',
     label: 'Footer spans full width',
     hint: 'The footer should span edge to edge, just like the top bar. The same grid-column technique that stretches items across all columns applies here too.',
-    test: css => {
-      const m = css.match(/\.footer\s*\{([^}]+)\}/)
-      return m ? /grid-column\s*:\s*1\s*\/\s*-1/.test(m[1]) : false
+    // EXECUTION: a full-width (1 / -1) footer renders as wide as the whole dashboard grid.
+    test: (doc, win) => {
+      const dash = doc.querySelector('.dashboard')
+      const foot = doc.querySelector('.footer')
+      if (!dash || !foot) return false
+      if (win.getComputedStyle(dash).display !== 'grid') return false
+      const dashW = dash.getBoundingClientRect().width
+      const footW = foot.getBoundingClientRect().width
+      return dashW > 0 && footW >= dashW - 2
     },
   },
   {
     id: 'no_grid_media',
     label: 'No media queries on grid columns',
     hint: 'If auto-fit and minmax are set up correctly, the columns reflow automatically at any screen width — adding a media query to override grid-template-columns means something else isn\'t quite right.',
-    test: css => {
+    // REGEX FALLBACK: this is a pure source-shape rule (don't override grid columns inside
+    // an @media). Nothing in the rendered output reveals it — keep the source-based test.
+    test: (doc, win, css) => {
       const mediaBlocks = css.match(/@media[^{]*\{[^}]+\}/g) ?? []
       return !mediaBlocks.some(b => /grid-template-columns/.test(b))
     },
@@ -264,11 +312,6 @@ function buildPreview(css, variantIndex) {
   const html = VARIANT_HTML[variantIndex]
   const reset = `<style>*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; } body { font-family: system-ui, sans-serif; } a { text-decoration: none; }</style>`
   return `<!DOCTYPE html><html><head>${reset}<style>${css}</style></head><body>${html}</body></html>`
-}
-
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -288,15 +331,12 @@ export default function Quest6() {
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [aiReview, setAiReview] = useState(null)
+  const [checks, setChecks] = useState(() => CSS_CHECKS.map(c => ({ ...c, passed: false })))
 
-  const iframeRef = useRef(null)
-  const cssLnRef = useRef(null)
-  const cssTaRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (on Preview tab)
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
 
-  const checks = useMemo(
-    () => CSS_CHECKS.map(c => ({ ...c, passed: c.test(cssCode) })),
-    [cssCode]
-  )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === CSS_CHECKS.length
   const xpEarned = passCount * 50
@@ -312,6 +352,36 @@ export default function Quest6() {
   useEffect(() => {
     if (tab === 'preview') updatePreview(cssCode)
   }, [cssCode, tab, updatePreview])
+
+  // Run the execution-based checks against the offscreen iframe whenever the CSS settles.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    if (!doc || !win || !doc.querySelector('.dashboard')) return
+    const results = CSS_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc, win, cssCode) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText(`+${(newPass - prevPassRef.current) * 50} XP`)
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [cssCode])
+
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(cssCode, variantIdx)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [cssCode, variantIdx, runChecks])
 
   useEffect(() => {
     if (!allPassed) { setAiReview(null); return }
@@ -332,30 +402,26 @@ export default function Quest6() {
     ? 'Grid sealed — engage the void lock'
     : `${failCount} check${failCount !== 1 ? 's' : ''} failing`
 
-  function handleCssChange(e) {
-    const val = e.target.value
-    const prevPassed = passCount
+  function handleCssChange(value) {
+    const val = value ?? ''
     setCssCode(val)
     trackChange(val.length)
-    const newPassed = CSS_CHECKS.filter(c => c.test(val)).length
-    if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 50} XP`)
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setCssCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleActivate() {
@@ -374,6 +440,15 @@ export default function Quest6() {
 
   return (
     <div className="dq-wrap dq-wrap-g6">
+
+      {/* Offscreen iframe that actually runs the student's CSS for the checks */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
@@ -476,19 +551,27 @@ export default function Quest6() {
           </div>
 
           <div className={`dq-editor-pane${tab === 'code' ? ' active' : ''}`}>
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={cssLnRef}>{lineNumbers(cssCode)}</div>
-              <textarea
-                ref={cssTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="css"
                 value={cssCode}
                 onChange={handleCssChange}
-                onKeyDown={handleTabKey}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(cssTaRef, cssLnRef)}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
             <div className="dq-editor-footer">

@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest7.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -290,24 +291,36 @@ const QUIZ = {
   correct: 1,
 }
 
-// ─── CSS checks ───────────────────────────────────────────────────────────────
+// ─── CSS checks (EXECUTION-BASED where reliable, regex fallback elsewhere) ───────
+// Each test runs against the RENDERED iframe (doc + its window) and inspects the
+// actual computed styles — so the CSS has to genuinely work. Pseudo-class states
+// (:hover / :focus) can't be triggered while building blind, and @keyframes
+// shape / the "no transition: all" rule are source-level concerns, so those parts
+// fall back to source regex. The raw source is passed as the 3rd arg.
 
 const CSS_CHECKS = [
   {
     id: 'btn_transition',
     label: 'Button uses targeted transition',
     hint: 'To animate a property change smoothly, declare a transition on the element — naming the specific property, a duration, and an easing. Avoid the shortcut that catches every property at once.',
-    test: css => {
-      const m = css.match(/\.btn-primary\s*\{([^}]+)\}/)
-      if (!m) return false
-      return /transition\s*:[^;]*transform/.test(m[1]) && !/transition\s*:\s*all/.test(m[1])
+    // EXECUTION: read the computed transition on the real .btn-primary element.
+    test: (doc, win) => {
+      const el = doc.querySelector('.btn-primary')
+      if (!el) return false
+      const cs = win.getComputedStyle(el)
+      const prop = (cs.transitionProperty || '').toLowerCase()
+      const dur = (cs.transitionDuration || '0s')
+      const hasDuration = dur.split(',').some(d => parseFloat(d) > 0)
+      // Must target transform specifically — not "all", not nothing.
+      return hasDuration && /\btransform\b/.test(prop) && !/\ball\b/.test(prop)
     },
   },
   {
     id: 'btn_scale',
     label: 'Button scales on hover',
     hint: 'Scale is a transform function that grows or shrinks an element relative to its natural size. Apply it on the :hover state — a value slightly above 1.0 gives a subtle enlarge effect.',
-    test: css => {
+    // REGEX FALLBACK: :hover can't be triggered while building blind.
+    test: (doc, win, css) => {
       const m = css.match(/\.btn-primary\s*:\s*hover\s*\{([^}]+)\}/)
       return m ? /transform\s*:[^;]*scale\s*\(/.test(m[1]) : false
     },
@@ -316,7 +329,8 @@ const CSS_CHECKS = [
     id: 'card_lift',
     label: 'Card lifts on hover',
     hint: 'To lift an element upward on hover, use a transform that translates along the vertical axis. Moving up means a value in the negative direction.',
-    test: css => {
+    // REGEX FALLBACK: :hover can't be triggered while building blind.
+    test: (doc, win, css) => {
       const m = css.match(/\.hover-card\s*:\s*hover\s*\{([^}]+)\}/)
       return m ? /transform\s*:[^;]*translateY\s*\(\s*-/.test(m[1]) : false
     },
@@ -325,12 +339,18 @@ const CSS_CHECKS = [
     id: 'input_focus',
     label: 'Input responds to focus',
     hint: 'The input should visually change when focused. Define a transition on a specific visual property — like border color — on the base element, then change that property in the :focus state.',
-    test: css => {
-      const base = css.match(/\.text-input\s*\{([^}]+)\}/)
+    // MIXED: execution for the base transition (computed style on the real input),
+    // regex for the :focus state change (can't trigger :focus blind).
+    test: (doc, win, css) => {
+      const el = doc.querySelector('.text-input')
+      if (!el) return false
+      const cs = win.getComputedStyle(el)
+      const prop = (cs.transitionProperty || '').toLowerCase()
+      const dur = (cs.transitionDuration || '0s')
+      const hasDuration = dur.split(',').some(d => parseFloat(d) > 0)
+      const hasTransition = hasDuration && /border|outline/.test(prop) && !/\ball\b/.test(prop)
       const focus = css.match(/\.text-input\s*:\s*focus\s*\{([^}]+)\}/)
-      if (!base || !focus) return false
-      const hasTransition = /transition\s*:[^;]*(?:border|outline)/.test(base[1]) && !/transition\s*:\s*all/.test(base[1])
-      const hasFocusChange = /border/.test(focus[1]) || /outline/.test(focus[1])
+      const hasFocusChange = focus ? (/border/.test(focus[1]) || /outline/.test(focus[1])) : false
       return hasTransition && hasFocusChange
     },
   },
@@ -338,27 +358,40 @@ const CSS_CHECKS = [
     id: 'notif_slide',
     label: 'Notification enters from above',
     hint: 'CSS animations use @keyframes to describe motion over time. To slide something in from above, start it at a position above its natural location and end with no offset. Wire the animation to .notification.',
-    test: css => {
-      const hasKeyframes = /@keyframes\s+\w+[^{]*\{[^}]*translateY\s*\(\s*-/.test(css)
-      const hasAnimation = /\.notification\s*\{[^}]*animation\s*:/.test(css)
-      return hasKeyframes && hasAnimation
+    // MIXED: execution confirms an animation is actually wired to .notification
+    // (computed animation-name resolves to a real keyframes set, not "none");
+    // regex confirms the keyframes describe an upward slide (translateY negative).
+    test: (doc, win, css) => {
+      const el = doc.querySelector('.notification')
+      if (!el) return false
+      const name = (win.getComputedStyle(el).animationName || 'none').trim()
+      const hasAnimation = name !== '' && name !== 'none'
+      const hasKeyframes = /@keyframes\s+[\w-]+[^{]*\{[\s\S]*?translateY\s*\(\s*-/.test(css)
+      return hasAnimation && hasKeyframes
     },
   },
   {
     id: 'loader_spin',
     label: 'Loader rotates continuously',
     hint: 'A spinner needs to rotate a full turn, forever. Define @keyframes that describes one complete rotation, then apply it to .loader-ring and tell the animation how many times to repeat.',
-    test: css => {
-      const hasKeyframes = /@keyframes\s+\w+[^{]*\{[^}]*rotate\s*\(\s*360deg\s*\)/.test(css)
-      const hasAnimation = /\.loader-ring\s*\{[^}]*animation\s*:/.test(css)
-      return hasKeyframes && hasAnimation
+    // MIXED: execution confirms an animation is wired to .loader-ring (computed
+    // animation-name resolves to real keyframes); regex confirms a full 360deg turn.
+    test: (doc, win, css) => {
+      const el = doc.querySelector('.loader-ring')
+      if (!el) return false
+      const name = (win.getComputedStyle(el).animationName || 'none').trim()
+      const hasAnimation = name !== '' && name !== 'none'
+      const hasKeyframes = /@keyframes\s+[\w-]+[^{]*\{[\s\S]*?rotate\s*\(\s*360deg\s*\)/.test(css)
+      return hasAnimation && hasKeyframes
     },
   },
   {
     id: 'no_transition_all',
     label: 'No transition: all anywhere',
     hint: '"all" as a transition target can trigger repaints on properties you never intended to animate. Name only the property that actually changes — it\'s faster and intentional.',
-    test: css => !/transition\s*:\s*all/.test(css),
+    // REGEX FALLBACK: a source-level rule ("never write transition: all") — there's
+    // no rendered artifact to inspect, so this stays a source check.
+    test: (doc, win, css) => !/transition\s*:\s*all/.test(css),
   },
 ]
 
@@ -368,11 +401,6 @@ function buildPreview(css, variantIndex) {
   const html = VARIANT_HTML[variantIndex]
   const reset = `<style>*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; } body { font-family: system-ui, sans-serif; } input { font-family: inherit; } button { font-family: inherit; cursor: pointer; border: none; }</style>`
   return `<!DOCTYPE html><html><head>${reset}<style>${css}</style></head><body>${html}</body></html>`
-}
-
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -392,15 +420,12 @@ export default function Quest7() {
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [aiReview, setAiReview] = useState(null)
+  const [checks, setChecks] = useState(() => CSS_CHECKS.map(c => ({ ...c, passed: false })))
 
-  const iframeRef = useRef(null)
-  const cssLnRef = useRef(null)
-  const cssTaRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (on Preview tab)
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
 
-  const checks = useMemo(
-    () => CSS_CHECKS.map(c => ({ ...c, passed: c.test(cssCode) })),
-    [cssCode]
-  )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === CSS_CHECKS.length
   const xpEarned = passCount * 50
@@ -415,6 +440,38 @@ export default function Quest7() {
   useEffect(() => {
     if (tab === 'preview') updatePreview(cssCode)
   }, [cssCode, tab, updatePreview])
+
+  // Run the checks against the offscreen iframe whenever the CSS settles. Execution
+  // checks read computed styles from the rendered doc; regex-fallback checks read the
+  // raw source. The source (cssCode) is passed as the 3rd arg to every test.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    if (!doc || !win || !doc.querySelector('.component-lab')) return
+    const results = CSS_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc, win, cssCode) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText(`+${(newPass - prevPassRef.current) * 50} XP`)
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [cssCode])
+
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(cssCode, variantIdx)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [cssCode, variantIdx, runChecks])
 
   useEffect(() => {
     if (!allPassed) { setAiReview(null); return }
@@ -435,30 +492,26 @@ export default function Quest7() {
     ? 'Figures awakened — transmit the signal'
     : `${failCount} component${failCount !== 1 ? 's' : ''} still frozen`
 
-  function handleCssChange(e) {
-    const val = e.target.value
-    const prevPassed = passCount
+  function handleCssChange(value) {
+    const val = value ?? ''
     setCssCode(val)
     trackChange(val.length)
-    const newPassed = CSS_CHECKS.filter(c => c.test(val)).length
-    if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 50} XP`)
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setCssCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleActivate() {
@@ -477,6 +530,15 @@ export default function Quest7() {
 
   return (
     <div className="dq-wrap dq-wrap-g7">
+
+      {/* Offscreen iframe that actually runs the student's CSS for the checks */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
@@ -565,19 +627,27 @@ export default function Quest7() {
           </div>
 
           <div className={`dq-editor-pane${tab === 'code' ? ' active' : ''}`}>
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={cssLnRef}>{lineNumbers(cssCode)}</div>
-              <textarea
-                ref={cssTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="css"
                 value={cssCode}
                 onChange={handleCssChange}
-                onKeyDown={handleTabKey}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(cssTaRef, cssLnRef)}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
             <div className="dq-editor-footer">

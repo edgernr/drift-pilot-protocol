@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest5.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -107,10 +108,13 @@ const START_CSS = `/* Gate 05 — The Gravity Anchor
    The HTML is pre-built. Your job is the CSS.
    .nav-brand::after uses position: absolute — that one is legitimate, leave it.
 
+   Checks now RUN your CSS and inspect the rendered layout (computed styles +
+   real positions) — not just the text. The code has to actually work.
+
    Checks to pass:
    1. .site-nav uses display: flex
    2. .nav-links uses display: flex
-   3. .nav-cta has margin-left: auto (pushes it to the far right)
+   3. .nav-cta is pushed to the far right (margin-left: auto)
    4. .card-row uses display: flex
    5. .two-col uses display: flex
    6. .hero-section uses display: flex + justify-content: center + align-items: center */
@@ -241,62 +245,79 @@ const QUIZ = {
   correct: 1,
 }
 
-// ─── CSS checks ───────────────────────────────────────────────────────────────
+// ─── CSS checks (EXECUTION-BASED) ───────────────────────────────────────────────
+// Each test runs against the RENDERED iframe (doc + its window) — it inspects the
+// actual computed styles / real element positions, so the CSS has to genuinely work,
+// not just contain the right text.
 
 const CSS_CHECKS = [
   {
     id: 'nav_flex',
     label: 'Navigation anchored to flow',
     hint: 'Flexbox is activated on the parent container, not the children. To arrange .site-nav\'s children in a row, apply the flex display mode to .site-nav itself.',
-    test: css => {
-      const m = css.match(/\.site-nav\s*\{([^}]+)\}/)
-      return m ? /display\s*:\s*flex/.test(m[1]) : false
+    test: (doc, win) => {
+      const el = doc.querySelector('.site-nav')
+      return !!el && win.getComputedStyle(el).display === 'flex'
     },
   },
   {
     id: 'nav_links_flex',
     label: 'Nav links in a row',
     hint: 'The .nav-links element is the parent of the individual links. To make those links sit side by side in a row, turn .nav-links itself into a flex container.',
-    test: css => {
-      const m = css.match(/\.nav-links\s*\{([^}]+)\}/)
-      return m ? /display\s*:\s*flex/.test(m[1]) : false
+    test: (doc, win) => {
+      const el = doc.querySelector('.nav-links')
+      return !!el && win.getComputedStyle(el).display === 'flex'
     },
   },
   {
     id: 'nav_push',
     label: 'Nav item pushed to edge',
     hint: 'In flexbox, a margin set to auto on one side of an item consumes all remaining free space in that direction — effectively pushing the element to the opposite end.',
-    test: css => {
-      const m = css.match(/\.nav-cta\s*\{([^}]+)\}/)
-      return m ? /margin-left\s*:\s*auto/.test(m[1]) : false
+    test: (doc, win) => {
+      const nav = doc.querySelector('.site-nav')
+      const links = doc.querySelector('.nav-links')
+      const cta = doc.querySelector('.nav-cta')
+      if (!nav || !links || !cta) return false
+      // The nav must be a flex row for an auto margin to do anything…
+      if (win.getComputedStyle(nav).display !== 'flex') return false
+      // …and margin-left:auto leaves a big gap before the CTA (it's shoved to the right).
+      const gap = cta.getBoundingClientRect().left - links.getBoundingClientRect().right
+      return gap > 80
     },
   },
   {
     id: 'card_flex',
     label: 'Card row established',
     hint: 'The .card-row element is the parent of all the cards. Making it a flex container will arrange its children side by side horizontally.',
-    test: css => {
-      const m = css.match(/\.card-row\s*\{([^}]+)\}/)
-      return m ? /display\s*:\s*flex/.test(m[1]) : false
+    test: (doc, win) => {
+      const el = doc.querySelector('.card-row')
+      if (!el || win.getComputedStyle(el).display !== 'flex') return false
+      // Confirm the cards actually sit side-by-side (same top edge).
+      const cards = el.querySelectorAll('.card')
+      if (cards.length >= 2) {
+        return Math.abs(cards[0].getBoundingClientRect().top - cards[1].getBoundingClientRect().top) < 5
+      }
+      return true
     },
   },
   {
     id: 'two_col_flex',
     label: 'Two columns using flex',
     hint: 'A two-column layout — main content beside a sidebar — is a classic flexbox pattern. Apply it to the wrapper that contains both columns.',
-    test: css => {
-      const m = css.match(/\.two-col\s*\{([^}]+)\}/)
-      return m ? /display\s*:\s*flex/.test(m[1]) : false
+    test: (doc, win) => {
+      const el = doc.querySelector('.two-col')
+      return !!el && win.getComputedStyle(el).display === 'flex'
     },
   },
   {
     id: 'hero_center',
     label: 'Hero centered both axes',
     hint: 'Centering content both horizontally and vertically in a flex container requires two separate alignment properties — one controls the main axis, the other controls the cross axis.',
-    test: css => {
-      const m = css.match(/\.hero-section\s*\{([^}]+)\}/)
-      if (!m) return false
-      return /display\s*:\s*flex/.test(m[1]) && /justify-content\s*:\s*center/.test(m[1]) && /align-items\s*:\s*center/.test(m[1])
+    test: (doc, win) => {
+      const el = doc.querySelector('.hero-section')
+      if (!el) return false
+      const cs = win.getComputedStyle(el)
+      return cs.display === 'flex' && cs.justifyContent === 'center' && cs.alignItems === 'center'
     },
   },
 ]
@@ -307,11 +328,6 @@ function buildPreview(css, variantIndex) {
   const html = VARIANT_HTML[variantIndex]
   const reset = `<style>*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; } body { font-family: system-ui, sans-serif; } a { text-decoration: none; }</style>`
   return `<!DOCTYPE html><html><head>${reset}<style>${css}</style></head><body>${html}</body></html>`
-}
-
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -331,15 +347,12 @@ export default function Quest5() {
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [aiReview, setAiReview] = useState(null)
+  const [checks, setChecks] = useState(() => CSS_CHECKS.map(c => ({ ...c, passed: false })))
 
-  const iframeRef = useRef(null)
-  const cssLnRef = useRef(null)
-  const cssTaRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (on Preview tab)
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
 
-  const checks = useMemo(
-    () => CSS_CHECKS.map(c => ({ ...c, passed: c.test(cssCode) })),
-    [cssCode]
-  )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === CSS_CHECKS.length
   const xpEarned = passCount * 40
@@ -354,6 +367,36 @@ export default function Quest5() {
   useEffect(() => {
     if (tab === 'preview') updatePreview(cssCode)
   }, [cssCode, tab, updatePreview])
+
+  // Run the execution-based checks against the offscreen iframe whenever the CSS settles.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    if (!doc || !win || !doc.querySelector('.layout-wrap')) return
+    const results = CSS_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc, win) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText(`+${(newPass - prevPassRef.current) * 40} XP`)
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [])
+
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(cssCode, variantIdx)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [cssCode, variantIdx, runChecks])
 
   useEffect(() => {
     if (!allPassed) { setAiReview(null); return }
@@ -374,30 +417,26 @@ export default function Quest5() {
     ? 'Gravity restored — deploy the anchor'
     : `${failCount} check${failCount !== 1 ? 's' : ''} failing`
 
-  function handleCssChange(e) {
-    const val = e.target.value
-    const prevPassed = passCount
+  function handleCssChange(value) {
+    const val = value ?? ''
     setCssCode(val)
     trackChange(val.length)
-    const newPassed = CSS_CHECKS.filter(c => c.test(val)).length
-    if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 40} XP`)
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setCssCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleActivate() {
@@ -416,6 +455,15 @@ export default function Quest5() {
 
   return (
     <div className="dq-wrap dq-wrap-g5">
+
+      {/* Offscreen iframe that actually runs the student's CSS for the checks */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
@@ -505,19 +553,27 @@ export default function Quest5() {
           </div>
 
           <div className={`dq-editor-pane${tab === 'code' ? ' active' : ''}`}>
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={cssLnRef}>{lineNumbers(cssCode)}</div>
-              <textarea
-                ref={cssTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="css"
                 value={cssCode}
                 onChange={handleCssChange}
-                onKeyDown={handleTabKey}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(cssTaRef, cssLnRef)}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
             <div className="dq-editor-footer">

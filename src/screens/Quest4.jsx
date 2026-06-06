@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest4.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -281,20 +282,78 @@ const QUIZ = {
   correct: 0,
 }
 
-// ─── CSS checks ───────────────────────────────────────────────────────────────
+// ─── CSS checks (EXECUTION-BASED where it's reliable to render) ─────────────────
+// Each test receives (doc, win, css):
+//   • doc / win — the RENDERED offscreen iframe + its window, so checks can read the
+//     real computed styles / applied results of the student's CSS.
+//   • css       — the raw source, for the rules that can ONLY be verified from source
+//     (declaration counts, "no #hex", media-query presence) and so stay regex.
+//
+// Mix per the gate guidance: computed-style for applied results (header/card styled,
+// var() actually consumed); regex for declaration/no-hex/media-query rules that are
+// invisible in computed styles or depend on the viewport.
+
+// A computed style counts as "actually applied" when it isn't the browser default.
+function isMeaningful(prop, value) {
+  if (!value) return false
+  const v = value.trim().toLowerCase()
+  switch (prop) {
+    case 'background-color':
+      return v !== 'rgba(0, 0, 0, 0)' && v !== 'transparent'
+    case 'color':
+      // default text color in our reset is the UA black — anything else is styled
+      return v !== 'rgb(0, 0, 0)' && v !== ''
+    case 'padding':
+      return v !== '0px' && v !== ''
+    case 'border-top-width':
+    case 'border-bottom-width':
+      return v !== '0px' && v !== ''
+    case 'border-radius':
+      return v !== '0px' && v !== ''
+    default:
+      return false
+  }
+}
+
+// Does the student's rule for `selector` both (a) reference a var() AND (b) actually
+// render a non-default style on that element? That's a genuine execution check that a
+// variable-driven rule took effect — with the regex var() guard keeping it completable.
+function styledWithVar(doc, win, css, selector) {
+  const ruleHasVar = new RegExp(
+    selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{[^}]*var\\s*\\(\\s*--[^)]+\\)[^}]*\\}'
+  ).test(css)
+  if (!ruleHasVar) return false
+  const el = doc.querySelector(selector)
+  if (!el) return false
+  const cs = win.getComputedStyle(el)
+  return (
+    isMeaningful('background-color', cs.backgroundColor) ||
+    isMeaningful('color', cs.color) ||
+    isMeaningful('padding', cs.padding) ||
+    isMeaningful('border-top-width', cs.borderTopWidth) ||
+    isMeaningful('border-bottom-width', cs.borderBottomWidth) ||
+    isMeaningful('border-radius', cs.borderTopLeftRadius)
+  )
+}
 
 const CSS_CHECKS = [
   {
+    // Source-only: the existence of a :root declaration block is invisible in
+    // computed styles, so this stays regex.
     id: 'root_vars',
     label: ':root custom properties declared',
     hint: 'Custom properties must be declared inside a special selector that targets the document root — making them available to every rule on the page. That selector is a CSS pseudo-class.',
-    test: css => /:root\s*\{[^}]*--[a-z]/.test(css),
+    mode: 'regex',
+    test: (doc, win, css) => /:root\s*\{[^}]*--[a-z]/.test(css),
   },
   {
+    // Source-only: counting declared color variables can't be read from computed
+    // styles — regex.
     id: 'color_tokens',
     label: 'Color system: 3+ color variables',
     hint: 'Color variables need actual color values. Any valid CSS color format works. Make sure you have at least three separate color properties defined in your root block.',
-    test: css => {
+    mode: 'regex',
+    test: (doc, win, css) => {
       const rootBlock = css.match(/:root\s*\{([^}]+)\}/)
       if (!rootBlock) return false
       const lines = rootBlock[1].split('\n').filter(l => l.includes('--') && l.includes(':'))
@@ -307,10 +366,12 @@ const CSS_CHECKS = [
     },
   },
   {
+    // Source-only: counting declared spacing variables — regex.
     id: 'spacing_tokens',
     label: 'Spacing system: 2+ size variables',
     hint: 'Spacing variables hold size values in a CSS length unit. Think about padding, gap, or margin values you\'ll reuse — define at least two of them.',
-    test: css => {
+    mode: 'regex',
+    test: (doc, win, css) => {
       const rootBlock = css.match(/:root\s*\{([^}]+)\}/)
       if (!rootBlock) return false
       const lines = rootBlock[1].split('\n').filter(l => l.includes('--') && l.includes(':'))
@@ -318,34 +379,59 @@ const CSS_CHECKS = [
     },
   },
   {
+    // EXECUTION: at least one rule outside :root must actually consume a variable and
+    // render a real style. We confirm a var()-bearing rule on a known element (header
+    // or card) genuinely applied; regex on the non-root source is the fallback so the
+    // gate stays completable for any other var()-consuming rule.
     id: 'var_used',
     label: 'Variables applied with var()',
     hint: 'To reference a custom property in a CSS rule, there\'s a function that takes the variable name as its argument. That function name is three letters long.',
-    test: css => /var\s*\(\s*--/.test(css.replace(/:root\s*\{[^}]+\}/, '')),
+    mode: 'exec',
+    test: (doc, win, css) => {
+      if (styledWithVar(doc, win, css, '.city-header')) return true
+      if (styledWithVar(doc, win, css, '.status-card')) return true
+      if (styledWithVar(doc, win, css, '.city-wrap')) return true
+      if (styledWithVar(doc, win, css, '.nav-link')) return true
+      // Fallback: any var() usage outside :root keeps the gate completable.
+      return /var\s*\(\s*--/.test(css.replace(/:root\s*\{[^}]+\}/, ''))
+    },
   },
   {
+    // Source-only: "no #hex outside :root" cannot be seen in computed styles (the
+    // browser normalises everything to rgb) — regex, per gate guidance.
     id: 'no_hex_rules',
     label: 'Zero hardcoded #hex in rules',
     hint: 'Hardcoded color values directly in class rules defeat the purpose of a design system — you\'d need to change them in every rule. Every color used in a rule should come from a variable.',
-    test: css => !/#[0-9a-fA-F]{3,8}/.test(css.replace(/:root\s*\{[^}]+\}/, '')),
+    mode: 'regex',
+    test: (doc, win, css) => !/#[0-9a-fA-F]{3,8}/.test(css.replace(/:root\s*\{[^}]+\}/, '')),
   },
   {
+    // EXECUTION: the .city-header rule must reference a var() AND actually render a
+    // non-default style on the element (background / color / padding / border).
     id: 'header_styled',
     label: '.city-header styled with variables',
     hint: 'Find the .city-header element in the HTML, then write a CSS rule targeting it. Apply at least one of your defined variables to a visual property like background or color.',
-    test: css => /\.city-header\s*\{[^}]*var\s*\(\s*--[^)]+\)[^}]*\}/.test(css),
+    mode: 'exec',
+    test: (doc, win, css) => styledWithVar(doc, win, css, '.city-header'),
   },
   {
+    // EXECUTION: the .status-card rule must reference a var() AND actually render a
+    // non-default style on the element.
     id: 'card_styled',
     label: '.status-card styled with variables',
     hint: 'Find the .status-card element in the HTML and write a CSS rule for it. Apply at least one of your defined variables — the card should look styled, not bare.',
-    test: css => /\.status-card\s*\{[^}]*var\s*\(\s*--[^)]+\)[^}]*\}/.test(css),
+    mode: 'exec',
+    test: (doc, win, css) => styledWithVar(doc, win, css, '.status-card'),
   },
   {
+    // Viewport-dependent: a @media (max-width) breakpoint only fires at a narrow
+    // viewport, which we can't reliably reproduce blind in a fixed offscreen frame —
+    // keep regex so the gate stays completable.
     id: 'responsive',
     label: 'Responsive @media breakpoint added',
     hint: 'A media query wraps rules that only apply when a condition is met — like the viewport being a certain width. Write one that makes the layout adapt for different screen sizes.',
-    test: css => /@media\s*\([^)]*(?:max|min)-width[^)]*\)/.test(css),
+    mode: 'regex',
+    test: (doc, win, css) => /@media\s*\([^)]*(?:max|min)-width[^)]*\)/.test(css),
   },
 ]
 
@@ -390,11 +476,6 @@ function buildPreview(css, variantIndex, override = '') {
   return `<!DOCTYPE html><html><head>${reset}<style>${css}</style>${overrideBlock}</head><body>${html}</body></html>`
 }
 
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Quest4() {
@@ -413,15 +494,12 @@ export default function Quest4() {
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [aiReview, setAiReview] = useState(null)
+  const [checks, setChecks] = useState(() => CSS_CHECKS.map(c => ({ ...c, passed: false })))
 
-  const iframeRef = useRef(null)
-  const cssLnRef = useRef(null)
-  const cssTaRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (on Preview tab)
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
 
-  const checks = useMemo(
-    () => CSS_CHECKS.map(c => ({ ...c, passed: c.test(cssCode) })),
-    [cssCode]
-  )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === CSS_CHECKS.length
   const xpEarned = passCount * 30
@@ -437,6 +515,37 @@ export default function Quest4() {
     if (tab === 'preview') updatePreview(cssCode, brandOverride)
   }, [cssCode, tab, brandOverride, updatePreview])
 
+  // Run the checks against the offscreen iframe whenever the CSS settles. Execution
+  // checks read the rendered computed styles; regex checks read the raw source.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    if (!doc || !win || !doc.querySelector('.city-wrap')) return
+    const results = CSS_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc, win, cssCode) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText(`+${(newPass - prevPassRef.current) * 30} XP`)
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [cssCode])
+
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(cssCode, variantIdx)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [cssCode, variantIdx, runChecks])
+
   useEffect(() => {
     if (!allPassed) { setAiReview(null); return }
     setAiReview('loading')
@@ -451,30 +560,26 @@ export default function Quest4() {
     ? 'Protocol ready — activate the override'
     : `${failCount} check${failCount !== 1 ? 's' : ''} failing`
 
-  function handleCssChange(e) {
-    const val = e.target.value
-    const prevPassed = passCount
+  function handleCssChange(value) {
+    const val = value ?? ''
     setCssCode(val)
     trackChange(val.length)
-    const newPassed = CSS_CHECKS.filter(c => c.test(val)).length
-    if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 30} XP`)
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setCssCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleActivate() {
@@ -504,6 +609,15 @@ export default function Quest4() {
 
   return (
     <div className="dq-wrap dq-wrap-g4">
+
+      {/* Offscreen iframe that actually renders the student's CSS for the checks */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
@@ -599,19 +713,27 @@ export default function Quest4() {
           </div>
 
           <div className={`dq-editor-pane${tab === 'code' ? ' active' : ''}`}>
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={cssLnRef}>{lineNumbers(cssCode)}</div>
-              <textarea
-                ref={cssTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="css"
                 value={cssCode}
                 onChange={handleCssChange}
-                onKeyDown={handleTabKey}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(cssTaRef, cssLnRef)}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
             <div className="dq-editor-footer">

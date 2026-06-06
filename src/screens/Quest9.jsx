@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest9.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -212,56 +213,109 @@ const QUIZ = {
   correct: 1,
 }
 
-// ─── JS checks ────────────────────────────────────────────────────────────────
+// ─── JS checks (EXECUTION-BASED where reliable, regex fallback otherwise) ───────
+// The student's JS is run inside an offscreen iframe (sandbox allow-scripts +
+// allow-same-origin so we can read it back). Each test receives (doc, win, code):
+//   doc  — the rendered iframe document AFTER the student's script ran
+//   win  — the iframe window
+//   code — the comment-stripped source (used for the source-only checks)
+// Behaviour checks SIMULATE real interactions (click / input / keydown) and assert
+// the DOM actually changed. Checks that can't be reliably simulated while built
+// blind (source-only facts, or fragile form-submit navigation) stay regex.
 
 const JS_CHECKS = [
   {
     id: 'selector',
     label: 'querySelector or getElementById selects elements',
     hint: "Use document.querySelector('#xp-count') or document.getElementById('xp-count') to get a reference to an element before you can change it.",
-    test: code => /\b(?:querySelector|getElementById)\s*\(/.test(code),
+    // REGEX FALLBACK: which selector API was used leaves no observable DOM trace.
+    test: (doc, win, code) => /\b(?:querySelector|getElementById)\s*\(/.test(code),
   },
   {
     id: 'text_content',
     label: '.textContent used to write to the DOM',
     hint: "Once you have an element reference, set element.textContent = yourValue to update what it displays. Unlike innerHTML, textContent treats the value as plain text — no HTML injected.",
-    test: code => /\.textContent\s*=/.test(code),
+    // REGEX FALLBACK: textContent vs innerHTML produces identical rendered text
+    // for plain values, so the safe-write distinction isn't observable at runtime.
+    test: (doc, win, code) => /\.textContent\s*=/.test(code),
   },
   {
     id: 'class_list',
     label: '.classList.add / .remove / .toggle used',
     hint: "element.classList.toggle('theme-light') flips the class on and off. Also works with .add() and .remove() for one-directional changes.",
-    test: code => /\.classList\.(add|remove|toggle)\s*\(/.test(code),
+    // EXECUTION: clicking the theme toggle must mutate a class somewhere in the DOM.
+    test: (doc) => {
+      const btn = doc.querySelector('#theme-toggle')
+      if (!btn) return false
+      const snapshot = () =>
+        [...doc.querySelectorAll('*')].map(el => String(el.className || '')).join('|')
+      const before = snapshot()
+      btn.click()
+      // Any element's class set changed as a result of the click → classList was used.
+      return snapshot() !== before
+    },
   },
   {
     id: 'click_handler',
     label: "addEventListener('click') handles button clicks",
     hint: "Attach a listener: element.addEventListener('click', function(e) { ... }). The callback runs every time the element is clicked.",
-    test: code => /addEventListener\s*\(\s*['"]click['"]/.test(code),
+    // EXECUTION: clicking #xp-plus must change the #xp-count display.
+    test: (doc) => {
+      const plus = doc.querySelector('#xp-plus')
+      const count = doc.querySelector('#xp-count')
+      if (!plus || !count) return false
+      const before = count.textContent
+      plus.click()
+      return count.textContent !== before
+    },
   },
   {
     id: 'input_handler',
     label: "addEventListener('input') reads .value as user types",
     hint: "input events fire on every keystroke. Inside the callback, access e.target.value (or the input element's .value directly) to get what was typed so far.",
-    test: code => /addEventListener\s*\(\s*['"]input['"]/.test(code) && /\.value/.test(code),
+    // EXECUTION: typing a no-match query must hide list rows (the search filters live).
+    test: (doc, win) => {
+      const input = doc.querySelector('#search-input')
+      const list = doc.querySelector('#citizen-list')
+      if (!input || !list) return false
+      const rows = [...list.querySelectorAll('li')]
+      if (rows.length === 0) return false
+      const visible = li => win.getComputedStyle(li).display !== 'none' && !li.hidden
+      const beforeVisible = rows.filter(visible).length
+      input.value = 'zzqxnomatch9'
+      input.dispatchEvent(new win.Event('input', { bubbles: true }))
+      const afterVisible = rows.filter(visible).length
+      return afterVisible < beforeVisible
+    },
   },
   {
     id: 'prevent_default',
     label: '.preventDefault() stops the form page-refresh',
     hint: "Inside a submit listener callback, call e.preventDefault() as the first line. Without it, the browser navigates away on submit and your JS state is destroyed.",
-    test: code => /\.preventDefault\s*\(\s*\)/.test(code),
+    // REGEX FALLBACK: a real submit inside a sandboxed iframe triggers navigation
+    // timing we can't observe reliably while built blind.
+    test: (doc, win, code) => /\.preventDefault\s*\(\s*\)/.test(code),
   },
   {
     id: 'state_variable',
     label: 'State variable holds the counter value',
     hint: "Declare: let xp = 0 (or any name). Update that variable in the click handler, then write it to the DOM with textContent. Don't read the number back out of the DOM — trust your variable.",
-    test: code => /\b(?:let|var)\s+\w+\s*=\s*0/.test(code),
+    // REGEX FALLBACK: a local state variable leaves no DOM trace of its existence.
+    test: (doc, win, code) => /\b(?:let|var)\s+\w+\s*=\s*0/.test(code),
   },
   {
     id: 'keydown_handler',
     label: "addEventListener('keydown') captures keyboard input",
     hint: "Attach a keydown listener to document or to an element: document.addEventListener('keydown', function(e) { ... }). The event object's .key property tells you which key was pressed.",
-    test: code => /addEventListener\s*\(\s*['"]keydown['"]/.test(code),
+    // EXECUTION: a dispatched keydown must update the #key-log readout.
+    test: (doc, win) => {
+      const log = doc.querySelector('#key-log')
+      if (!log) return false
+      const before = log.textContent
+      const ev = new win.KeyboardEvent('keydown', { key: 'A', bubbles: true })
+      doc.dispatchEvent(ev)
+      return log.textContent !== before
+    },
   },
 ]
 
@@ -270,11 +324,6 @@ const JS_CHECKS = [
 function buildPreview(js, variantIndex) {
   const safe = `try{\n${js}\n}catch(e){ console.error('JS error:',e.message) }`
   return VARIANT_HTML[variantIndex].replace('</body>', `<script>\n${safe}\n</script>\n</body>`)
-}
-
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -294,15 +343,12 @@ export default function Quest9() {
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [aiReview, setAiReview] = useState(null)
+  const [checks, setChecks] = useState(() => JS_CHECKS.map(c => ({ ...c, passed: false })))
 
-  const iframeRef = useRef(null)
-  const lnRef = useRef(null)
-  const taRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (on Preview tab)
+  const checkIframeRef = useRef(null)   // offscreen iframe that runs the student JS
+  const prevPassRef = useRef(0)
 
-  const checks = useMemo(
-    () => JS_CHECKS.map(c => ({ ...c, passed: c.test(stripComments(jsCode)) })),
-    [jsCode]
-  )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === JS_CHECKS.length
   const xpEarned = passCount * 50
@@ -312,6 +358,41 @@ export default function Quest9() {
     if (!iframeRef.current) return
     iframeRef.current.srcdoc = buildPreview(js, variantIdx)
   }, [variantIdx])
+
+  // Run the checks against the offscreen iframe (which has already executed the
+  // student's JS). Behaviour checks simulate clicks / input / keydown and assert
+  // the DOM changed; the source-only checks read the comment-stripped code.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    if (!doc || !win || !doc.querySelector('#xp-count')) return
+    const stripped = stripComments(jsCode)
+    const results = JS_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc, win, stripped) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText(`+${(newPass - prevPassRef.current) * 50} XP`)
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [jsCode])
+
+  // Debounced render: reload the offscreen iframe with the latest JS, then run
+  // the checks once it has loaded and the student's script has executed.
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(jsCode, variantIdx)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [jsCode, variantIdx, runChecks])
 
   useEffect(() => {
     if (!allPassed) { setAiReview(null); return }
@@ -332,30 +413,26 @@ export default function Quest9() {
     ? 'All systems wired — Control Room online'
     : `${JS_CHECKS.length - passCount} check${JS_CHECKS.length - passCount !== 1 ? 's' : ''} failing`
 
-  function handleJsChange(e) {
-    const val = e.target.value
-    const prevPassed = passCount
+  function handleJsChange(value) {
+    const val = value ?? ''
     setJsCode(val)
     trackChange(val.length)
-    const newPassed = JS_CHECKS.filter(c => c.test(stripComments(val))).length
-    if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 50} XP`)
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-  }
-
-  function syncScroll() {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(ta.selectionEnd)
-    setJsCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleActivate() {
@@ -374,6 +451,18 @@ export default function Quest9() {
 
   return (
     <div className="dq-wrap dq-wrap-g9">
+
+      {/* Offscreen iframe that actually runs the student's JS for the checks.
+          allow-scripts so the script executes; allow-same-origin so we can read
+          the rendered DOM back to verify behaviour. */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        sandbox="allow-scripts allow-same-origin"
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
@@ -471,19 +560,27 @@ export default function Quest9() {
           </div>
 
           <div className={`dq-editor-pane${tab === 'code' ? ' active' : ''}`}>
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={lnRef}>{lineNumbers(jsCode)}</div>
-              <textarea
-                ref={taRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="javascript"
                 value={jsCode}
                 onChange={handleJsChange}
-                onKeyDown={handleTabKey}
-                onPaste={onPaste}
-                onScroll={syncScroll}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
             <div className="dq-editor-footer">

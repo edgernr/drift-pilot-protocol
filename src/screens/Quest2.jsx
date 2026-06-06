@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest2.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -158,69 +159,91 @@ const QUIZ = {
   correct: 0,
 }
 
+// ─── Semantic checks (EXECUTION-BASED) ──────────────────────────────────────────
+// Each test runs against the RENDERED iframe (doc + its window) — it inspects the
+// actual parsed DOM produced by the student's HTML, so the markup has to genuinely
+// contain the real semantic elements (with content), not just the right text.
+
 const SEMANTIC_CHECKS = [
   {
     id: 'header',
     label: 'Site banner → <header>',
     hint: 'The banner at the top of a page — home to the logo and navigation — belongs in a landmark element whose name describes its position on the page.',
-    test: code => /<header[^<>]*>/i.test(code) && /<\/header>/i.test(code),
+    test: (doc) => {
+      const el = doc.querySelector('header')
+      // The banner must wrap the navigation links.
+      return !!el && !!el.querySelector('a')
+    },
   },
   {
     id: 'nav',
     label: 'Link group → <nav>',
     hint: 'A group of links used to move around a site belongs in an element whose name literally describes its purpose.',
-    test: code => /<nav[^<>]*>/i.test(code) && /<\/nav>/i.test(code),
+    test: (doc) => {
+      const el = doc.querySelector('nav')
+      // A real link group lives inside the nav.
+      return !!el && el.querySelectorAll('a').length >= 2
+    },
   },
   {
     id: 'main',
     label: 'Primary content → <main>',
     hint: 'The primary content of a page — the reason someone visited — lives in a single landmark element. There should only ever be one of it per page.',
-    test: code => /<main[^<>]*>/i.test(code) && /<\/main>/i.test(code),
+    test: (doc) => {
+      const els = doc.querySelectorAll('main')
+      // Exactly one <main> per page, and it must hold the page content.
+      return els.length === 1 && els[0].children.length > 0
+    },
   },
   {
     id: 'article',
     label: 'Lead story → <article>',
     hint: 'Content that could be lifted out and still make sense on its own — like a news story — belongs in an element that means a self-contained composition.',
-    test: code => /<article[^<>]*>/i.test(code) && /<\/article>/i.test(code),
+    test: (doc) => {
+      const el = doc.querySelector('article')
+      // The lead story carries its own heading.
+      return !!el && !!el.querySelector('h1, h2, h3')
+    },
   },
   {
     id: 'section',
     label: 'History block → <section>',
     hint: 'A thematic block of content with its own heading, but not fully independent from the page, belongs in an element that represents a themed grouping.',
-    test: code => /<section[^<>]*>/i.test(code) && /<\/section>/i.test(code),
+    test: (doc) => {
+      const el = doc.querySelector('section')
+      // A themed block keeps its heading.
+      return !!el && !!el.querySelector('h1, h2, h3')
+    },
   },
   {
     id: 'aside',
     label: 'Sidebar → <aside>',
     hint: 'Supplementary content that enriches but isn\'t essential to the main story — like a sidebar fact box — has its own dedicated landmark element.',
-    test: code => /<aside[^<>]*>/i.test(code) && /<\/aside>/i.test(code),
+    test: (doc) => {
+      const el = doc.querySelector('aside')
+      return !!el && el.children.length > 0
+    },
   },
   {
     id: 'figure',
     label: 'Blueprint block → <figure> + <figcaption>',
     hint: 'When an image and its description belong together as a visual unit, they share a semantic container. The description text goes in a dedicated child element inside that container.',
-    test: code => /<figure[^<>]*>/i.test(code) && /<\/figure>/i.test(code) && /<figcaption[^<>]*>/i.test(code) && /<\/figcaption>/i.test(code),
+    test: (doc) => {
+      const fig = doc.querySelector('figure')
+      // The caption must actually live inside the figure.
+      return !!fig && !!fig.querySelector('figcaption')
+    },
   },
   {
     id: 'footer',
     label: 'Page footer → <footer>',
     hint: 'The closing band of a page — copyright, credits, secondary links — belongs in a landmark element whose name describes where it sits on the page.',
-    test: code => /<footer[^<>]*>/i.test(code) && /<\/footer>/i.test(code),
+    test: (doc) => {
+      const el = doc.querySelector('footer')
+      return !!el && (el.textContent || '').trim().length > 0
+    },
   },
 ]
-
-function getErrors(code) {
-  const errs = new Set()
-  for (const chk of SEMANTIC_CHECKS) {
-    if (!chk.test(code)) errs.add(chk.id)
-  }
-  return errs
-}
-
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
-}
 
 export default function Quest2() {
   const { goto } = useNav()
@@ -229,7 +252,8 @@ export default function Quest2() {
 
   const [startCode] = useState(() => VARIANTS[Math.floor(Math.random() * VARIANTS.length)])
   const [htmlCode, setHtmlCode] = useState(() => startCode)
-  const [errors, setErrors] = useState(() => getErrors(startCode))
+  // All checks start failing; runChecks() (driven by the offscreen render) clears them.
+  const [errors, setErrors] = useState(() => new Set(SEMANTIC_CHECKS.map(c => c.id)))
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [verifying, setVerifying] = useState(false)
@@ -238,12 +262,11 @@ export default function Quest2() {
   const [quizOpen, setQuizOpen] = useState(false)
   const [aiReview, setAiReview] = useState(null)
 
-  const iframeRef = useRef(null)
-  const htmlLnRef = useRef(null)
-  const htmlTaRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (Identity Scanner)
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevFixedRef = useRef(0)
 
-  const updatePreview = useCallback((html) => {
-    if (!iframeRef.current) return
+  const buildPreview = useCallback((html) => {
     const style = `<style>
       html { font-size: 9px; overflow: hidden; }
       body { margin: 0; padding: 0; background: #080c14; color: #a0b0c0; font-family: 'Courier New', monospace; font-size: 1.1rem; line-height: 1.4; }
@@ -262,10 +285,46 @@ export default function Quest2() {
       p { margin: 1px 0; }
       img { display: none; }
     </style>`
-    iframeRef.current.srcdoc = style + html
+    return style + html
   }, [])
 
+  const updatePreview = useCallback((html) => {
+    if (!iframeRef.current) return
+    iframeRef.current.srcdoc = buildPreview(html)
+  }, [buildPreview])
+
   useEffect(() => { updatePreview(htmlCode) }, [htmlCode, updatePreview])
+
+  // Run the execution-based checks against the offscreen iframe whenever the HTML settles.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    if (!doc || !win || !doc.body) return
+    const errs = new Set()
+    for (const chk of SEMANTIC_CHECKS) {
+      let passed = false
+      try { passed = !!chk.test(doc, win) } catch { passed = false }
+      if (!passed) errs.add(chk.id)
+    }
+    const fixed = SEMANTIC_CHECKS.length - errs.size
+    if (fixed > prevFixedRef.current) {
+      setXpPopText('+25 XP')
+      setXpPopKey(k => k + 1)
+    }
+    prevFixedRef.current = fixed
+    setErrors(errs)
+  }, [])
+
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(htmlCode)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [htmlCode, buildPreview, runChecks])
 
   const errorsLeft = errors.size
 
@@ -292,31 +351,26 @@ export default function Quest2() {
     ? 'All elements identified. Submit to extract.'
     : 'The page looks identical. Only the meaning changes.'
 
-  function handleHtmlChange(e) {
-    const val = e.target.value
+  function handleHtmlChange(value) {
+    const val = value ?? ''
     setHtmlCode(val)
     trackChange(val.length)
-    const newErrors = getErrors(val)
-    if (newErrors.size < errors.size) {
-      setXpPopText('+25 XP')
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-    setErrors(newErrors)
-    syncScroll(htmlTaRef, htmlLnRef)
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setHtmlCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleVerify() {
@@ -339,6 +393,17 @@ export default function Quest2() {
 
   return (
     <div className="dq-wrap">
+
+      {/* Offscreen iframe that actually renders the student's HTML for the checks.
+          No sandbox attribute → stays same-origin so the checks can read its DOM. */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
+
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
         <div className="dq-topbar-center">
@@ -415,19 +480,27 @@ export default function Quest2() {
           </div>
 
           <div className="dq-editor-pane active">
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={htmlLnRef}>{lineNumbers(htmlCode)}</div>
-              <textarea
-                ref={htmlTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="html"
                 value={htmlCode}
                 onChange={handleHtmlChange}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(htmlTaRef, htmlLnRef)}
-                onKeyDown={handleTabKey}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
           </div>

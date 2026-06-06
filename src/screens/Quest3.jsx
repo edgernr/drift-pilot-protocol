@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest3.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -101,105 +102,80 @@ const QUIZ = {
   correct: 0,
 }
 
+// ─── Form checks (EXECUTION-BASED) ──────────────────────────────────────────────
+// Each test runs against the RENDERED iframe document — it inspects the actual
+// parsed DOM (real elements, attributes, label↔input links), so the HTML has to
+// genuinely produce the structure, not just contain matching text.
+
 const FORM_CHECKS = [
   {
     id: 'form',
     label: 'Registration wrapped in <form>',
     hint: 'All input controls that work together to collect and send data must live inside a dedicated container element. Without it, submission has nowhere to go.',
-    test: code => /<form[^<>]*>/i.test(code) && /<\/form>/i.test(code),
+    test: (doc) => !!doc.querySelector('form'),
   },
   {
     id: 'text',
     label: 'Name: <input type="text">',
     hint: 'For a field that collects a short typed response, the input\'s type attribute has a specific value. What single word describes plain, unformatted text?',
-    test: code => /<input[^>]+type=["']text["']/i.test(code),
+    test: (doc) => !!doc.querySelector('input[type="text" i]'),
   },
   {
     id: 'email',
     label: 'Email: <input type="email">',
     hint: 'Using the right input type for an email address does more than just collect text — it tells the browser the expected format so it can validate it automatically.',
-    test: code => /<input[^>]+type=["']email["']/i.test(code),
+    test: (doc) => !!doc.querySelector('input[type="email" i]'),
   },
   {
     id: 'select',
     label: 'Sector: <select> with <option>s',
     hint: 'When a user picks from a fixed list, two elements work together: a container that creates the dropdown, and child elements that each define one choice.',
-    test: code => /<select[^<>]*>/i.test(code) && /<\/select>/i.test(code) && /<option[^<>]*>/i.test(code),
+    test: (doc) => {
+      const sel = doc.querySelector('select')
+      return !!sel && sel.querySelectorAll('option').length > 0
+    },
   },
   {
     id: 'radio',
     label: 'Access level: <input type="radio">',
     hint: 'When only one option in a group can be selected at a time, all the inputs in that group share the same name attribute. The input type is a small circular selector.',
-    test: code => /<input[^>]+type=["']radio["']/i.test(code),
+    test: (doc) => doc.querySelectorAll('input[type="radio" i]').length >= 2,
   },
   {
     id: 'textarea',
     label: 'Message: <textarea>',
     hint: 'A field that accepts multiple lines of free-form text requires a completely different element — not a variation of input. It has its own opening and closing tags.',
-    test: code => /<textarea[^<>]*>/i.test(code) && /<\/textarea>/i.test(code),
+    test: (doc) => !!doc.querySelector('textarea'),
   },
   {
     id: 'labels',
     label: 'Inputs labeled: <label for="...">',
     hint: 'Every input needs a visible label connected to it — not just placed next to it. The connection is made by matching an attribute on the label to an attribute on the input.',
-    test: code => (code.match(/<label[^>]+for=/gi) || []).length >= 3,
+    test: (doc) => doc.querySelectorAll('label[for]').length >= 3,
   },
   {
     id: 'ids',
     label: 'Inputs have id attributes',
     hint: 'For a label to connect to its input, the input needs a unique identifier attribute. The label\'s "for" attribute must contain the exact same value to complete the link.',
-    test: code => (code.match(/\bid=["'][^"']+["']/gi) || []).length >= 3,
+    test: (doc) => doc.querySelectorAll('input[id], select[id], textarea[id]').length >= 3,
   },
   {
     id: 'required',
     label: 'Critical fields marked required',
     hint: 'Fields that must not be submitted empty can be enforced directly in HTML — no JavaScript needed. There\'s a single boolean attribute that activates native browser validation on an input.',
-    test: code => (code.match(/\brequired\b/gi) || []).length >= 2,
+    test: (doc) => doc.querySelectorAll('input[required], select[required], textarea[required]').length >= 2,
   },
   {
     id: 'button',
     label: 'Submit is a real <button>',
     hint: 'The control that triggers submission should be a native interactive element with a type attribute that tells the browser its role. A styled div has no submission behaviour.',
-    test: code => /<button[^<>]*>/i.test(code) && /<\/button>/i.test(code),
+    test: (doc) => !!doc.querySelector('button'),
   },
 ]
 
-function getErrors(code) {
-  const errs = new Set()
-  for (const chk of FORM_CHECKS) {
-    if (!chk.test(code)) errs.add(chk.id)
-  }
-  return errs
-}
+// ─── Preview builder ──────────────────────────────────────────────────────────
 
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
-}
-
-export default function Quest3() {
-  const { goto } = useNav()
-  const { completeQuest } = useAuth()
-  const { onPaste, trackChange, getAnalytics, pasteBlocked } = useQuestAnalytics()
-
-  const [startCode] = useState(() => VARIANTS[Math.floor(Math.random() * VARIANTS.length)])
-  const [htmlCode, setHtmlCode] = useState(() => startCode)
-  const [errors, setErrors] = useState(() => getErrors(startCode))
-  const [xpPopKey, setXpPopKey] = useState(0)
-  const [xpPopText, setXpPopText] = useState('')
-  const [extracting, setExtracting] = useState(false)
-  const [dungeonEntry, setDungeonEntry] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [quizOpen, setQuizOpen] = useState(false)
-  const [aiReview, setAiReview] = useState(null)
-
-  const iframeRef = useRef(null)
-  const htmlLnRef = useRef(null)
-  const htmlTaRef = useRef(null)
-
-  const updatePreview = useCallback((html) => {
-    if (!iframeRef.current) return
-    const style = `<style>
+const PREVIEW_STYLE = `<style>
       html { font-size: 9px; overflow: hidden; }
       body { margin: 0; padding: 5px 7px; background: #0c0810; color: #c0a8b8; font-family: 'Courier New', monospace; font-size: 1.05rem; line-height: 1.4; }
       form { display: flex; flex-direction: column; gap: 3px; }
@@ -212,12 +188,69 @@ export default function Quest3() {
       button { background: oklch(0.28 0.1 25); border: 1px solid oklch(0.55 0.22 25); color: oklch(0.85 0.12 25); padding: 2px 8px; font-size: 0.9rem; cursor: pointer; margin-top: 2px; font-family: inherit; }
       select option { background: #1a1020; }
     </style>`
-    iframeRef.current.srcdoc = style + html
+
+function buildPreview(html) {
+  return PREVIEW_STYLE + html
+}
+
+export default function Quest3() {
+  const { goto } = useNav()
+  const { completeQuest } = useAuth()
+  const { onPaste, trackChange, getAnalytics, pasteBlocked } = useQuestAnalytics()
+
+  const [startCode] = useState(() => VARIANTS[Math.floor(Math.random() * VARIANTS.length)])
+  const [htmlCode, setHtmlCode] = useState(() => startCode)
+  const [checks, setChecks] = useState(() => FORM_CHECKS.map(c => ({ ...c, passed: false })))
+  const [xpPopKey, setXpPopKey] = useState(0)
+  const [xpPopText, setXpPopText] = useState('')
+  const [extracting, setExtracting] = useState(false)
+  const [dungeonEntry, setDungeonEntry] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [quizOpen, setQuizOpen] = useState(false)
+  const [aiReview, setAiReview] = useState(null)
+
+  const iframeRef = useRef(null)        // visible preview
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
+
+  const passCount = checks.filter(c => c.passed).length
+  const errorsLeft = FORM_CHECKS.length - passCount
+
+  const updatePreview = useCallback((html) => {
+    if (!iframeRef.current) return
+    iframeRef.current.srcdoc = buildPreview(html)
   }, [])
 
   useEffect(() => { updatePreview(htmlCode) }, [htmlCode, updatePreview])
 
-  const errorsLeft = errors.size
+  // Run the execution-based checks against the offscreen iframe whenever the HTML settles.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    if (!doc || !doc.body) return
+    const results = FORM_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText('+30 XP')
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [])
+
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(htmlCode)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [htmlCode, runChecks])
 
   useEffect(() => {
     if (errorsLeft !== 0) { setAiReview(null); return }
@@ -243,31 +276,26 @@ export default function Quest3() {
     ? 'Form complete. Extract the data.'
     : 'The Label Eater cannot consume what is labeled.'
 
-  function handleHtmlChange(e) {
-    const val = e.target.value
+  function handleHtmlChange(value) {
+    const val = value ?? ''
     setHtmlCode(val)
     trackChange(val.length)
-    const newErrors = getErrors(val)
-    if (newErrors.size < errors.size) {
-      setXpPopText('+30 XP')
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-    setErrors(newErrors)
-    syncScroll(htmlTaRef, htmlLnRef)
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setHtmlCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleExtract() {
@@ -290,6 +318,16 @@ export default function Quest3() {
 
   return (
     <div className="dq-wrap dq-wrap-g3">
+
+      {/* Offscreen iframe that actually renders the student's HTML for the checks */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
+
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
         <div className="dq-topbar-center">
@@ -341,8 +379,8 @@ export default function Quest3() {
               </span>
             </div>
             <ul className="dq-objectives">
-              {FORM_CHECKS.map(chk => {
-                const fixed = !errors.has(chk.id)
+              {FORM_CHECKS.map((chk, i) => {
+                const fixed = !!checks[i]?.passed
                 return (
                   <li key={chk.id} className={fixed ? 'done' : 'error'}>
                     <div className="dq-obj-box dq3-obj-box">{fixed ? '✓' : '×'}</div>
@@ -377,19 +415,27 @@ export default function Quest3() {
           </div>
 
           <div className="dq-editor-pane active">
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={htmlLnRef}>{lineNumbers(htmlCode)}</div>
-              <textarea
-                ref={htmlTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="html"
                 value={htmlCode}
                 onChange={handleHtmlChange}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(htmlTaRef, htmlLnRef)}
-                onKeyDown={handleTabKey}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
           </div>

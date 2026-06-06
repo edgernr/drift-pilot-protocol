@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
 import './Quest10.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -158,11 +159,6 @@ function buildPreview(js) {
   return TEMPLATE_HTML.replace('</body>', `<script>\n${safe}\n</script>\n</body>`)
 }
 
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
-}
-
 // ─── City building heights for scene art ─────────────────────────────────────
 
 const BUILDING_HEIGHTS = [22, 38, 28, 48, 34, 26]
@@ -183,15 +179,12 @@ export default function Quest10() {
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [aiReview, setAiReview] = useState(null)
+  const [checks, setChecks] = useState(() => JS_CHECKS.map(c => ({ ...c, passed: false })))
 
-  const iframeRef = useRef(null)
-  const lnRef = useRef(null)
-  const taRef = useRef(null)
+  const iframeRef = useRef(null)        // visible preview (on Preview tab)
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
 
-  const checks = useMemo(
-    () => JS_CHECKS.map(c => ({ ...c, passed: c.test(stripComments(jsCode)) })),
-    [jsCode]
-  )
   const passCount = checks.filter(c => c.passed).length
   const allPassed = passCount === JS_CHECKS.length
   const failCount = JS_CHECKS.length - passCount
@@ -203,6 +196,42 @@ export default function Quest10() {
     if (!iframeRef.current) return
     iframeRef.current.srcdoc = buildPreview(js)
   }, [])
+
+  // Run the checks whenever the JS settles. Gate 10 is the FINAL BOSS — its
+  // mechanics are async + real network (fetch to JSONPlaceholder), which can't be
+  // reliably verified blind. So these checks stay SOURCE-based (regex on the
+  // student's code, comments stripped). We still run them through the same
+  // state + runChecks() + debounced-render pipeline as the execution gates, and
+  // the offscreen iframe genuinely executes the student's code (sandboxed) so the
+  // live behavior matches what they wrote.
+  const runChecks = useCallback(() => {
+    const src = stripComments(jsCode)
+    const results = JS_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(src) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText(`+${(newPass - prevPassRef.current) * 100} XP`)
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [jsCode])
+
+  // Render the student's JS into the offscreen check iframe (it allows scripts AND
+  // same-origin so the executed dashboard is real & readable), debounced so we're
+  // not re-running on every keystroke, then evaluate the checks.
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = buildPreview(jsCode)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [jsCode, runChecks])
 
   useEffect(() => {
     if (!allPassed) { setAiReview(null); return }
@@ -223,30 +252,26 @@ export default function Quest10() {
     ? 'Signal received — THE STATIC CITY defeated'
     : `${failCount} check${failCount !== 1 ? 's' : ''} failing — city frozen`
 
-  function handleJsChange(e) {
-    const val = e.target.value
-    const prevPassed = passCount
+  function handleJsChange(value) {
+    const val = value ?? ''
     setJsCode(val)
     trackChange(val.length)
-    const newPassed = JS_CHECKS.filter(c => c.test(stripComments(val))).length
-    if (newPassed > prevPassed) {
-      setXpPopText(`+${(newPassed - prevPassed) * 100} XP`)
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-  }
-
-  function syncScroll() {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(ta.selectionEnd)
-    setJsCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleActivate() {
@@ -265,6 +290,18 @@ export default function Quest10() {
 
   return (
     <div className="dq-wrap dq-wrap-g10">
+
+      {/* Offscreen iframe that actually runs the student's JS for the checks.
+          Final boss executes student code, so it needs allow-scripts; it also needs
+          allow-same-origin so the rendered dashboard stays readable for inspection. */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        sandbox="allow-scripts allow-same-origin"
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
@@ -380,19 +417,27 @@ export default function Quest10() {
           </div>
 
           <div className={`dq-editor-pane${tab === 'code' ? ' active' : ''}`}>
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={lnRef}>{lineNumbers(jsCode)}</div>
-              <textarea
-                ref={taRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="javascript"
                 value={jsCode}
                 onChange={handleJsChange}
-                onKeyDown={handleTabKey}
-                onPaste={onPaste}
-                onScroll={syncScroll}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
             <div className="dq-editor-footer">

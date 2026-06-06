@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import './Quest.css'
+import Editor from '@monaco-editor/react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
@@ -67,45 +68,55 @@ const QUIZ = {
   correct: 0,
 }
 
+// ─── Error checks (EXECUTION-BASED where reliable) ──────────────────────────────
+// Each test runs against the RENDERED iframe (doc + its window) — it inspects the
+// actual parsed DOM, so the markup has to genuinely repair, not just match text.
+// A few structural repairs (unclosed <h1>, mis-nested <strong>/<p>) get silently
+// "fixed" by the browser's error-recovery in ways that look identical in the DOM
+// whether or not the student fixed them — those keep their original regex test as a
+// reliable fallback so the gate always stays completable.
+
 const ERROR_CHECKS = [
   {
     id: 'doctype',
     label: 'Missing DOCTYPE declaration',
     hint: 'Every HTML document starts with a special declaration on line 1 that tells the browser it\'s working with modern HTML. It comes before the html tag and begins with an exclamation mark.',
-    test: code => /<!DOCTYPE\s+html>/i.test(code),
+    // EXECUTION: a real DOCTYPE puts the parsed document into standards mode and
+    // produces a <!DOCTYPE html> node; without it the doc parses in quirks mode.
+    test: (doc) => !!doc.doctype && doc.doctype.name?.toLowerCase() === 'html' && doc.compatMode === 'CSS1Compat',
   },
   {
     id: 'h1',
     label: 'Unclosed <h1> tag',
     hint: 'Heading elements wrap content between two tags — one to open and one to close. Look at the heading text and think about what needs to come after it.',
-    test: code => /<\/h1>/i.test(code),
+    // REGEX FALLBACK: the browser auto-closes an unclosed <h1> before the following
+    // <p>, so the parsed DOM looks the same fixed or not — text inspection can't
+    // distinguish it reliably. Keep the source check.
+    test: (doc, win, code) => /<\/h1>/i.test(code),
   },
   {
     id: 'nesting',
     label: 'Tag nesting violation (strong / p)',
     hint: 'Tags must close in reverse order of how they opened — the last tag opened is the first to close. Which of these two tags was opened most recently?',
-    test: code => !/<\/p>\s*<\/strong>/i.test(code) && /<\/strong>/i.test(code),
+    // REGEX FALLBACK: the adoption-agency algorithm repairs mis-nested <strong>/<p>
+    // into a near-identical DOM whether or not the student fixed it, so DOM
+    // inspection isn't a reliable discriminator. Keep the source check.
+    test: (doc, win, code) => !/<\/p>\s*<\/strong>/i.test(code) && /<\/strong>/i.test(code),
   },
   {
     id: 'anchor',
     label: 'Anchor tag not properly closed',
     hint: 'An element must end with its own dedicated closing tag. Check the very end of the link — does the tag there open something or close something?',
-    test: code => /<\/a>/i.test(code),
+    // EXECUTION: a stray second <a> (instead of </a>) makes the parser close the
+    // first anchor and open a second empty one — so the body holds two <a> elements.
+    // Properly closed markup leaves exactly one anchor carrying the link text.
+    test: (doc) => {
+      const anchors = doc.body ? doc.body.querySelectorAll('a') : doc.querySelectorAll('a')
+      if (anchors.length !== 1) return false
+      return (anchors[0].textContent || '').trim().length > 0
+    },
   },
 ]
-
-function getErrors(code) {
-  const errs = new Set()
-  for (const chk of ERROR_CHECKS) {
-    if (!chk.test(code)) errs.add(chk.id)
-  }
-  return errs
-}
-
-function lineNumbers(text) {
-  const n = text.split('\n').length
-  return Array.from({ length: n }, (_, i) => <div key={i}>{i + 1}</div>)
-}
 
 export default function Quest() {
   const { goto } = useNav()
@@ -114,7 +125,7 @@ export default function Quest() {
 
   const [startCode] = useState(() => VARIANTS[Math.floor(Math.random() * VARIANTS.length)])
   const [htmlCode, setHtmlCode] = useState(() => startCode)
-  const [errors, setErrors] = useState(() => getErrors(startCode))
+  const [checks, setChecks] = useState(() => ERROR_CHECKS.map(c => ({ ...c, passed: false })))
   const [xpPopKey, setXpPopKey] = useState(0)
   const [xpPopText, setXpPopText] = useState('')
   const [transmitting, setTransmitting] = useState(false)
@@ -123,9 +134,12 @@ export default function Quest() {
   const [quizOpen, setQuizOpen] = useState(false)
   const [aiReview, setAiReview] = useState(null)
 
-  const iframeRef = useRef(null)
-  const htmlLnRef = useRef(null)
-  const htmlTaRef = useRef(null)
+  const iframeRef = useRef(null)        // visible broadcast-terminal preview
+  const checkIframeRef = useRef(null)   // offscreen iframe used to run the checks
+  const prevPassRef = useRef(0)
+
+  const passCount = checks.filter(c => c.passed).length
+  const errorsLeft = ERROR_CHECKS.length - passCount
 
   const updatePreview = useCallback((html) => {
     if (!iframeRef.current) return
@@ -142,7 +156,37 @@ export default function Quest() {
 
   useEffect(() => { updatePreview(htmlCode) }, [htmlCode, updatePreview])
 
-  const errorsLeft = errors.size
+  // Run the execution-based checks against the offscreen iframe whenever the code settles.
+  // The check iframe renders the RAW student HTML (no style prepend) so the DOCTYPE keeps
+  // its authentic leading position and the parsed DOM reflects exactly what was typed.
+  const runChecks = useCallback(() => {
+    const iframe = checkIframeRef.current
+    const doc = iframe?.contentDocument
+    const win = iframe?.contentWindow
+    if (!doc || !win) return
+    const results = ERROR_CHECKS.map(c => {
+      let passed = false
+      try { passed = !!c.test(doc, win, htmlCode) } catch { passed = false }
+      return { ...c, passed }
+    })
+    setChecks(results)
+    const newPass = results.filter(r => r.passed).length
+    if (newPass > prevPassRef.current) {
+      setXpPopText('+25 XP')
+      setXpPopKey(k => k + 1)
+    }
+    prevPassRef.current = newPass
+  }, [htmlCode])
+
+  useEffect(() => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    const t = setTimeout(() => {
+      iframe.onload = () => requestAnimationFrame(runChecks)
+      iframe.srcdoc = htmlCode
+    }, 350)
+    return () => clearTimeout(t)
+  }, [htmlCode, runChecks])
 
   useEffect(() => {
     if (errorsLeft !== 0) { setAiReview(null); return }
@@ -167,31 +211,26 @@ export default function Quest() {
     ? 'Gate unlocked. Click the terminal to extract.'
     : 'The scanner detects errors. The browser does not.'
 
-  function handleHtmlChange(e) {
-    const val = e.target.value
+  function handleHtmlChange(value) {
+    const val = value ?? ''
     setHtmlCode(val)
     trackChange(val.length)
-    const newErrors = getErrors(val)
-    if (newErrors.size < errors.size) {
-      setXpPopText('+25 XP')
-      setXpPopKey(k => k + 1)
+  }
+
+  // Monaco anti-cheat paste block. Monaco reads the clipboard directly on Ctrl/Cmd+V
+  // (Clipboard API), bypassing the DOM 'paste' event — so we must override the paste
+  // KEYBINDING, not just listen for paste events. Belt-and-suspenders: also block the
+  // raw paste/drop DOM events (right-click, middle-click, drag-drop).
+  function handleEditorMount(editor, monaco) {
+    const flash = () => { try { onPaste({ preventDefault() {} }) } catch { /* best-effort */ } }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, flash)
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Insert, flash)
+    const dom = editor.getDomNode?.()
+    if (dom) {
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); flash() }
+      dom.addEventListener('paste', stop, true)
+      dom.addEventListener('drop', stop, true)
     }
-    setErrors(newErrors)
-    syncScroll(htmlTaRef, htmlLnRef)
-  }
-
-  function syncScroll(taRef, lnRef) {
-    if (taRef.current && lnRef.current) lnRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTabKey(e) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.target
-    const s = ta.selectionStart, en = ta.selectionEnd
-    const next = ta.value.slice(0, s) + '  ' + ta.value.slice(en)
-    setHtmlCode(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 })
   }
 
   function handleTransmit() {
@@ -214,6 +253,16 @@ export default function Quest() {
 
   return (
     <div className="dq-wrap">
+
+      {/* Offscreen iframe that actually parses the student's HTML for the checks */}
+      <iframe
+        ref={checkIframeRef}
+        title="checks"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', left: -10000, top: 0, width: 1100, height: 800, border: 0, opacity: 0, pointerEvents: 'none' }}
+      />
+
       <div className="dq-topbar">
         <span className="dq-back" onClick={() => goto('dashboard')}>← Dashboard</span>
         <div className="dq-topbar-center">
@@ -253,8 +302,8 @@ export default function Quest() {
               </span>
             </div>
             <ul className="dq-objectives">
-              {ERROR_CHECKS.map(chk => {
-                const fixed = !errors.has(chk.id)
+              {ERROR_CHECKS.map((chk, i) => {
+                const fixed = checks[i]?.passed
                 return (
                   <li key={chk.id} className={fixed ? 'done' : 'error'}>
                     <div className="dq-obj-box">{fixed ? '✓' : '!'}</div>
@@ -286,22 +335,31 @@ export default function Quest() {
               index.html
               <span className="dq-dot" />
             </div>
+            <div className="dq-status">{statusText}</div>
           </div>
 
           <div className="dq-editor-pane active">
-            <div className="dq-editor-inner">
-              <div className="dq-line-numbers" ref={htmlLnRef}>{lineNumbers(htmlCode)}</div>
-              <textarea
-                ref={htmlTaRef}
-                className="dq-textarea"
+            <div className="dq-editor-inner" style={{ height: '100%', minHeight: 460 }}>
+              <Editor
+                height="100%"
+                language="html"
                 value={htmlCode}
                 onChange={handleHtmlChange}
-                onPaste={onPaste}
-                onScroll={() => syncScroll(htmlTaRef, htmlLnRef)}
-                onKeyDown={handleTabKey}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                onMount={handleEditorMount}
+                theme="vs-dark"
+                options={{
+                  fontSize: 13,
+                  fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbers: 'on',
+                  tabSize: 2,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  renderLineHighlight: 'line',
+                  contextmenu: false,
+                  smoothScrolling: true,
+                }}
               />
             </div>
           </div>
