@@ -10,6 +10,7 @@ import Login from './screens/Login'
 import Signup from './screens/Signup'
 import Terms from './screens/Terms'
 import Privacy from './screens/Privacy'
+import Downloads from './screens/Downloads'
 import Dashboard from './screens/Dashboard'
 import Quest from './screens/Quest'
 import Quest2 from './screens/Quest2'
@@ -97,6 +98,7 @@ function AnimatedRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/downloads" element={<Downloads />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/quest" element={<ProtectedRoute><Quest /></ProtectedRoute>} />
         <Route path="/quest2" element={<GateRoute requires={['act1-ch01']}><Quest2 /></GateRoute>} />

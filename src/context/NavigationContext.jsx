@@ -7,6 +7,7 @@ const SCREEN_NAMES = {
   '/signup': 'ENLISTMENT',
   '/terms': 'FLIGHT RULES — TERMS OF SERVICE',
   '/privacy': 'PRIVACY POLICY',
+  '/downloads': 'DOWNLOAD DESKTOP APP',
   '/dashboard': 'PILOT HQ',
   '/quest': 'GATE 01 — THE DOCUMENT TOMB',
   '/quest2': 'GATE 02 — THE SEMANTIC CRYPT',

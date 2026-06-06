@@ -36,6 +36,7 @@ export default function Landing() {
           <li><a href="#worlds">Quests</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#academy" style={{ color: 'var(--builder-gold, oklch(0.86 0.19 80))' }}>Academy</a></li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); goto('downloads') }}>Download App</a></li>
         </ul>
         <button
           className="btn btn-ghost btn-sm"
@@ -381,6 +382,7 @@ export default function Landing() {
         <div className="container inner">
           <div>© 2026 Drift Pilot Protocol · All missions reserved.</div>
           <div className="right">
+            <a href="#" onClick={(e) => { e.preventDefault(); goto('downloads') }}>Download App</a>
             <a href="#" onClick={(e) => { e.preventDefault(); goto('terms') }}>Terms</a>
             <a href="#" onClick={(e) => { e.preventDefault(); goto('privacy') }}>Privacy</a>
           </div>
