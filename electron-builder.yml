@@ -22,6 +22,7 @@ publish:
   provider: github
   owner: edgernr
   repo: drift-pilot-protocol
+  releaseType: release   # publish directly (not draft) so all 3 OS jobs target the same release type
 
 linux:
   target: [AppImage, deb]
@@ -38,6 +39,6 @@ nsis:
   allowToChangeInstallationDirectory: true
 
 mac:
-  target: [dmg]
+  target: [zip]   # zip avoids the CI hdiutil/.dmg failure AND is what macOS auto-update requires; re-add dmg once hdiutil is sorted
   category: public.app-category.education
   # hardenedRuntime + notarization require an Apple Developer account — see DESKTOP.md.

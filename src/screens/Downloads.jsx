@@ -10,7 +10,7 @@ const RELEASES_PAGE = `https://github.com/${REPO}/releases`
 
 const OS_TARGETS = [
   { key: 'win',   label: 'Windows', icon: '⊞', sub: 'Windows 10/11 · .exe installer', match: (n) => /\.exe$/i.test(n) },
-  { key: 'mac',   label: 'macOS',   icon: '', sub: 'Apple Silicon / Intel · .dmg',    match: (n) => /\.dmg$/i.test(n) },
+  { key: 'mac',   label: 'macOS',   icon: '', sub: 'Apple Silicon · unzip → Applications', match: (n) => /\.dmg$/i.test(n) || (/\.zip$/i.test(n) && /(mac|darwin|osx)/i.test(n)) },
   { key: 'linux', label: 'Linux',   icon: '🐧', sub: 'AppImage · .deb also available', match: (n) => /\.appimage$/i.test(n) },
 ]
 
