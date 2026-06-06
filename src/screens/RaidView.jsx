@@ -503,7 +503,9 @@ export default function RaidView() {
   }, [])
 
   const loadOpenRaids = useCallback(async () => {
-    await supabase.rpc('cleanup_expired_lobby_raids').catch(() => {})
+    // Supabase query builders are then-only thenables (no .catch) — calling .catch
+    // throws synchronously. Wrap in try/catch; the RPC is optional (lobby auto-expiry).
+    try { await supabase.rpc('cleanup_expired_lobby_raids') } catch { /* ignore if RPC missing */ }
     const { data: raids } = await supabase
       .from('raids').select('*').eq('status', 'lobby').order('created_at', { ascending: false })
     const list = raids ?? []
@@ -548,28 +550,34 @@ export default function RaidView() {
 
   const loadActiveRaid = useCallback(async () => {
     if (!user) return
-    const { data: myMems } = await supabase
-      .from('raid_members').select('raid_id, role').eq('user_id', user.id)
+    // try/finally guarantees the "INITIALIZING…" loading state always clears,
+    // even if a query/realtime call throws — otherwise the view hangs forever.
+    try {
+      const { data: myMems } = await supabase
+        .from('raid_members').select('raid_id, role').eq('user_id', user.id)
 
-    if (myMems?.length) {
-      const { data: activeRaids } = await supabase
-        .from('raids').select('*')
-        .in('id', myMems.map(m => m.raid_id))
-        .in('status', ['lobby', 'descent', 'active', 'siege'])
-      if (activeRaids?.length) {
-        const raid = activeRaids[0]
-        const mem = myMems.find(m => m.raid_id === raid.id)
-        setMyMembership(mem)
-        setActiveRaid(raid)
-        await loadRaidDetails(raid.id)
-        subscribeToRaid(raid.id)
-        setLoading(false)
-        return
+      if (myMems?.length) {
+        const { data: activeRaids } = await supabase
+          .from('raids').select('*')
+          .in('id', myMems.map(m => m.raid_id))
+          .in('status', ['lobby', 'descent', 'active', 'siege'])
+        if (activeRaids?.length) {
+          const raid = activeRaids[0]
+          const mem = myMems.find(m => m.raid_id === raid.id)
+          setMyMembership(mem)
+          setActiveRaid(raid)
+          await loadRaidDetails(raid.id)
+          subscribeToRaid(raid.id)
+          return
+        }
       }
+      await loadOpenRaids()
+      subscribeLobby()
+    } catch (e) {
+      console.error('Raid init failed:', e)
+    } finally {
+      setLoading(false)
     }
-    await loadOpenRaids()
-    subscribeLobby()
-    setLoading(false)
   }, [user, loadRaidDetails, loadOpenRaids, subscribeLobby])
 
   useEffect(() => {
