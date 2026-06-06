@@ -1,7 +1,8 @@
 # Drift Pilot Protocol — File Guide
 
 > Gamified Web3 learning platform. Neon cyberpunk aesthetic.  
-> Stack: **Vite + React 19 + React Router v7 + Supabase**
+> Stack: **Vite + React 19 + React Router v7 + Supabase**  
+> Desktop: **Electron** (Linux/Win/macOS) wraps the same SPA — see [DESKTOP.md](DESKTOP.md) (`electron/`, `electron-builder.yml`, `src/lib/desktop.js`).
 
 ---
 
