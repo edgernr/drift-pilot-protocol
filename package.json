@@ -2,6 +2,8 @@
   "name": "eva-react",
   "private": true,
   "version": "0.0.0",
+  "description": "Drift Pilot Protocol — gamified coding academy. Learn, build, and earn $DRIFT.",
+  "author": "Drift Pilot Protocol <technjmd@gmail.com>",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
