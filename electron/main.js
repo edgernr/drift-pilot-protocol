@@ -68,7 +68,12 @@ function createWindow() {
   })
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
-  mainWindow.loadURL(USE_BUNDLE ? `${APP_SCHEME}://bundle/index.html` : DEV_URL)
+  // Load at the ORIGIN ("/") — not /index.html — so React Router's "/" (Landing) route matches.
+  mainWindow.loadURL(USE_BUNDLE ? `${APP_SCHEME}://bundle/` : DEV_URL)
+
+  // Surface load failures, and auto-open DevTools when testing the bundle (electron:preview).
+  mainWindow.webContents.on('did-fail-load', (_e, code, desc, url) => console.error('[did-fail-load]', code, desc, url))
+  if (process.env.ELECTRON_BUNDLE === '1' && !app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'detach' })
 
   // Open http(s) links and target=_blank in the real browser, never in-app.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
