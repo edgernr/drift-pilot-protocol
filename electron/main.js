@@ -3,8 +3,8 @@
 // React app). Serves it over a custom app:// scheme so React Router's /paths work under
 // a packaged build, handles driftpilot:// deep links (Supabase auth callbacks), a system
 // tray streak indicator, and auto-update.
-import { app, BrowserWindow, protocol, Menu, Tray, shell, ipcMain, nativeImage, Notification } from 'electron'
-import { fileURLToPath } from 'node:url'
+import { app, BrowserWindow, protocol, net, Menu, Tray, shell, ipcMain, nativeImage, Notification } from 'electron'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 
@@ -20,36 +20,28 @@ let mainWindow = null
 let tray = null
 let pendingDeepLink = null
 
-const MIME = {
-  '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
-  '.css': 'text/css', '.json': 'application/json', '.wasm': 'application/wasm',
-  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif', '.webp': 'image/webp', '.ico': 'image/x-icon',
-  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
-  '.map': 'application/json', '.data': 'application/octet-stream', '.txt': 'text/plain',
-}
-
 // Must run before app 'ready'. Makes app:// a secure, fetch-capable origin so WASM
 // (PGlite), workers (Sandpack) and crypto behave exactly as on the web.
 protocol.registerSchemesAsPrivileged([
   { scheme: APP_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
 ])
 
-function serveBundle(request) {
-  let pathname = decodeURIComponent(new URL(request.url).pathname)
-  if (pathname === '/' || pathname === '') pathname = '/index.html'
-  let filePath = path.normalize(path.join(DIST, pathname))
-  // SPA fallback: unknown route / no extension / missing file -> index.html (React Router takes over)
-  const ext = path.extname(filePath)
-  if (!filePath.startsWith(DIST) || !ext || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    filePath = path.join(DIST, 'index.html')
+// Serve the bundled SPA via net.fetch — it reads from the asar archive and sets correct
+// MIME types automatically. Real assets (have a file extension) are fetched directly;
+// routes / missing assets fall back to index.html so React Router takes over.
+// (Avoids fs.existsSync, which misbehaves on asar paths and was blanking the page.)
+async function serveBundle(request) {
+  const indexUrl = pathToFileURL(path.join(DIST, 'index.html')).toString()
+  let rel = decodeURIComponent(new URL(request.url).pathname)
+  if (rel === '/' || rel === '') rel = '/index.html'
+  const filePath = path.normalize(path.join(DIST, rel))
+  if (filePath.startsWith(DIST) && path.extname(filePath)) {
+    try {
+      const res = await net.fetch(pathToFileURL(filePath).toString())
+      if (res.ok) return res
+    } catch { /* fall through to the SPA index */ }
   }
-  try {
-    const body = fs.readFileSync(filePath)
-    return new Response(body, { headers: { 'content-type': MIME[path.extname(filePath)] || 'application/octet-stream' } })
-  } catch {
-    return new Response('Not found', { status: 404 })
-  }
+  return net.fetch(indexUrl)
 }
 
 function createWindow() {
