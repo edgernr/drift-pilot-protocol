@@ -2,6 +2,11 @@ appId: net.driftprotocol.app
 productName: Drift Pilot Protocol
 copyright: © Drift Pilot Protocol
 
+# Read the bundle from real files (not an asar archive). The app:// protocol handler
+# reads dist/ with fs — asar packaging made packaged reads behave differently from the
+# working `electron:preview`, blanking the page. asar:false replicates the proven setup.
+asar: false
+
 directories:
   output: release
   buildResources: build   # put icon.png (1024x1024) / icon.ico / icon.icns here

@@ -132,7 +132,7 @@ export default function Downloads() {
         {(state.status === 'ok' || state.status === 'empty') && (
           <div style={{ marginTop: 28, fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.8 }}>
             <div>The app <strong style={{ color: 'var(--ink-2)' }}>auto-updates</strong> — install once and new versions arrive on launch.</div>
-            <div>Installers are currently <strong style={{ color: 'var(--ink-2)' }}>unsigned</strong>: on Windows click <em>More info → Run anyway</em>; on macOS right-click the app → <em>Open</em>.</div>
+            <div>Installers are currently <strong style={{ color: 'var(--ink-2)' }}>unsigned</strong>. <strong style={{ color: 'var(--ink-2)' }}>Windows:</strong> <em>More info → Run anyway</em>. <strong style={{ color: 'var(--ink-2)' }}>macOS:</strong> if it says "damaged / can&apos;t be opened", run <code>xattr -cr &quot;/Applications/Drift Pilot Protocol.app&quot;</code> in Terminal (or System Settings → Privacy &amp; Security → <em>Open Anyway</em>) — it&apos;s the unsigned-app quarantine, not a corrupt file.</div>
             <div style={{ marginTop: 6 }}>All builds: <a href={RELEASES_PAGE} target="_blank" rel="noreferrer" style={{ color: 'var(--teal)' }}>{RELEASES_PAGE}</a></div>
           </div>
         )}
