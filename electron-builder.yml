@@ -1,6 +1,6 @@
 appId: net.driftprotocol.app
-productName: Drift Pilot Protocol
-copyright: © Drift Pilot Protocol
+productName: Hunter Protocol
+copyright: © Hunter Protocol
 
 directories:
   output: release
@@ -14,20 +14,20 @@ files:
 
 # OS-level deep link: driftpilot://auth-callback (Supabase auth redirects)
 protocols:
-  - name: Drift Pilot Protocol
+  - name: Hunter Protocol
     schemes: [driftpilot]
 
 # Auto-update + release hosting via GitHub Releases (free).
 publish:
   provider: github
   owner: edgernr
-  repo: drift-pilot-protocol
+  repo: hunter-protocol
   releaseType: release   # publish directly (not draft) so all 3 OS jobs target the same release type
 
 linux:
   target: [AppImage, deb]
   category: Education
-  maintainer: Drift Pilot Protocol
+  maintainer: Hunter Protocol
   synopsis: Gamified coding academy — learn, build, earn.
 
 win:

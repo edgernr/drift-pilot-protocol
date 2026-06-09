@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './Dashboard.css'
 import { useNav } from '../context/NavigationContext'
-import { useAuth, DRIFT_REWARDS, SEASON_PASS_XP_MULT, USERNAME_COLORS } from '../context/AuthContext'
+import { useAuth, HUNT_REWARDS, SEASON_PASS_XP_MULT, USERNAME_COLORS } from '../context/AuthContext'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../lib/supabase'
 import RaidView from './RaidView'
@@ -27,13 +27,13 @@ export default function Dashboard() {
     const v = localStorage.getItem('dash-view') ?? 'home'
     return v === 'challenges' ? 'home' : v
   })
-  const [cardVariant, setCardVariant] = useState(() => parseInt(localStorage.getItem('drift-card-variant') ?? '0', 10))
+  const [cardVariant, setCardVariant] = useState(() => parseInt(localStorage.getItem('hunt-card-variant') ?? '0', 10))
   const [flaggedRows, setFlaggedRows] = useState([])
   const [allPilots, setAllPilots] = useState([])
   const [notifOpen, setNotifOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [welcomed, setWelcomed] = useState(() => !!localStorage.getItem('dpp_welcomed'))
+  const [welcomed, setWelcomed] = useState(() => !!localStorage.getItem('hp_welcomed'))
   const [onboardStep, setOnboardStep] = useState(1)
   const [onboardName, setOnboardName] = useState('')
   const [profileLinkCopied, setProfileLinkCopied] = useState(false)
@@ -112,7 +112,7 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    localStorage.setItem('drift-card-variant', cardVariant)
+    localStorage.setItem('hunt-card-variant', cardVariant)
   }, [cardVariant])
 
   useEffect(() => {
@@ -177,7 +177,7 @@ export default function Dashboard() {
   const showWelcome = !welcomed && (profile?.questsCompleted ?? 0) === 0
 
   function dismissWelcome(andGo) {
-    localStorage.setItem('dpp_welcomed', '1')
+    localStorage.setItem('hp_welcomed', '1')
     setWelcomed(true)
     if (andGo) goto('quest')
   }
@@ -186,7 +186,7 @@ export default function Dashboard() {
     if (onboardName.trim() && onboardName.trim() !== profile?.name) {
       await updateProfile(onboardName.trim(), profile?.wallet ?? '')
     }
-    localStorage.setItem('dpp_welcomed', '1')
+    localStorage.setItem('hp_welcomed', '1')
     setWelcomed(true)
     goto('quest')
   }
@@ -309,9 +309,9 @@ export default function Dashboard() {
   // Count only Act I gate completions for the "QUESTS CLEARED" stat.
   const gatesDone = [...(profile?.completedQuestIds ?? [])].filter(id => id.startsWith('act1-ch')).length
   const totalXp = profile?.totalXp ?? 0
-  const totalDrift = profile?.totalDrift ?? 0
-  const totalDriftSpent = profile?.totalDriftSpent ?? 0
-  const spendableDrift = totalDrift - totalDriftSpent
+  const totalHunt = profile?.totalHunt ?? 0
+  const totalHuntSpent = profile?.totalHuntSpent ?? 0
+  const spendableDrift = totalHunt - totalHuntSpent
   const completions = profile?.completions ?? []
   const unlocks = profile?.unlocks ?? []
   const unlockedGateIds = profile?.unlockedGateIds ?? new Set()
@@ -325,9 +325,9 @@ export default function Dashboard() {
     })
   )
 
-  async function handleUnlock(chKey, driftCost) {
+  async function handleUnlock(chKey, huntCost) {
     setUnlockStatus(s => ({ ...s, [chKey]: 'unlocking' }))
-    const result = await unlockGate(chKey, driftCost)
+    const result = await unlockGate(chKey, huntCost)
     if (!result.ok) {
       setUnlockStatus(s => ({ ...s, [chKey]: result.reason }))
       setTimeout(() => setUnlockStatus(s => { const n = { ...s }; delete n[chKey]; return n }), 3000)
@@ -336,7 +336,7 @@ export default function Dashboard() {
     }
   }
 
-  const DRIFT_GATE_NAMES = {
+  const HUNT_GATE_NAMES = {
     'act1-ch01': { label: 'Gate 01 — The Document Tomb', icon: '📡' },
     'act1-ch02': { label: 'Gate 02 — The Semantic Crypt', icon: '⚱️' },
     'act1-ch03': { label: 'Gate 03 — The Form Gate',     icon: '📋' },
@@ -348,11 +348,11 @@ export default function Dashboard() {
     'act1-ch09': { label: 'Gate 09 — The Control Room',  icon: '⬡' },
     'act1-ch10': { label: 'Gate 10 — The Static City',   icon: '📡' },
   }
-  // Source of truth for $DRIFT payouts lives in AuthContext.DRIFT_REWARDS —
+  // Source of truth for $HUNT payouts lives in AuthContext.HUNT_REWARDS —
   // mirror it directly so wallet credits, transactions, and notifications match.
-  const DRIFT_REWARDS_UI = DRIFT_REWARDS
+  const HUNT_REWARDS_UI = HUNT_REWARDS
   function resolveQuestMeta(questId, xpEarned) {
-    if (DRIFT_GATE_NAMES[questId]) return { ...DRIFT_GATE_NAMES[questId], drift: DRIFT_REWARDS_UI[questId] ?? 0, kind: 'gate' }
+    if (HUNT_GATE_NAMES[questId]) return { ...HUNT_GATE_NAMES[questId], drift: HUNT_REWARDS_UI[questId] ?? 0, kind: 'gate' }
     if (questId?.startsWith('raid:')) return { label: 'Raid completed', icon: '⚔️', drift: xpEarned ?? 0, kind: 'raid' }
     return { label: questId, icon: '◈', drift: 0, kind: 'unknown' }
   }
@@ -423,10 +423,10 @@ export default function Dashboard() {
             {/* ── Step 1: Welcome + Lore ── */}
             {onboardStep === 1 && (<>
               <div className="welcome-glyph onboard-glyph-pulse">◈</div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>DRIFT PILOT PROTOCOL</div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>HUNTER PROTOCOL</div>
               <h2 className="welcome-title">Welcome, Pilot.</h2>
               <p className="welcome-body">
-                EVA City is a neon district where the old code has corrupted. As a Drift Pilot you'll clear the Gates — debugging sectors, building real projects, and earning $DRIFT.<br /><br />
+                EVA City is a neon district where the old code has corrupted. As a Drift Pilot you'll clear the Gates — debugging sectors, building real projects, and earning $HUNT.<br /><br />
                 Clear all 10 gates in Act I to unlock the Reactive Sector. Raid the tower for bonus rewards.
               </p>
               <div className="onboard-dots">
@@ -453,7 +453,7 @@ export default function Dashboard() {
                     <span className="onboard-gate-icon">{g.icon}</span>
                     <span className="onboard-gate-name">{g.name}</span>
                     <span className="onboard-gate-sub">{g.sub}</span>
-                    <span className="onboard-gate-reward">+{g.xp} XP · +{g.drift} $DRIFT</span>
+                    <span className="onboard-gate-reward">+{g.xp} XP · +{g.drift} $HUNT</span>
                   </div>
                 ))}
               </div>
@@ -542,7 +542,7 @@ export default function Dashboard() {
       )}
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => { goto('landing'); setSidebarOpen(false) }}>
-          <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 40 }} />
+          <img src="/LOGO.svg" alt="HUNTER PROTOCOL" style={{ height: 40 }} />
         </div>
 
         <div>
@@ -558,7 +558,7 @@ export default function Dashboard() {
         <div>
           <div className="section-label">Rewards</div>
           <div className="navlist">
-            <a className={view === 'wallet' ? 'active' : ''} onClick={() => setView('wallet')}><span className="ic">$</span> $DRIFT Wallet</a>
+            <a className={view === 'wallet' ? 'active' : ''} onClick={() => setView('wallet')}><span className="ic">$</span> $HUNT Wallet</a>
             <a className={view === 'leaderboard' ? 'active' : ''} onClick={() => setView('leaderboard')}><span className="ic">♦</span> Leaderboard</a>
           </div>
         </div>
@@ -584,7 +584,7 @@ export default function Dashboard() {
             <span className="dot" style={{ color: profile?.wallet ? 'var(--lime)' : 'var(--ink-3)' }} />
             {shortenWallet(profile?.wallet)}
           </div>
-          <div className="bal">{fmt(spendableDrift)}<span className="u">$DRIFT</span></div>
+          <div className="bal">{fmt(spendableDrift)}<span className="u">$HUNT</span></div>
         </div>
       </aside>
 
@@ -632,7 +632,7 @@ export default function Dashboard() {
                             <span style={{ fontSize: 18, flexShrink: 0 }}>{meta.icon}</span>
                             <div>
                               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>{meta.label} cleared</div>
-                              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', marginTop: 2 }}>+{meta.drift} $DRIFT · {new Date(c.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', marginTop: 2 }}>+{meta.drift} $HUNT · {new Date(c.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                             </div>
                           </div>
                         )
@@ -749,7 +749,7 @@ export default function Dashboard() {
             <div className="stats-grid">
               {[
                 { color: 'var(--teal)',    label: 'TOTAL XP',        val: fmt(totalXp),       delta: 'lifetime earned' },
-                { color: 'var(--magenta)', label: '$DRIFT BALANCE',   val: fmt(spendableDrift), unit: 'DRIFT', delta: `${fmt(totalDrift)} earned · ${fmt(totalDriftSpent)} spent` },
+                { color: 'var(--magenta)', label: '$HUNT BALANCE',   val: fmt(spendableDrift), unit: 'DRIFT', delta: `${fmt(totalHunt)} earned · ${fmt(totalHuntSpent)} spent` },
                 { color: 'var(--violet)',  label: 'QUESTS CLEARED',  val: String(gatesDone), unit: `/${quests.length || 10}`, delta: `${Math.min(100, Math.round(gatesDone / (quests.length || 10) * 100))}% of Act I` },
                 { color: 'var(--amber)',   label: 'GLOBAL RANK',     val: myRank ? `#${myRank}` : '—', delta: myRank ? `of ${lbData.length} pilots` : lbData.length > 0 ? 'not ranked yet' : 'loading...' },
               ].map(s => (
@@ -972,7 +972,7 @@ export default function Dashboard() {
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'oklch(0.72 0.28 340 / 0.06)', border: '1px solid oklch(0.72 0.28 340 / 0.2)', borderRadius: 10, padding: '12px 18px', fontFamily: 'var(--f-mono)', fontSize: 11 }}>
                   <span style={{ fontSize: 20 }}>🔓</span>
-                  <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 10 gates</strong> sequentially with a Season Pass — no $DRIFT spend needed.</span>
+                  <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 10 gates</strong> sequentially with a Season Pass — no $HUNT spend needed.</span>
                   <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px', flexShrink: 0 }} onClick={handleCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? 'Loading…' : 'Get Season Pass →'}
                   </button>
@@ -994,7 +994,7 @@ export default function Dashboard() {
                 const isLocked = !isDone && !isActive && !isUnlocked
                 const stateCls = isDone ? ' st-done' : (isActive || isUnlocked) ? ' st-active' : ' st-locked'
                 const chLabel = q.is_boss ? 'BOSS' : `CH${String(q.chapter).padStart(2, '0')}`
-                const driftCost = q.is_boss ? 250 : 100
+                const huntCost = q.is_boss ? 250 : 100
                 const uStatus = unlockStatus[chKey]
                 const canUnlock = !isSubscribed && q.chapter > 3 && (doneQuests.has(prevChKey) || unlockedGateIds.has(prevChKey))
                 return (
@@ -1022,12 +1022,12 @@ export default function Dashboard() {
                         uStatus === 'unlocking' ? (
                           <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--ink-3)' }}>...</span>
                         ) : uStatus === 'insufficient' ? (
-                          <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--magenta)' }}>Need {driftCost} $DRIFT</span>
+                          <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--magenta)' }}>Need {huntCost} $HUNT</span>
                         ) : (
                           <button
                             style={{ padding: '2px 8px', fontSize: 9, color: 'var(--magenta)', background: 'none', border: '1px solid oklch(0.72 0.28 340 / 0.4)', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--f-mono)' }}
-                            onClick={e => { e.stopPropagation(); handleUnlock(chKey, driftCost) }}
-                          >{driftCost} $DRIFT</button>
+                            onClick={e => { e.stopPropagation(); handleUnlock(chKey, huntCost) }}
+                          >{huntCost} $HUNT</button>
                         )
                       )}
                     </div>
@@ -1040,7 +1040,7 @@ export default function Dashboard() {
           <>
             <div className="st-header">
               <div>
-                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>$DRIFT Wallet</h2>
+                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>$HUNT Wallet</h2>
                 <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                   Off-chain balance · Season 01
                 </p>
@@ -1061,14 +1061,14 @@ export default function Dashboard() {
                 <div style={{ position: 'absolute', right: 30, bottom: -70, width: 170, height: 170, borderRadius: '50%', background: 'oklch(1 0 0 / 0.04)', pointerEvents: 'none' }} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative' }}>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'oklch(1 0 0 / 0.6)', letterSpacing: '0.14em' }}>DRIFT PILOT PROTOCOL</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'oklch(1 0 0 / 0.6)', letterSpacing: '0.14em' }}>HUNTER PROTOCOL</div>
                   <div style={{ width: 32, height: 24, background: 'linear-gradient(135deg, oklch(0.85 0.15 75), oklch(0.70 0.20 50))', borderRadius: 4 }} />
                 </div>
 
                 <div style={{ position: 'relative' }}>
                   <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.12em', marginBottom: 6 }}>BALANCE</div>
                   <div style={{ fontSize: 40, fontWeight: 700, color: 'oklch(1 0 0 / 0.95)', letterSpacing: '-0.02em', lineHeight: 1 }}>{fmt(spendableDrift)}</div>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'oklch(1 0 0 / 0.5)', marginTop: 4 }}>$DRIFT</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'oklch(1 0 0 / 0.5)', marginTop: 4 }}>$HUNT</div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
@@ -1099,11 +1099,11 @@ export default function Dashboard() {
               <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className="panel" style={{ padding: '16px 20px' }}>
                   <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', marginBottom: 6 }}>EARNED</div>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--lime)' }}>+{fmt(totalDrift)}</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--lime)' }}>+{fmt(totalHunt)}</div>
                 </div>
                 <div className="panel" style={{ padding: '16px 20px' }}>
                   <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', marginBottom: 6 }}>SPENT</div>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--ink-2)' }}>{totalDriftSpent > 0 ? `-${fmt(totalDriftSpent)}` : '0'}</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--ink-2)' }}>{totalHuntSpent > 0 ? `-${fmt(totalHuntSpent)}` : '0'}</div>
                 </div>
               </div>
 
@@ -1114,7 +1114,7 @@ export default function Dashboard() {
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', marginBottom: 4 }}>ON-CHAIN · SEPOLIA TESTNET</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--amber)' }}>
                       {onChainBalance === null ? '—' : fmt(onChainBalance)}
-                      <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--ink-3)', marginLeft: 6 }}>$DRIFT</span>
+                      <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--ink-3)', marginLeft: 6 }}>$HUNT</span>
                     </div>
                   </div>
                   <a
@@ -1131,7 +1131,7 @@ export default function Dashboard() {
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Transaction History</div>
                 <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
                   {completions.length === 0 && unlocks.length === 0 ? (
-                    <div style={{ padding: '24px 20px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No transactions yet. Clear a gate to earn $DRIFT.</div>
+                    <div style={{ padding: '24px 20px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No transactions yet. Clear a gate to earn $HUNT.</div>
                   ) : (
                     [
                       ...completions.map(c => ({ type: 'earn', quest_id: c.quest_id, date: c.completed_at, drift: resolveQuestMeta(c.quest_id, c.xp_earned).drift, xp_earned: c.xp_earned })),
@@ -1143,7 +1143,7 @@ export default function Dashboard() {
                           ? resolveQuestMeta(tx.quest_id, tx.xp_earned)
                           : tx.quest_id?.startsWith('raid-entry:')
                             ? { label: 'Raid Entry Fee', icon: '⚔️' }
-                            : { label: DRIFT_GATE_NAMES[tx.quest_id]?.label ?? tx.quest_id, icon: '🔓' }
+                            : { label: HUNT_GATE_NAMES[tx.quest_id]?.label ?? tx.quest_id, icon: '🔓' }
                         const date = new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                         return (
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--line-popup)' }}>

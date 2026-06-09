@@ -1,5 +1,5 @@
 -- ============================================================
--- Drift Pilot Protocol — PRE-TEST SETUP
+-- Hunter Protocol — PRE-TEST SETUP
 -- Run ONCE in the Supabase SQL Editor before opening to testers.
 -- Idempotent + safe to re-run on an existing project
 -- (CREATE ... IF NOT EXISTS / CREATE OR REPLACE / DROP POLICY IF EXISTS).

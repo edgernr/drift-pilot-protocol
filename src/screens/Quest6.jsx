@@ -628,7 +628,7 @@ export default function Quest6() {
             <strong>The district grid is infinite.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+400</div></div>
+            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+400</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+500</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Void Fragment</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Grid Seal I</div></div>

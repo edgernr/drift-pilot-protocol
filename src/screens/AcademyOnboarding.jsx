@@ -266,7 +266,7 @@ export default function AcademyOnboarding() {
             disabled={submitting || !name.trim()}
             onClick={handleConfirm}
           >
-            {submitting ? 'ENTERING...' : 'ENTER THE CONSTRUCT →'}
+            {submitting ? 'ENTERING...' : 'ENTER HUNTER ACADEMY →'}
           </button>
         </div>
       )}
@@ -277,7 +277,7 @@ export default function AcademyOnboarding() {
           <div className="ao-message-icon">🌱</div>
           <h2 className="ao-message-title">Not quite yet.</h2>
           <p className="ao-message-text">
-            The Construct opens at age 8. Come back when you're ready —
+            Hunter Academy opens at age 8. Come back when you're ready —
             it'll still be here.
           </p>
           <button className="ao-btn-ghost" onClick={() => goto('academy')}>

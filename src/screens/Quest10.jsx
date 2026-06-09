@@ -500,7 +500,7 @@ export default function Quest10() {
             <strong>The city that survives is one that works when the signal breaks.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+1500</div></div>
+            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+1500</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+600</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">Interface Architect</div></div>
             <div className="r"><div className="l">STATUS</div><div className="v">Act I Complete</div></div>

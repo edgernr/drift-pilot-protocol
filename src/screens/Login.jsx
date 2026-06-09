@@ -12,12 +12,12 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [resetMsg, setResetMsg] = useState(null)
   const [banMsg, setBanMsg] = useState(() => {
-    const v = localStorage.getItem('dpp_ban_until')
+    const v = localStorage.getItem('hp_ban_until')
     if (!v) return null
     if (v === '2099-01-01T00:00:00Z') return 'Your account has been permanently suspended.'
     const d = new Date(v)
     if (d > new Date()) return `Your account is suspended until ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
-    localStorage.removeItem('dpp_ban_until')
+    localStorage.removeItem('hp_ban_until')
     return null
   })
 
@@ -44,7 +44,7 @@ export default function Login() {
       <div className="login-left">
         <div>
           <div className="login-logo">
-            <img src="/LOGO.svg" alt="Drift Pilot Protocol" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Hunter Protocol" style={{ height: 28 }} />
           </div>
           <div className="login-hero">
             <span className="chip chip-teal" style={{ marginTop: 80, display: 'inline-flex' }}>

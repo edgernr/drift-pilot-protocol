@@ -638,7 +638,7 @@ export default function Quest9() {
             <strong>The city lives because you wired it.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+700</div></div>
+            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+700</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+450</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">JS Operator I</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Control Room Badge</div></div>

@@ -489,7 +489,7 @@ export default function Quest3() {
           <h2>The Label Eater collapses.</h2>
           <p>It couldn't find a single unlabeled input to feed on. Every field had identity. Every type was correct. <strong>The dungeon had nothing left to consume.</strong></p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+700</div></div>
+            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+700</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+300</div></div>
             <div className="r"><div className="l">CORE</div><div className="v">Label Eater Core</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">D License</div></div>

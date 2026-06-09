@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
-document.documentElement.setAttribute('data-theme', localStorage.getItem('dpp_theme') ?? 'dark')
+document.documentElement.setAttribute('data-theme', localStorage.getItem('hp_theme') ?? 'dark')
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

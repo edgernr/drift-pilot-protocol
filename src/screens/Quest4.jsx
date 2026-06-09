@@ -797,7 +797,7 @@ export default function Quest4() {
             <strong>That&apos;s the cascade working the way it was designed.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+195</div></div>
+            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+195</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+240</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Color Protocol</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">CSS Architect I</div></div>

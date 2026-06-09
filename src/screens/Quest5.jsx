@@ -630,7 +630,7 @@ export default function Quest5() {
             <strong>That&apos;s margin-left: auto at work.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+225</div></div>
+            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+225</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+280</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Gravity Anchor Fragment</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Flex License I</div></div>

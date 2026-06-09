@@ -9,7 +9,7 @@ export default function Privacy() {
     <div className="container" style={{ maxWidth: 820, paddingTop: 48, paddingBottom: 96 }}>
       <nav className="nav" style={{ marginBottom: 32 }}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => goto('landing')}>
-          <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 36 }} />
+          <img src="/LOGO.svg" alt="HUNTER PROTOCOL" style={{ height: 36 }} />
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => goto('landing')}>← Back to home</button>
       </nav>
@@ -21,7 +21,7 @@ export default function Privacy() {
             Privacy Policy
           </h1>
           <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 13 }}>
-            Drift Pilot Protocol &amp; Drift Builders Academy
+            Hunter Protocol &amp; Hunter Academy
           </p>
           <p style={{ color: 'var(--amber)', fontStyle: 'italic', fontSize: 14, marginTop: 10 }}>
             *Draft — pending legal review*
@@ -33,7 +33,7 @@ export default function Privacy() {
 
         <div style={{ color: 'var(--ink-1)', fontSize: 15, lineHeight: 1.7 }}>
           <p style={{ marginBottom: 20 }}>
-            This Privacy Policy explains what information Drift Pilot Protocol and Drift Builders
+            This Privacy Policy explains what information Hunter Protocol and Drift Builders
             Academy (the "Service") collect, how we use and store it, and the choices and rights you
             have. We aim to collect only what we need to run the academy and to keep your data safe.
           </p>
@@ -43,7 +43,7 @@ export default function Privacy() {
             <ul style={{ margin: '10px 0 0', paddingLeft: 22 }}>
               <li><strong>Account details:</strong> your email address and display name (and, for Academy accounts, the parent/guardian's account details and the learner's display name).</li>
               <li><strong>Optional wallet address:</strong> if you choose to connect one, we store your public wallet address. This is optional and not required to use the Service.</li>
-              <li><strong>Learning progress &amp; analytics:</strong> your quest/gate completions, XP, levels, badges, and in-app $DRIFT balance, plus gameplay analytics such as time spent on challenges and paste counts (used for progress tracking and anti-cheat).</li>
+              <li><strong>Learning progress &amp; analytics:</strong> your quest/gate completions, XP, levels, badges, and in-app $HUNT balance, plus gameplay analytics such as time spent on challenges and paste counts (used for progress tracking and anti-cheat).</li>
               <li><strong>Technical data:</strong> basic information your browser provides (for example, general device/browser type) needed to deliver and secure the Service.</li>
             </ul>
             <p style={{ marginTop: 12 }}>
@@ -55,7 +55,7 @@ export default function Privacy() {
           <Section n="2" title="How We Use Your Information">
             <ul style={{ margin: '0 0 0', paddingLeft: 22 }}>
               <li>To create and manage your account and authenticate you.</li>
-              <li>To track learning progress, award XP/badges/$DRIFT, and power leaderboards.</li>
+              <li>To track learning progress, award XP/badges/$HUNT, and power leaderboards.</li>
               <li>To detect cheating and protect the integrity of the academy (anti-cheat).</li>
               <li>To operate, maintain, debug, and improve the Service.</li>
               <li>To communicate with you about your account, security, or important changes.</li>
@@ -83,7 +83,7 @@ export default function Privacy() {
 
           <Section n="5" title="Children's Data &amp; Parental Rights (Academy)">
             <p>
-              Drift Builders Academy serves learners aged 8–16. For these accounts, the parent or legal
+              Hunter Academy serves learners aged 8–16. For these accounts, the parent or legal
               guardian is the account holder and must provide verified consent before a child
               participates. We collect only the limited data needed to run the learning experience
               (display name and learning progress/analytics) and do not knowingly collect unnecessary

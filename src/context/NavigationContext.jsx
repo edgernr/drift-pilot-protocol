@@ -19,10 +19,10 @@ const SCREEN_NAMES = {
   '/quest8': 'GATE 08 — THE COLLAPSE',
   '/quest9': 'GATE 09 — THE CONTROL ROOM',
   '/quest10': 'GATE 10 — THE STATIC CITY',
-  // Drift Builders Academy
-  '/academy': 'THE CONSTRUCT',
+  // Hunter Academy
+  '/academy': 'HUNTER ACADEMY',
   '/academy/onboarding': 'BUILDER SETUP',
-  '/academy/dashboard': 'CONSTRUCT — BUILDER HQ',
+  '/academy/dashboard': 'HUNTER ACADEMY — BUILDER HQ',
   '/academy/gate/s01': 'GATE S-01 — THE FIRST BLOCK',
   '/academy/gate/s02': 'GATE S-02 — THE REPEAT MACHINE',
   '/academy/gate/s03': 'GATE S-03 — THE DECISION POINT',

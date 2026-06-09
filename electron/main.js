@@ -1,4 +1,4 @@
-// Drift Pilot Protocol — Electron main process
+// Hunter Protocol — Electron main process
 // Wraps the bundled Vite SPA (both the main platform and the Academy live in the same
 // React app). Serves it over a custom app:// scheme so React Router's /paths work under
 // a packaged build, handles driftpilot:// deep links (Supabase auth callbacks), a system
@@ -49,7 +49,7 @@ function createWindow() {
     width: 1400, height: 900, minWidth: 940, minHeight: 600,
     backgroundColor: '#0a0a12',
     show: false,
-    title: 'Drift Pilot Protocol',
+    title: 'Hunter Protocol',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -88,7 +88,7 @@ function rebuildTrayMenu(streak) {
     { type: 'separator' },
     { label: 'Quit', click: () => app.quit() },
   ]))
-  tray.setToolTip(streak > 0 ? `Drift Pilot — ${streak}-day streak` : 'Drift Pilot Protocol')
+  tray.setToolTip(streak > 0 ? `Hunter Protocol — ${streak}-day streak` : 'Hunter Protocol')
 }
 
 function createTray() {
@@ -119,7 +119,7 @@ function handleDeepLink(url) {
 ipcMain.handle('deep-link:pending', () => { const l = pendingDeepLink; pendingDeepLink = null; return l })
 ipcMain.on('tray:streak', (_e, streak) => rebuildTrayMenu(Number(streak) || 0))
 ipcMain.on('notify', (_e, { title, body } = {}) => {
-  if (Notification.isSupported()) new Notification({ title: title || 'Drift Pilot Protocol', body: body || '' }).show()
+  if (Notification.isSupported()) new Notification({ title: title || 'Hunter Protocol', body: body || '' }).show()
 })
 
 // Single instance — route a second launch's deep link into the running window.

@@ -46,7 +46,7 @@ export default function AcademySignup() {
       <div className="signup-wrap">
         <div className="signup-left">
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Drift Builders Academy" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Hunter Academy" style={{ height: 28 }} />
           </div>
         </div>
         <div className="signup-right">
@@ -69,7 +69,7 @@ export default function AcademySignup() {
       <div className="signup-left">
         <div>
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Drift Builders Academy" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Hunter Academy" style={{ height: 28 }} />
           </div>
           <div className="signup-hero">
             <span className="chip chip-violet" style={{ marginTop: 80, display: 'inline-flex' }}>

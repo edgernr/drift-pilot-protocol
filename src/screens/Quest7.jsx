@@ -705,7 +705,7 @@ export default function Quest7() {
             <strong>You built that difference.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$DRIFT EARNED</div><div className="v">+280</div></div>
+            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+280</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+350</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Motion Fragment</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Ghost Signal I</div></div>

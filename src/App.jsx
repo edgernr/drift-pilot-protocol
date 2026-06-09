@@ -111,7 +111,7 @@ function AnimatedRoutes() {
         <Route path="/quest9" element={<GateRoute requires={['act1-ch08']} unlockKey="act1-ch09"><Quest9 /></GateRoute>} />
         <Route path="/quest10" element={<GateRoute requires={['act1-ch09']} unlockKey="act1-ch10"><Quest10 /></GateRoute>} />
         <Route path="/pilot/:id" element={<PilotProfile />} />
-        {/* Drift Builders Academy */}
+        {/* Hunter Academy */}
         <Route path="/academy" element={<AcademyLanding />} />
         <Route path="/academy/signup" element={<AcademySignup />} />
         <Route path="/academy/onboarding" element={<ProtectedRoute><AcademyOnboarding /></ProtectedRoute>} />

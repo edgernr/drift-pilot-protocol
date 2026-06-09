@@ -32,7 +32,7 @@ export default function Signup() {
       <div className="signup-wrap">
         <div className="signup-left">
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Drift Pilot Protocol" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Hunter Protocol" style={{ height: 28 }} />
           </div>
         </div>
         <div className="signup-right">
@@ -55,14 +55,14 @@ export default function Signup() {
       <div className="signup-left">
         <div>
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Drift Pilot Protocol" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Hunter Protocol" style={{ height: 28 }} />
           </div>
           <div className="signup-hero">
             <span className="chip chip-violet" style={{ marginTop: 80, display: 'inline-flex' }}>
               <span className="dot dot-pulse" /> ENLISTING · SEASON 01
             </span>
             <h1>Welcome, pilot.<br /><span className="gradient-text">Let's suit up.</span></h1>
-            <p>Create your account and start earning $DRIFT from day one.</p>
+            <p>Create your account and start earning $HUNT from day one.</p>
           </div>
         </div>
       </div>

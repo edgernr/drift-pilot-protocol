@@ -4,7 +4,7 @@ import { authRedirectTo, initDesktopAuth, setTrayStreak } from '../lib/desktop'
 
 const AuthContext = createContext(null)
 
-export const DRIFT_REWARDS = {
+export const HUNT_REWARDS = {
   'act1-ch01': 250, 'act1-ch02': 350, 'act1-ch03': 700,
   'act1-ch04': 195, 'act1-ch05': 225, 'act1-ch06': 400,
   'act1-ch07': 280, 'act1-ch08': 400, 'act1-ch09': 700, 'act1-ch10': 1500,
@@ -12,7 +12,7 @@ export const DRIFT_REWARDS = {
 
 // Raid XP rewards (distinct from DRIFT payout amounts: 2350/1050/250/0)
 export const RAID_XP_REWARDS  = { PERFECT: 500, PASSED: 300, PARTIAL: 100, FAILED: 0 }
-const RAID_XP_TO_DRIFT  = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
+const RAID_XP_TO_HUNT  = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
 const RAID_NEW_XP_SET   = new Set([100, 300, 500])          // new-format XP values
 const RAID_OLD_TO_XP    = { 2350: 500, 1050: 300, 250: 100 } // old DRIFT amounts → XP
 
@@ -130,7 +130,7 @@ export function AuthProvider({ children }) {
       const isPermanentBan = prof.banned_until === '2099-01-01T00:00:00Z'
       const isTempBan = prof.banned_until && new Date(prof.banned_until) > new Date()
       if (isPermanentBan || isTempBan) {
-        localStorage.setItem('dpp_ban_until', prof.banned_until)
+        localStorage.setItem('hp_ban_until', prof.banned_until)
         await supabase.auth.signOut()
         setUser(null)
         setProfile(null)
@@ -147,19 +147,19 @@ export function AuthProvider({ children }) {
         }
         return s + r.xp_earned
       }, 0) ?? 0
-      const totalDrift = xpRows?.reduce((s, r) => {
-        if (DRIFT_REWARDS[r.quest_id]) return s + DRIFT_REWARDS[r.quest_id]
+      const totalHunt = xpRows?.reduce((s, r) => {
+        if (HUNT_REWARDS[r.quest_id]) return s + HUNT_REWARDS[r.quest_id]
         if (r.quest_id?.startsWith('raid:')) {
           if (r.quest_id.endsWith(':bank')) return s + r.xp_earned  // bank: xp_earned = direct DRIFT
           if (r.xp_earned === 0) return s
           // New format: derive DRIFT from XP amount
-          if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + (RAID_XP_TO_DRIFT[r.xp_earned] ?? 0)
+          if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + (RAID_XP_TO_HUNT[r.xp_earned] ?? 0)
           // Old format: xp_earned IS the DRIFT amount directly
           return s + r.xp_earned
         }
         return s
       }, 0) ?? 0
-      const totalDriftSpent = unlockRows?.reduce((s, r) => s + r.drift_cost, 0) ?? 0
+      const totalHuntSpent = unlockRows?.reduce((s, r) => s + r.drift_cost, 0) ?? 0
       const completedQuestIds = new Set(xpRows?.map(r => r.quest_id) ?? [])
       const unlockedGateIds = new Set(unlockRows?.map(r => r.quest_id) ?? [])
       const streak = computeStreak(xpRows)
@@ -169,7 +169,7 @@ export function AuthProvider({ children }) {
       const xpMultiplier = streakMultiplier * subscriberMultiplier
       const ld = computeLevelData(totalXp)
       setProfile({
-        ...prof, questsCompleted: count ?? 0, totalXp, totalDrift, totalDriftSpent,
+        ...prof, questsCompleted: count ?? 0, totalXp, totalHunt, totalHuntSpent,
         completedQuestIds, unlockedGateIds, streak, streakMultiplier, subscriberMultiplier, xpMultiplier,
         completions: xpRows ?? [], unlocks: unlockRows ?? [],
         level: ld.level, levelLabel: ld.label, levelColor: ld.color,
@@ -235,19 +235,19 @@ export function AuthProvider({ children }) {
       )
     if (!error) {
       await fetchProfile(user.id)
-      supabase.functions.invoke('mint-drift', { body: { quest_id: questId } }).catch(() => {})
+      supabase.functions.invoke('mint-hunt', { body: { quest_id: questId } }).catch(() => {})
     }
     return !error
   }
 
-  async function unlockGate(questId, driftCost) {
+  async function unlockGate(questId, huntCost) {
     if (!user) return { ok: false, reason: 'not-logged-in' }
-    const spendable = (profile?.totalDrift ?? 0) - (profile?.totalDriftSpent ?? 0)
-    if (spendable < driftCost) return { ok: false, reason: 'insufficient' }
-    const { error } = await supabase.from('gate_unlocks').insert({ user_id: user.id, quest_id: questId, drift_cost: driftCost })
+    const spendable = (profile?.totalHunt ?? 0) - (profile?.totalHuntSpent ?? 0)
+    if (spendable < huntCost) return { ok: false, reason: 'insufficient' }
+    const { error } = await supabase.from('gate_unlocks').insert({ user_id: user.id, quest_id: questId, drift_cost: huntCost })
     if (!error) {
       await fetchProfile(user.id)
-      supabase.functions.invoke('burn-drift', { body: { quest_id: questId } }).catch(() => {})
+      supabase.functions.invoke('burn-hunt', { body: { quest_id: questId } }).catch(() => {})
     }
     return { ok: !error, reason: error ? 'error' : null }
   }
@@ -255,14 +255,14 @@ export function AuthProvider({ children }) {
   async function burnRaidEntry(raidId) {
     if (!user) return { ok: false, reason: 'not-logged-in' }
     const ENTRY_COST = 1000
-    const spendable = (profile?.totalDrift ?? 0) - (profile?.totalDriftSpent ?? 0)
+    const spendable = (profile?.totalHunt ?? 0) - (profile?.totalHuntSpent ?? 0)
     if (spendable < ENTRY_COST) return { ok: false, reason: 'insufficient' }
     const questId = `raid-entry:${raidId}`
     if (profile?.unlocks?.some(u => u.quest_id === questId)) return { ok: true, reason: null }
     const { error } = await supabase.from('gate_unlocks').insert({ user_id: user.id, quest_id: questId, drift_cost: ENTRY_COST })
     if (!error) {
       await fetchProfile(user.id)
-      supabase.functions.invoke('burn-drift', { body: { quest_id: questId, reason: 'raid_entry' } }).catch(() => {})
+      supabase.functions.invoke('burn-hunt', { body: { quest_id: questId, reason: 'raid_entry' } }).catch(() => {})
     }
     return { ok: !error, reason: error ? 'error' : null }
   }
@@ -326,8 +326,8 @@ export function AuthProvider({ children }) {
       .eq('user_id', user.id)
       .eq('quest_id', questId)
     if (!error) {
-      const newEarned = (profile?.totalDrift ?? 0) - (DRIFT_REWARDS[questId] ?? 0)
-      if (newEarned < (profile?.totalDriftSpent ?? 0)) {
+      const newEarned = (profile?.totalHunt ?? 0) - (HUNT_REWARDS[questId] ?? 0)
+      if (newEarned < (profile?.totalHuntSpent ?? 0)) {
         await supabase.from('gate_unlocks').delete().eq('user_id', user.id)
       }
       await fetchProfile(user.id)

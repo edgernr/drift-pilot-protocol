@@ -464,7 +464,7 @@ function healthColor(h) {
 export default function RaidView() {
   const { user, profile, completeQuest, burnRaidEntry, refundRaidEntry } = useAuth()
   const isAdmin = profile?.is_admin ?? false
-  const spendableDrift = (profile?.totalDrift ?? 0) - (profile?.totalDriftSpent ?? 0)
+  const spendableDrift = (profile?.totalHunt ?? 0) - (profile?.totalHuntSpent ?? 0)
   const RAID_ENTRY_COST = 1000
 
   const [activeRaid, setActiveRaid] = useState(null)
@@ -1028,7 +1028,7 @@ export default function RaidView() {
           {isAdminForced ? (
             <div className="raid-payout-badge raid-payout-zero" style={{ gridColumn: '1 / -1' }}>
               <span className="raid-payout-icon">⚑</span>
-              <span className="raid-payout-label">ADMIN TEST — no XP or $DRIFT awarded</span>
+              <span className="raid-payout-label">ADMIN TEST — no XP or $HUNT awarded</span>
             </div>
           ) : myMembership ? (
             <>
@@ -1047,13 +1047,13 @@ export default function RaidView() {
               {iWin ? (
                 <div className="raid-payout-badge" style={{ borderColor: 'oklch(0.82 0.18 75 / 0.5)', background: 'oklch(0.82 0.18 75 / 0.08)' }}>
                   <span className="raid-payout-icon" style={{ color: 'var(--amber)' }}>◈</span>
-                  <span className="raid-payout-amount" style={{ color: 'var(--amber)' }}>+{bankPot} $DRIFT</span>
+                  <span className="raid-payout-amount" style={{ color: 'var(--amber)' }}>+{bankPot} $HUNT</span>
                   <span className="raid-payout-label">{bankAlreadyPaid ? 'bank already claimed' : 'BANK WON — highest score'}</span>
                 </div>
               ) : (
                 <div className="raid-payout-badge raid-payout-zero">
                   <span className="raid-payout-icon">⊘</span>
-                  <span className="raid-payout-label">−1000 $DRIFT — entry fee burned</span>
+                  <span className="raid-payout-label">−1000 $HUNT — entry fee burned</span>
                 </div>
               )}
             </>
@@ -1197,7 +1197,7 @@ export default function RaidView() {
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <button className="btn btn-primary" disabled={!raidName.trim() || !selectedRole || busy || (spendableDrift < RAID_ENTRY_COST && !isAdmin)} onClick={handleCreate}>
-                {busy ? 'Creating...' : `Create Raid → (${RAID_ENTRY_COST} $DRIFT)`}
+                {busy ? 'Creating...' : `Create Raid → (${RAID_ENTRY_COST} $HUNT)`}
               </button>
               <button className="btn" onClick={() => { setCreating(false); setRaidName(''); setSelectedRole(null) }}>Cancel</button>
             </div>
@@ -1252,7 +1252,7 @@ export default function RaidView() {
                       <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Join as {ROLES[joiningRaid.role]?.label}?</span>
                         <button className="btn btn-primary" style={{ fontSize: 11, padding: '4px 10px' }} disabled={busy || (spendableDrift < RAID_ENTRY_COST && !isAdmin)}
-                          onClick={() => handleJoin(joiningRaid.raidId, joiningRaid.role)}>Join → ({RAID_ENTRY_COST} $DRIFT)</button>
+                          onClick={() => handleJoin(joiningRaid.raidId, joiningRaid.role)}>Join → ({RAID_ENTRY_COST} $HUNT)</button>
                         <button className="btn" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setJoiningRaid(null)}>Cancel</button>
                       </div>
                     )}

@@ -5,7 +5,7 @@ import { useTheme } from '../hooks/useTheme'
 
 // Installers are published to GitHub Releases by the desktop-release CI workflow.
 // NOTE: the repo/releases must be PUBLIC for these (unauthenticated) reads to work.
-const REPO = 'edgernr/drift-pilot-protocol'
+const REPO = 'edgernr/hunter-protocol'
 const RELEASES_PAGE = `https://github.com/${REPO}/releases`
 
 const OS_TARGETS = [
@@ -51,7 +51,7 @@ export default function Downloads() {
     <div className="container" style={{ maxWidth: 980, paddingTop: 110, paddingBottom: 80 }}>
       <nav className="nav">
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => goto('landing')}>
-          <img src="/LOGO.svg" alt="DRIFT PILOT PROTOCOL" style={{ height: 40 }} />
+          <img src="/LOGO.svg" alt="HUNTER PROTOCOL" style={{ height: 40 }} />
           <span className="chip chip-teal" style={{ fontSize: 9, padding: '2px 8px' }}>BETA</span>
         </div>
         <ul>
@@ -75,7 +75,7 @@ export default function Downloads() {
       </nav>
         <div className="eyebrow" style={{ color: 'var(--teal)', fontFamily: 'var(--f-mono)', fontSize: 12, letterSpacing: '0.16em' }}>DESKTOP APP</div>
         <h1 style={{ fontSize: 40, margin: '10px 0 8px' }}>
-          Download <span className="gradient-text">Drift Pilot Protocol</span>
+          Download <span className="gradient-text">Hunter Protocol</span>
         </h1>
         <p style={{ color: 'var(--ink-2)', maxWidth: 620, lineHeight: 1.6 }}>
           The full academy and raids as a native desktop app — with offline-friendly loading, a streak tray indicator, and automatic updates.
@@ -132,7 +132,7 @@ export default function Downloads() {
         {(state.status === 'ok' || state.status === 'empty') && (
           <div style={{ marginTop: 28, fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.8 }}>
             <div>The app <strong style={{ color: 'var(--ink-2)' }}>auto-updates</strong> — install once and new versions arrive on launch.</div>
-            <div>Installers are currently <strong style={{ color: 'var(--ink-2)' }}>unsigned</strong>. <strong style={{ color: 'var(--ink-2)' }}>Windows:</strong> <em>More info → Run anyway</em>. <strong style={{ color: 'var(--ink-2)' }}>macOS:</strong> if it says "damaged / can&apos;t be opened", run <code>xattr -cr &quot;/Applications/Drift Pilot Protocol.app&quot;</code> in Terminal (or System Settings → Privacy &amp; Security → <em>Open Anyway</em>) — it&apos;s the unsigned-app quarantine, not a corrupt file.</div>
+            <div>Installers are currently <strong style={{ color: 'var(--ink-2)' }}>unsigned</strong>. <strong style={{ color: 'var(--ink-2)' }}>Windows:</strong> <em>More info → Run anyway</em>. <strong style={{ color: 'var(--ink-2)' }}>macOS:</strong> if it says "damaged / can&apos;t be opened", run <code>xattr -cr &quot;/Applications/Hunter Protocol.app&quot;</code> in Terminal (or System Settings → Privacy &amp; Security → <em>Open Anyway</em>) — it&apos;s the unsigned-app quarantine, not a corrupt file.</div>
             <div style={{ marginTop: 6 }}>All builds: <a href={RELEASES_PAGE} target="_blank" rel="noreferrer" style={{ color: 'var(--teal)' }}>{RELEASES_PAGE}</a></div>
           </div>
         )}

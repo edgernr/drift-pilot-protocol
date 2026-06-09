@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import './PilotProfile.css'
 import { supabase } from '../lib/supabase'
 import { useParams } from 'react-router-dom'
-import { computeLevelData, DRIFT_REWARDS, USERNAME_COLORS } from '../context/AuthContext'
+import { computeLevelData, HUNT_REWARDS, USERNAME_COLORS } from '../context/AuthContext'
 
-const RAID_XP_TO_DRIFT = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
+const RAID_XP_TO_HUNT = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
 const RAID_NEW_XP_SET   = new Set([100, 300, 500])
 const RAID_OLD_TO_XP    = { 2350: 500, 1050: 300, 250: 100 }
 
@@ -46,11 +46,11 @@ export default function PilotProfile() {
         return s + r.xp_earned
       }, 0)
 
-      const totalDrift = completions.reduce((s, r) => {
-        if (DRIFT_REWARDS[r.quest_id]) return s + DRIFT_REWARDS[r.quest_id]
+      const totalHunt = completions.reduce((s, r) => {
+        if (HUNT_REWARDS[r.quest_id]) return s + HUNT_REWARDS[r.quest_id]
         if (r.quest_id?.startsWith('raid:')) {
           if (r.xp_earned === 0) return s
-          if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + (RAID_XP_TO_DRIFT[r.xp_earned] ?? 0)
+          if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + (RAID_XP_TO_HUNT[r.xp_earned] ?? 0)
           return s + r.xp_earned
         }
         return s
@@ -75,7 +75,7 @@ export default function PilotProfile() {
 
       const ld = computeLevelData(totalXp)
       setPilot({
-        ...prof, totalXp, totalDrift, completedGates,
+        ...prof, totalXp, totalHunt, completedGates,
         questsCompleted: completedGates.length, streak,
         level: ld.level, levelLabel: ld.label, levelColor: ld.color,
         levelProgress: ld.progress, xpInLevel: ld.xpInLevel, xpNeeded: ld.xpNeeded,
@@ -117,7 +117,7 @@ export default function PilotProfile() {
     <div className="pp-shell">
       <div className="pp-card">
 
-        <a href="/" className="pp-back">← driftprotocol.net</a>
+        <a href="/" className="pp-back">← hunterprotocol.net</a>
 
         {/* Avatar */}
         <div className="pp-avatar" style={{
@@ -152,8 +152,8 @@ export default function PilotProfile() {
           </div>
           <div className="pp-stat-sep" />
           <div className="pp-stat">
-            <div className="pp-stat-val" style={{ color: 'var(--magenta)' }}>{fmt(pilot.totalDrift)}</div>
-            <div className="pp-stat-lbl">$DRIFT EARNED</div>
+            <div className="pp-stat-val" style={{ color: 'var(--magenta)' }}>{fmt(pilot.totalHunt)}</div>
+            <div className="pp-stat-lbl">$HUNT EARNED</div>
           </div>
         </div>
 
@@ -211,7 +211,7 @@ export default function PilotProfile() {
 
         {/* CTA */}
         <div className="pp-cta">
-          <div className="pp-cta-brand">DRIFT PILOT PROTOCOL</div>
+          <div className="pp-cta-brand">HUNTER PROTOCOL</div>
           <div className="pp-cta-sub">Learn. Build. Earn. Clear the gates. Raid the tower.</div>
           <a href="/" className="btn btn-primary" style={{ marginTop: 16 }}>Join the Protocol →</a>
         </div>
