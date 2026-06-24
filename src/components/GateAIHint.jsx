@@ -42,7 +42,7 @@ export default function GateAIHint({ code, checks, gateId, lang, done }) {
         <div className="ag-ai-panel">
           <div className="ag-ai-head">
             <span className="ag-ai-icon">◈</span>
-            <span>HUNTER AI</span>
+            <span>VOID AI</span>
             <span className="ag-ai-uses">{3 - used} hint{3 - used !== 1 ? 's' : ''} left</span>
           </div>
           <p className="ag-ai-body">{hint}</p>

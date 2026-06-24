@@ -155,7 +155,7 @@ const PORT = process.env.PORT || 3001
 // TODO: register unhandled promise rejection handler — log reason
 
 app.listen(PORT, () => {
-  console.log('[Signal Hunter] API online → port ' + PORT)
+  console.log('[Signal Seeker] API online → port ' + PORT)
 })`,
     'src/db.js': `const { Pool } = require('pg')
 
@@ -209,7 +209,7 @@ module.exports = { generateAccessToken, generateRefreshToken, verifyAccessToken 
 
   vault: {
     'schema.sql': `-- EVA City District Database Schema
--- Vault Hunter executes this exactly as-is during Phase 02.
+-- Vault Seeker executes this exactly as-is during Phase 02.
 -- No changes without a full party vote.
 
 CREATE TABLE IF NOT EXISTS users (
@@ -288,7 +288,7 @@ SELECT u.id, d.id, u.name, 1
 FROM users u CROSS JOIN districts d
 WHERE u.role = 'citizen' AND d.name = 'Sector Zero'
 ON CONFLICT DO NOTHING;`,
-    'queries.js': `// Vault Hunter — Database Query Layer
+    'queries.js': `// Vault Seeker — Database Query Layer
 // All DB access goes through this module. No raw SQL in route handlers.
 const { query } = require('../db')
 
@@ -343,7 +343,7 @@ const generateRefreshToken = () => crypto.randomUUID()
 const verifyAccessToken    = token  => jwt.verify(token, ACCESS_SECRET)
 
 module.exports = { generateAccessToken, generateRefreshToken, verifyAccessToken }`,
-    'middleware.js': `// Cipher Hunter — Authentication Middleware
+    'middleware.js': `// Cipher Seeker — Authentication Middleware
 // Reference: Cipher Contract (token architecture, RBAC rules, error codes)
 
 // Implement and export three middleware functions:
@@ -418,29 +418,29 @@ module.exports = { register, login, refresh, logout, me }`,
     // deploy.yml — TODO: create .github/workflows/deploy.yml
     // Runs on push to main: DB migration step (npx prisma migrate deploy), then deploy API + client
     // Must include the DB migration step for Sync 3 to pass
-    '.env.example': `# === VAULT HUNTER — database ===
+    '.env.example': `# === VAULT SEEKER — database ===
 DATABASE_URL=postgresql://user:password@host:5432/eva_city
 
-# === CIPHER HUNTER — auth secrets (each min 32 chars, must be DIFFERENT) ===
+# === CIPHER SEEKER — auth secrets (each min 32 chars, must be DIFFERENT) ===
 ACCESS_TOKEN_SECRET=replace-with-openssl-rand-hex-32-output
 REFRESH_TOKEN_SECRET=replace-with-different-openssl-rand-hex-32-output
 
-# === SIGNAL HUNTER — api server ===
+# === SIGNAL SEEKER — api server ===
 PORT=3001
 NODE_ENV=production
 ALLOWED_ORIGINS=https://your-frontend-domain.com
 
-# === INTERFACE HUNTER — react app ===
+# === INTERFACE SEEKER — react app ===
 VITE_API_URL=https://your-api-domain.com`,
     'README.md': `# EVA City — Gate Zero
 
 ## Deployment Order
 
-1. **Architect Hunter** — provision database, configure secrets, set env vars
-2. **Vault Hunter** — run migrations (\`npx prisma migrate deploy\`), run seed.js
-3. **Signal Hunter** — deploy API to production host, confirm /api/health returns 200
-4. **Cipher Hunter** — confirm auth endpoints functioning with real secrets
-5. **Interface Hunter** — deploy frontend, confirm VITE_API_URL points to production API
+1. **Architect Seeker** — provision database, configure secrets, set env vars
+2. **Vault Seeker** — run migrations (\`npx prisma migrate deploy\`), run seed.js
+3. **Signal Seeker** — deploy API to production host, confirm /api/health returns 200
+4. **Cipher Seeker** — confirm auth endpoints functioning with real secrets
+5. **Interface Seeker** — deploy frontend, confirm VITE_API_URL points to production API
 
 ## Pre-Siege Checklist
 
@@ -1028,7 +1028,7 @@ export default function RaidIDE({
                       <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, flex: 1, color: m ? 'var(--ink-1)' : 'var(--ink-4)' }}>
                         {m ? (m.user_id === user?.id
                           ? <span style={{ color: 'var(--magenta)' }}>{m.profiles?.name ?? 'You'}</span>
-                          : m.profiles?.name ?? 'Pilot')
+                          : m.profiles?.name ?? 'Seeker')
                         : '—'}
                       </span>
                       <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)' }}>{r.label.split(' ')[0].toUpperCase()}</span>
@@ -1190,7 +1190,7 @@ export default function RaidIDE({
                             <div className="wave-stations">
                               {w.stations.map((s, i) => (
                                 <div key={i} className="wave-station">
-                                  <span className="wave-station-role" style={{ color: ROLES_FULL[s.role].color }}>{ROLES_FULL[s.role].icon} {ROLES_FULL[s.role].label.replace(' Hunter', '')}</span>
+                                  <span className="wave-station-role" style={{ color: ROLES_FULL[s.role].color }}>{ROLES_FULL[s.role].icon} {ROLES_FULL[s.role].label.replace(' Seeker', '')}</span>
                                   <span className="wave-station-duty">{s.duty}</span>
                                 </div>
                               ))}

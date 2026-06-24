@@ -1,6 +1,6 @@
 appId: net.driftprotocol.app
-productName: Hunter Protocol
-copyright: © Hunter Protocol
+productName: Void Shards
+copyright: © Void Shards
 
 directories:
   output: release
@@ -14,7 +14,7 @@ files:
 
 # OS-level deep link: driftpilot://auth-callback (Supabase auth redirects)
 protocols:
-  - name: Hunter Protocol
+  - name: Void Shards
     schemes: [driftpilot]
 
 # Auto-update + release hosting via GitHub Releases (free).
@@ -27,7 +27,7 @@ publish:
 linux:
   target: [AppImage, deb]
   category: Education
-  maintainer: Hunter Protocol
+  maintainer: Void Shards
   synopsis: Gamified coding academy — learn, build, earn.
 
 win:

@@ -47,11 +47,11 @@ const VARIANT_HTML = [
   </section>
 
   <section class="testimonials">
-    <div class="testimonial"><blockquote>"Sector Zero gave us the infrastructure to scale."</blockquote><cite>— Pilot Alpha</cite></div>
+    <div class="testimonial"><blockquote>"Sector Zero gave us the infrastructure to scale."</blockquote><cite>— Seeker Alpha</cite></div>
     <div class="testimonial"><blockquote>"The signal system is unmatched in the district."</blockquote><cite>— Unit 7</cite></div>
   </section>
 
-  <footer class="footer">◈ Drift Protocol — Sector Zero v4.1 · All rights reserved</footer>
+  <footer class="footer">◈ Void Shards — Sector Zero v4.1 · All rights reserved</footer>
 </div>
 </body>
 </html>`,
@@ -638,7 +638,7 @@ export default function Quest8() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+400 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+400 SHARD</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+500</div></div>
           </div>
         </aside>
@@ -734,7 +734,7 @@ export default function Quest8() {
             <strong>That&apos;s mobile-first by design.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+400</div></div>
+            <div className="r"><div className="l">$SHARD EARNED</div><div className="v">+400</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+500</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Stack Fragment</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Responsive License I</div></div>

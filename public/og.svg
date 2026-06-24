@@ -38,7 +38,7 @@
   <rect x="40" y="40" width="1120" height="550" rx="16" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.1"/>
 
   <!-- Tag line -->
-  <text x="80" y="142" font-family="'Space Grotesk', sans-serif" font-size="13" font-weight="500" letter-spacing="0.2em" fill="oklch(0.78 0.18 185)" opacity="0.9" text-transform="uppercase">DRIFT PILOT PROTOCOL</text>
+  <text x="80" y="142" font-family="'Space Grotesk', sans-serif" font-size="13" font-weight="500" letter-spacing="0.2em" fill="oklch(0.78 0.18 185)" opacity="0.9" text-transform="uppercase">VOID SHARDS</text>
 
   <!-- Main headline -->
   <text x="80" y="240" font-family="'Space Grotesk', sans-serif" font-size="72" font-weight="700" fill="#e8e8f4" letter-spacing="-0.03em">Learn.</text>
@@ -46,7 +46,7 @@
   <text x="80" y="420" font-family="'Space Grotesk', sans-serif" font-size="72" font-weight="700" fill="oklch(0.78 0.18 185)" letter-spacing="-0.03em">Earn.</text>
 
   <!-- Description -->
-  <text x="80" y="510" font-family="'Inter', sans-serif" font-size="20" font-weight="400" fill="#8080a0">A gamified coding academy. Clear gates. Raid Gate Zero. Earn $DRIFT.</text>
+  <text x="80" y="510" font-family="'Inter', sans-serif" font-size="20" font-weight="400" fill="#8080a0">A gamified coding academy. Clear gates. Raid Gate Zero. Earn $SHARD.</text>
 
   <!-- Right side chips -->
   <g transform="translate(760, 180)">
@@ -72,11 +72,11 @@
     <text x="90" y="268" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="500" fill="oklch(0.9 0.22 135)" text-anchor="middle">△ ARCHITECT</text>
   </g>
 
-  <!-- DRIFT badge bottom right -->
+  <!-- SHARD badge bottom right -->
   <g transform="translate(960, 490)">
     <rect x="0" y="0" width="160" height="48" rx="10" fill="oklch(0.82 0.18 75)" opacity="0.15"/>
     <rect x="0" y="0" width="160" height="48" rx="10" fill="none" stroke="oklch(0.82 0.18 75)" stroke-width="1.5" opacity="0.5"/>
     <text x="80" y="20" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="500" fill="oklch(0.82 0.18 75)" text-anchor="middle" letter-spacing="0.15em">EARN</text>
-    <text x="80" y="40" font-family="'Space Grotesk', sans-serif" font-size="18" font-weight="700" fill="oklch(0.82 0.18 75)" text-anchor="middle">$DRIFT</text>
+    <text x="80" y="40" font-family="'Space Grotesk', sans-serif" font-size="18" font-weight="700" fill="oklch(0.82 0.18 75)" text-anchor="middle">$SHARD</text>
   </g>
 </svg>

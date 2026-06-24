@@ -1,5 +1,5 @@
 -- ============================================================
--- DRIFT BUILDERS ACADEMY — Schema additions
+-- VOID ACADEMY — Schema additions
 -- Run these in order in the Supabase SQL Editor
 -- ============================================================
 

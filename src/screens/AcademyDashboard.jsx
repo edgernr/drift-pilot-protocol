@@ -254,7 +254,7 @@ export default function AcademyDashboard() {
           <div className="welcome-modal" onClick={e => e.stopPropagation()}>
             {onboardStep === 1 && (<>
               <div className="welcome-glyph onboard-glyph-pulse">◈</div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--amber)', letterSpacing: '0.18em', marginBottom: 10 }}>DRIFT BUILDERS ACADEMY</div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--amber)', letterSpacing: '0.18em', marginBottom: 10 }}>VOID ACADEMY</div>
               <h2 className="welcome-title">Welcome, {activeChild.name}.</h2>
               <p className="welcome-body">
                 You're in the Construct — a digital world built by young coders, gate by gate.
@@ -327,7 +327,7 @@ export default function AcademyDashboard() {
       {/* ── Sidebar ──────────────────────────────────────── */}
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => { goto('academy'); setSidebarOpen(false) }}>
-          <img src="/LOGO.svg" alt="DRIFT" style={{ height: 40 }} />
+          <img src="/LOGO.svg" alt="SHARD" style={{ height: 40 }} />
           <span className="chip chip-amber" style={{ fontSize: 9, padding: '2px 8px' }}>ACADEMY</span>
         </div>
 

@@ -33,7 +33,7 @@ const VARIANT_HTML = [
       <div class="card"><div class="card-label">NODE ZETA</div><div class="card-val">ONLINE</div><div class="card-desc">All checks cleared</div></div>
     </div>
   </main>
-  <footer class="footer">◈ Drift Protocol — District Control System v4.1</footer>
+  <footer class="footer">◈ Void Shards — District Control System v4.1</footer>
 </div>`,
 
   // Variant 1: Command Dashboard
@@ -532,7 +532,7 @@ export default function Quest6() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+400 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+400 SHARD</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+500</div></div>
           </div>
         </aside>
@@ -628,7 +628,7 @@ export default function Quest6() {
             <strong>The district grid is infinite.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+400</div></div>
+            <div className="r"><div className="l">$SHARD EARNED</div><div className="v">+400</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+500</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Void Fragment</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Grid Seal I</div></div>

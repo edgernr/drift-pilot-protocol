@@ -28,7 +28,7 @@ export default function Landing() {
     <>
       <nav className="nav">
         <div className="logo">
-          <img src="/LOGO.svg" alt="HUNTER PROTOCOL" style={{ height: 40 }} />
+          <img src="/LOGO.svg" alt="VOID SHARDS" style={{ height: 40 }} />
           <span className="chip chip-teal" style={{ fontSize: 9, padding: '2px 8px' }}>BETA</span>
         </div>
         <ul>
@@ -61,7 +61,7 @@ export default function Landing() {
               <h1>
                 <span className="line">Level up</span>
                 <span className="line gradient-text">your frontend.</span>
-                <span className="line">Get paid in $HUNT.</span>
+                <span className="line">Get paid in $SHARD.</span>
               </h1>
               <p className="lede">
                 A gamified coding academy where every quest you ship earns real on-chain rewards.
@@ -77,7 +77,7 @@ export default function Landing() {
               <div className="hero-meta">
                 <div>
                   <div className="num">{stats.pilots !== null ? stats.pilots.toLocaleString() : '—'}</div>
-                  <div className="lbl">Pilots enrolled</div>
+                  <div className="lbl">Seekers enrolled</div>
                 </div>
                 <div>
                   <div className="num">{stats.xp !== null ? stats.xp.toLocaleString() : '—'}</div>
@@ -104,7 +104,7 @@ export default function Landing() {
                     </div>
                     <div className="reward-pill">
                       <div className="coin">E</div>
-                      +240 $HUNT
+                      +240 $SHARD
                     </div>
                   </div>
                   <div className="code-block">
@@ -259,7 +259,7 @@ export default function Landing() {
       <section id="academy" style={{ padding: '100px 0', background: 'oklch(0.09 0.02 260)' }}>
         <div className="container">
           <div className="section-head reveal">
-            <span className="eyebrow" style={{ color: 'oklch(0.86 0.19 80)' }}>DRIFT BUILDERS ACADEMY</span>
+            <span className="eyebrow" style={{ color: 'oklch(0.86 0.19 80)' }}>VOID ACADEMY</span>
             <h2>Coding quests for ages 8–16.<br /><span style={{ color: 'oklch(0.86 0.19 80)' }}>40 gates. 3 tracks.</span></h2>
             <p>Visual block coding → Python → JavaScript + React. Every gate is a short coding challenge. Complete it, answer a quiz, earn XP. No fluff.</p>
           </div>
@@ -313,7 +313,7 @@ export default function Landing() {
             <div className="panel price-card reveal">
               <div><div className="tier">FREE</div><div className="amount" style={{ marginTop: 12 }}>$0</div></div>
               <h3>Access to the first gates</h3>
-              <ul><li>Play the opening gates</li><li>Earn $HUNT on every completion</li><li>Community leaderboard</li></ul>
+              <ul><li>Play the opening gates</li><li>Earn $SHARD on every completion</li><li>Community leaderboard</li></ul>
               <button className="btn btn-ghost" style={{ justifyContent: 'center' }} onClick={() => goto(user ? 'dashboard' : 'signup')}>Start Free →</button>
             </div>
             <div className="panel price-card featured reveal">
@@ -347,7 +347,7 @@ export default function Landing() {
               {[
                 { cat: 'Gameplay', items: ['×1.25 XP boost for the full season', 'Early access to new gates before public release', 'Exclusive access to the Gate Zero Raid'] },
                 { cat: 'Profile',  items: ['Exclusive avatar frames (dark fantasy / cyberpunk)', 'Season badge on profile', 'Custom username color'] },
-                { cat: '$HUNT',   items: ['Bonus $HUNT airdrop at season start', 'Increased $HUNT drop rate from quests'] },
+                { cat: '$SHARD',   items: ['Bonus $SHARD airdrop at season start', 'Increased $SHARD drop rate from quests'] },
                 { cat: 'Community',items: ['Private Discord channel for pass holders', 'Priority feedback'] },
                 { cat: 'Content',  items: ['Exclusive side quests', 'Access to the platform roadmap'] },
               ].map(group => (
@@ -373,14 +373,14 @@ export default function Landing() {
         <div className="container reveal">
           <span className="eyebrow">READY FOR LAUNCH</span>
           <h2 style={{ marginTop: 16 }}>Press start.<br /><span className="gradient-text">Your code is waiting.</span></h2>
-          <p>Join 142k pilots learning frontend the fun way. No credit card. Wallet optional.</p>
-          <button className="btn btn-primary" onClick={() => goto(user ? 'dashboard' : 'signup')}>{user ? 'Go to Dashboard →' : 'Enter Hunter Protocol →'}</button>
+          <p>Join 142k seekers learning frontend the fun way. No credit card. Wallet optional.</p>
+          <button className="btn btn-primary" onClick={() => goto(user ? 'dashboard' : 'signup')}>{user ? 'Go to Dashboard →' : 'Enter Void Shards →'}</button>
         </div>
       </section>
 
       <footer>
         <div className="container inner">
-          <div>© 2026 Hunter Protocol · All missions reserved.</div>
+          <div>© 2026 Void Shards · All missions reserved.</div>
           <div className="right">
             <a href="#" onClick={(e) => { e.preventDefault(); goto('downloads') }}>Download App</a>
             <a href="#" onClick={(e) => { e.preventDefault(); goto('terms') }}>Terms</a>

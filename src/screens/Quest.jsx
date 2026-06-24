@@ -16,7 +16,7 @@ const VARIANTS = [
 
   <h1>EMERGENCY — Sector Zero
 
-  <p><strong>All pilots: report to designated shelters immediately.</p></strong>
+  <p><strong>All seekers: report to designated shelters immediately.</p></strong>
 
   <p>This transmission originates from EVA Command.</p>
 
@@ -26,7 +26,7 @@ const VARIANTS = [
 
   `<html>
 <head>
-  <title>EVA City — Pilot Registry Notice</title>
+  <title>EVA City — Seeker Registry Notice</title>
 </head>
 <body>
 
@@ -324,7 +324,7 @@ export default function Quest() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+250 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+250 SHARD</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+100</div></div>
           </div>
         </aside>
@@ -411,9 +411,9 @@ export default function Quest() {
           <span className="dq-badge-icon">📡</span>
           <div className="dq-complete-chip">GATE CLEARED</div>
           <h2>The Gate opens.</h2>
-          <p>Most hunters left thinking it was dead. You stayed. The browser forgives everything. <strong>The Gate does not.</strong> You extracted what others dismissed as worthless.</p>
+          <p>Most seekers left thinking it was dead. You stayed. The browser forgives everything. <strong>The Gate does not.</strong> You extracted what others dismissed as worthless.</p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+250</div></div>
+            <div className="r"><div className="l">$SHARD EARNED</div><div className="v">+250</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+100</div></div>
             <div className="r"><div className="l">FRAGMENT</div><div className="v">Signal Fragment</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">E License</div></div>

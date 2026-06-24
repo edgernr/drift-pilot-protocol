@@ -395,7 +395,7 @@ export default function Quest10() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+1500 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+1500 SHARD</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+600</div></div>
           </div>
         </aside>
@@ -500,7 +500,7 @@ export default function Quest10() {
             <strong>The city that survives is one that works when the signal breaks.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+1500</div></div>
+            <div className="r"><div className="l">$SHARD EARNED</div><div className="v">+1500</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+600</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">Interface Architect</div></div>
             <div className="r"><div className="l">STATUS</div><div className="v">Act I Complete</div></div>
@@ -509,7 +509,7 @@ export default function Quest10() {
             className="btn btn-primary"
             onClick={async () => { await completeQuest('act1-ch10', 600, getAnalytics()); goto('dashboard') }}
           >
-            Return to Pilot HQ →
+            Return to Seeker HQ →
           </button>
         </div>
       </div>

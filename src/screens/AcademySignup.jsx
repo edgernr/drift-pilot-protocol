@@ -46,7 +46,7 @@ export default function AcademySignup() {
       <div className="signup-wrap">
         <div className="signup-left">
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Hunter Academy" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Void Academy" style={{ height: 28 }} />
           </div>
         </div>
         <div className="signup-right">
@@ -69,11 +69,11 @@ export default function AcademySignup() {
       <div className="signup-left">
         <div>
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Hunter Academy" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Void Academy" style={{ height: 28 }} />
           </div>
           <div className="signup-hero">
             <span className="chip chip-violet" style={{ marginTop: 80, display: 'inline-flex' }}>
-              <span className="dot dot-pulse" /> DRIFT BUILDERS ACADEMY
+              <span className="dot dot-pulse" /> VOID ACADEMY
             </span>
             <h1>Welcome, Builder.<br /><span className="gradient-text">Let's get started.</span></h1>
             <p>Create a parent account to set up your child's Builder profile.</p>

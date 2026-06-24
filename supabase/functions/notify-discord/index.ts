@@ -21,12 +21,12 @@ Deno.serve(async (req) => {
       description,
       color: 0xe84393,
       fields: [
-        { name: 'Pilot', value: user_name ?? 'Unknown', inline: true },
+        { name: 'Seeker', value: user_name ?? 'Unknown', inline: true },
         { name: 'View', value: view ?? '—', inline: true },
         { name: 'Page', value: url ?? '—', inline: false },
       ],
       timestamp: created_at ?? new Date().toISOString(),
-      footer: { text: 'Drift Pilot Protocol' },
+      footer: { text: 'Void Shards' },
     }
 
     if (screenshot_base64) {

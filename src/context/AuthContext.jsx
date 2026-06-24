@@ -21,7 +21,7 @@ export const XP_LEVELS = [
   { level: 2,  min: 100,  label: 'SCOUT',     color: 'var(--teal)'           },
   { level: 3,  min: 300,  label: 'OPERATIVE', color: 'var(--violet)'         },
   { level: 4,  min: 600,  label: 'AGENT',     color: 'var(--amber)'          },
-  { level: 5,  min: 1000, label: 'HUNTER',    color: 'var(--lime)'           },
+  { level: 5,  min: 1000, label: 'REAPER',    color: 'var(--lime)'           },
   { level: 6,  min: 1600, label: 'PHANTOM',   color: 'var(--magenta)'        },
   { level: 7,  min: 2400, label: 'VANGUARD',  color: 'oklch(0.75 0.22 200)'  },
   { level: 8,  min: 3300, label: 'WARDEN',    color: 'oklch(0.72 0.20 270)'  },
@@ -110,7 +110,7 @@ export function AuthProvider({ children }) {
     // minimal profile so a fresh user is never stuck. PGRST116 = "no rows".
     if (!prof && profErr) {
       const { data: { user: authUser } } = await supabase.auth.getUser()
-      const fallbackName = authUser?.email ?? 'Pilot'
+      const fallbackName = authUser?.email ?? 'Seeker'
       const { data: created, error: upsertErr } = await supabase
         .from('profiles')
         .upsert({ id: userId, name: fallbackName }, { onConflict: 'id' })

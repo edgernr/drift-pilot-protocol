@@ -1,4 +1,4 @@
-// Hunter Protocol — Electron main process
+// Void Shards — Electron main process
 // Wraps the bundled Vite SPA (both the main platform and the Academy live in the same
 // React app). Serves it over a custom app:// scheme so React Router's /paths work under
 // a packaged build, handles driftpilot:// deep links (Supabase auth callbacks), a system
@@ -49,7 +49,7 @@ function createWindow() {
     width: 1400, height: 900, minWidth: 940, minHeight: 600,
     backgroundColor: '#0a0a12',
     show: false,
-    title: 'Hunter Protocol',
+    title: 'Void Shards',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -84,11 +84,11 @@ function rebuildTrayMenu(streak) {
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: streak > 0 ? `🔥 ${streak}-day streak` : 'No streak yet', enabled: false },
     { type: 'separator' },
-    { label: 'Open Drift Pilot', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus() } else createWindow() } },
+    { label: 'Open Void Shards', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus() } else createWindow() } },
     { type: 'separator' },
     { label: 'Quit', click: () => app.quit() },
   ]))
-  tray.setToolTip(streak > 0 ? `Hunter Protocol — ${streak}-day streak` : 'Hunter Protocol')
+  tray.setToolTip(streak > 0 ? `Void Shards — ${streak}-day streak` : 'Void Shards')
 }
 
 function createTray() {
@@ -119,7 +119,7 @@ function handleDeepLink(url) {
 ipcMain.handle('deep-link:pending', () => { const l = pendingDeepLink; pendingDeepLink = null; return l })
 ipcMain.on('tray:streak', (_e, streak) => rebuildTrayMenu(Number(streak) || 0))
 ipcMain.on('notify', (_e, { title, body } = {}) => {
-  if (Notification.isSupported()) new Notification({ title: title || 'Hunter Protocol', body: body || '' }).show()
+  if (Notification.isSupported()) new Notification({ title: title || 'Void Shards', body: body || '' }).show()
 })
 
 // Single instance — route a second launch's deep link into the running window.

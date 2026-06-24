@@ -6,27 +6,27 @@ import './RaidView.css'
 
 const ROLES = {
   interface: {
-    label: 'Interface Hunter', icon: '◈', color: 'var(--teal)',
+    label: 'Interface Seeker', icon: '◈', color: 'var(--teal)',
     owns: 'Frontend — React app, routing, UI state, real-time data display, accessibility.',
     challenge: 'UI Corruption Waves — malformed data must not crash the interface.',
   },
   signal: {
-    label: 'Signal Hunter', icon: '◉', color: 'var(--violet)',
+    label: 'Signal Seeker', icon: '◉', color: 'var(--violet)',
     owns: 'Backend — Node.js/Express API, all endpoints, middleware chain, rate limiting, error handling.',
     challenge: 'Request Floods — thousands of malformed requests must not take the server down.',
   },
   vault: {
-    label: 'Vault Hunter', icon: '⬡', color: 'var(--amber)',
+    label: 'Vault Seeker', icon: '⬡', color: 'var(--amber)',
     owns: 'Data layer — database schema, migrations, seed data, query optimization, integrity constraints.',
     challenge: 'Corruption Attempts — direct DB attacks; schema constraints are your only defense.',
   },
   cipher: {
-    label: 'Cipher Hunter', icon: '⬢', color: 'var(--magenta)',
+    label: 'Cipher Seeker', icon: '⬢', color: 'var(--magenta)',
     owns: 'Auth & security — JWT system, refresh tokens, RBAC, route protection, input sanitization.',
     challenge: 'Phantom Attacks — token replays, role escalation, brute force sequences.',
   },
   architect: {
-    label: 'Architect Hunter', icon: '△', color: 'var(--lime)',
+    label: 'Architect Seeker', icon: '△', color: 'var(--lime)',
     owns: 'Infrastructure — CI/CD, production hosting, env config, logging, monitoring, health checks.',
     challenge: 'Infrastructure Attacks — env corruption, server crashes, connection drops; automatic recovery required.',
   },
@@ -63,8 +63,8 @@ const ROLE_BRIEFS = {
       ]},
     ],
     dependsOn: [
-      "Signal Hunter's API reachable at VITE_API_URL",
-      "Cipher Hunter's token format matching what you send in Authorization header",
+      "Signal Seeker's API reachable at VITE_API_URL",
+      "Cipher Seeker's token format matching what you send in Authorization header",
       'Signal Contract being accurate — you build against it exactly',
     ],
     dependedOnBy: ['Nobody depends on you technically — but the raid is evaluated visually first. A broken frontend makes a working backend invisible.'],
@@ -102,13 +102,13 @@ const ROLE_BRIEFS = {
       ]},
     ],
     dependsOn: [
-      "Vault Hunter's database reachable at DATABASE_URL",
-      "Cipher Hunter's auth middleware — you integrate it, they write it",
+      "Vault Seeker's database reachable at DATABASE_URL",
+      "Cipher Seeker's auth middleware — you integrate it, they write it",
       'Data Contract schema matching what your queries expect',
     ],
     dependedOnBy: [
-      'Interface Hunter — every API call hits your server',
-      "Cipher Hunter — their middleware runs inside your Express app",
+      'Interface Seeker — every API call hits your server',
+      "Cipher Seeker — their middleware runs inside your Express app",
     ],
   },
   vault: {
@@ -131,7 +131,7 @@ const ROLE_BRIEFS = {
         'idx_refresh_tokens_token ON refresh_tokens(token)',
         'idx_audit_logs_user ON audit_logs(user_id)',
       ]},
-      { title: 'Query Layer — Expose to Signal Hunter', items: [
+      { title: 'Query Layer — Expose to Signal Seeker', items: [
         'users: createUser / findUserByEmail / findUserById',
         'refresh_tokens: createRefreshToken / findRefreshToken / deleteRefreshToken / deleteAllUserTokens',
         'districts: getAllDistricts / getDistrictById / createDistrict / updateDistrictStatus',
@@ -148,12 +148,12 @@ const ROLE_BRIEFS = {
       ]},
     ],
     dependsOn: [
-      "Architect Hunter's database provisioned and reachable",
+      "Architect Seeker's database provisioned and reachable",
       'The Data Contract — you wrote it, you execute it exactly',
     ],
     dependedOnBy: [
-      'Signal Hunter — every database operation goes through your query layer',
-      'Cipher Hunter — refresh token storage and lookup is yours',
+      'Signal Seeker — every database operation goes through your query layer',
+      'Cipher Seeker — refresh token storage and lookup is yours',
     ],
   },
   cipher: {
@@ -192,12 +192,12 @@ const ROLE_BRIEFS = {
       ]},
     ],
     dependsOn: [
-      "Vault Hunter's refresh_tokens table (createRefreshToken, findRefreshToken, deleteRefreshToken)",
-      "Signal Hunter integrating your middleware into their Express app at the correct position in the chain",
+      "Vault Seeker's refresh_tokens table (createRefreshToken, findRefreshToken, deleteRefreshToken)",
+      "Signal Seeker integrating your middleware into their Express app at the correct position in the chain",
     ],
     dependedOnBy: [
-      "Signal Hunter — your middleware runs on every protected route in their app",
-      "Interface Hunter — your token format determines what they send in Authorization header",
+      "Signal Seeker — your middleware runs on every protected route in their app",
+      "Interface Seeker — your token format determines what they send in Authorization header",
       'Everyone — if auth is broken, nothing in the district is accessible',
     ],
   },
@@ -207,9 +207,9 @@ const ROLE_BRIEFS = {
       { title: 'Repository Structure — Set Up Before Anyone Writes Code', items: [
         '.github/workflows/ci.yml — on every PR: lint + test for both api/ and client/',
         '.github/workflows/deploy.yml — on main merge: migrate DB → deploy API → build + deploy frontend',
-        'api/ — Signal Hunter\'s Express app (src/, package.json, .env.example)',
-        'client/ — Interface Hunter\'s React app (src/, package.json, .env.example)',
-        'db/ — Vault Hunter\'s migrations (prisma/) and seed.js',
+        'api/ — Signal Seeker\'s Express app (src/, package.json, .env.example)',
+        'client/ — Interface Seeker\'s React app (src/, package.json, .env.example)',
+        'db/ — Vault Seeker\'s migrations (prisma/) and seed.js',
         'README.md — deployment instructions for all five roles',
       ]},
       { title: 'CI Pipeline (ci.yml)', items: [
@@ -240,12 +240,12 @@ const ROLE_BRIEFS = {
       ]},
     ],
     dependsOn: [
-      'All four other Hunters communicating their environment variable needs during Descent',
-      "Vault Hunter's migrations committed to the repo and runnable",
+      'All four other Seekers communicating their environment variable needs during Descent',
+      "Vault Seeker's migrations committed to the repo and runnable",
     ],
     dependedOnBy: [
       'Everyone — if the environment is not ready, nobody can integrate',
-      'The Architect Hunter is the only Hunter who can block the entire party',
+      'The Architect Seeker is the only Seeker who can block the entire party',
     ],
   },
 }
@@ -338,14 +338,14 @@ const SYNCS = [
   {
     n: 4, hour: 40, label: 'Sync Ritual IV',
     desc: 'Production deploy complete. All five layers live. Defense begins in 4 hours.',
-    passEffect: '+50 HP — Siege begins. All 5 hunters at stations.',
+    passEffect: '+50 HP — Siege begins. All 5 seekers at stations.',
     failEffect: '−30 HP — production broken; Siege begins anyway',
     conditions: [
       { role: 'architect', text: 'All Sync III conditions verified at the production URL — not staging' },
       { role: 'architect', text: 'All environment variables set in production — no .env file shipped, no hardcoded secrets' },
       { role: 'architect', text: 'Process manager configured — app auto-restarts on crash (PM2 or equivalent)' },
       { role: 'architect', text: 'Logs accessible — application errors visible in production log output' },
-      { role: 'all',       text: 'Pre-Siege checklist complete — every hunter confirms their layer is siege-ready' },
+      { role: 'all',       text: 'Pre-Siege checklist complete — every seeker confirms their layer is siege-ready' },
       { role: 'vault',     text: 'Test users seeded — at least 1 admin, 1 operator, 3 citizens in production DB' },
       { role: 'all',       text: '30-minute stability window passed — no crashes, no 500s under normal load for 30 minutes before Siege starts' },
     ],
@@ -403,7 +403,7 @@ const WAVES = [
       { role: 'signal',    duty: 'Confirm all endpoints return the correct shape on edge cases — empty district returns { citizens: [] } not { citizens: null }. Type contract must hold.' },
       { role: 'vault',     duty: 'Confirm DB queries return empty arrays, not null, when no rows match — confirm ORM/query behavior on 0-row results.' },
       { role: 'cipher',    duty: 'Confirm /me returns a full user object even for a new user with no activity — no missing fields.' },
-      { role: 'architect', duty: 'Monitor error tracking — any unhandled exception in the frontend means Interface Hunter missed a null guard.' },
+      { role: 'architect', duty: 'Monitor error tracking — any unhandled exception in the frontend means Interface Seeker missed a null guard.' },
     ],
     unprepared: [
       { role: 'interface', cost: '.map() on null → TypeError crash → white screen → BREACHED' },
@@ -675,7 +675,7 @@ export default function RaidView() {
       supabase.from('raids').update({ health: newHealth }).eq('id', raidId),
       supabase.from('raid_events').insert({
         raid_id: raidId, type: 'integrity_penalty',
-        label: `⚠ INTEGRITY BREACH — ${profile?.name ?? 'Pilot'} carries ${myFlagged} flagged gate submission${myFlagged !== 1 ? 's' : ''}. Squad penalised −${penalty} HP. Every hunter pays for one hunter's shortcuts.`,
+        label: `⚠ INTEGRITY BREACH — ${profile?.name ?? 'Seeker'} carries ${myFlagged} flagged gate submission${myFlagged !== 1 ? 's' : ''}. Squad penalised −${penalty} HP. Every seeker pays for one seeker's shortcuts.`,
         health_delta: -penalty, created_by: user.id,
       }),
     ])
@@ -760,7 +760,7 @@ export default function RaidView() {
       await supabase.from('raids').update({ status: 'descent', started_at: new Date().toISOString() }).eq('id', raidId)
       await supabase.from('raid_events').insert({
         raid_id: raidId, type: 'phase_change',
-        label: 'PHASE 01 — THE DESCENT begins. No Hunter writes a single line of code until all five documents are signed. Read. Study. Plan.',
+        label: 'PHASE 01 — THE DESCENT begins. No Seeker writes a single line of code until all five documents are signed. Read. Study. Plan.',
         health_delta: 0, created_by: user.id,
       })
       await loadRaidDetails(raidId)
@@ -775,7 +775,7 @@ export default function RaidView() {
     try {
       await supabase.from('raid_events').insert({
         raid_id: activeRaid.id, type: 'ai_pledge',
-        label: `${profile?.name ?? 'Pilot'} — AI PLEDGE SWORN. No AI wrote my code. No tool completed my work. Every line is mine.`,
+        label: `${profile?.name ?? 'Seeker'} — AI PLEDGE SWORN. No AI wrote my code. No tool completed my work. Every line is mine.`,
         health_delta: 0, created_by: user.id,
       })
       await loadRaidDetails(activeRaid.id)
@@ -795,7 +795,7 @@ export default function RaidView() {
       await supabase.from('raids').update({ status: 'active' }).eq('id', raidId)
       await supabase.from('raid_events').insert({
         raid_id: raidId, type: 'phase_change',
-        label: 'DESCENT complete. All Hunters pledged. PHASE 02 — THE BUILD begins. 36 hours. Build the district.',
+        label: 'DESCENT complete. All Seekers pledged. PHASE 02 — THE BUILD begins. 36 hours. Build the district.',
         health_delta: 0, created_by: user.id,
       })
       await loadRaidDetails(raidId)
@@ -1028,7 +1028,7 @@ export default function RaidView() {
           {isAdminForced ? (
             <div className="raid-payout-badge raid-payout-zero" style={{ gridColumn: '1 / -1' }}>
               <span className="raid-payout-icon">⚑</span>
-              <span className="raid-payout-label">ADMIN TEST — no XP or $HUNT awarded</span>
+              <span className="raid-payout-label">ADMIN TEST — no XP or $SHARD awarded</span>
             </div>
           ) : myMembership ? (
             <>
@@ -1047,13 +1047,13 @@ export default function RaidView() {
               {iWin ? (
                 <div className="raid-payout-badge" style={{ borderColor: 'oklch(0.82 0.18 75 / 0.5)', background: 'oklch(0.82 0.18 75 / 0.08)' }}>
                   <span className="raid-payout-icon" style={{ color: 'var(--amber)' }}>◈</span>
-                  <span className="raid-payout-amount" style={{ color: 'var(--amber)' }}>+{bankPot} $HUNT</span>
+                  <span className="raid-payout-amount" style={{ color: 'var(--amber)' }}>+{bankPot} $SHARD</span>
                   <span className="raid-payout-label">{bankAlreadyPaid ? 'bank already claimed' : 'BANK WON — highest score'}</span>
                 </div>
               ) : (
                 <div className="raid-payout-badge raid-payout-zero">
                   <span className="raid-payout-icon">⊘</span>
-                  <span className="raid-payout-label">−1000 $HUNT — entry fee burned</span>
+                  <span className="raid-payout-label">−1000 $SHARD — entry fee burned</span>
                 </div>
               )}
             </>
@@ -1063,7 +1063,7 @@ export default function RaidView() {
         {/* Per-player score table */}
         {raidFilesLoaded && members.length > 0 && !isAdminForced && (
           <div className="score-table" style={{ marginBottom: 0 }}>
-            <div className="score-table-head"><span>HUNTER</span><span>CHECKS</span></div>
+            <div className="score-table-head"><span>SEEKER</span><span>CHECKS</span></div>
             {sorted.map((mem) => {
               const pct = memberScores[mem.user_id] ?? 0
               const xp  = Math.round(pct * 500)
@@ -1072,7 +1072,7 @@ export default function RaidView() {
                 <div key={mem.user_id} className="score-row" style={isWinner ? { background: 'oklch(0.82 0.18 75 / 0.06)' } : undefined}>
                   <span className="score-row-label">
                     {isWinner && <span style={{ color: 'var(--amber)', marginRight: 6 }}>★</span>}
-                    {mem.profiles?.name ?? 'Hunter'}
+                    {mem.profiles?.name ?? 'Seeker'}
                     <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--ink-3)', fontFamily: 'var(--f-mono)' }}>
                       [{ROLES[mem.role]?.label ?? mem.role}]
                     </span>
@@ -1108,7 +1108,7 @@ export default function RaidView() {
           )}
           {penaltyEvents.length > 0 && (
             <div className="score-bonus-note" style={{ color: 'oklch(0.72 0.28 340 / 0.7)' }}>
-              Integrity penalties applied — {penaltyEvents.length} flagged hunter{penaltyEvents.length !== 1 ? 's' : ''} in this squad
+              Integrity penalties applied — {penaltyEvents.length} flagged seeker{penaltyEvents.length !== 1 ? 's' : ''} in this squad
             </div>
           )}
         </div>
@@ -1146,12 +1146,12 @@ export default function RaidView() {
           <div>
             <div className="raid-lore-name">THE ABYSSAL RAID — GATE ZERO</div>
             <div className="raid-lore-text">
-              Gate Zero doesn't appear on any map. A party of <strong>five hunters</strong> is the minimum.
+              Gate Zero doesn't appear on any map. A party of <strong>five seekers</strong> is the minimum.
               Gate Zero is a <strong>living system</strong> — build, deploy, and defend it in 48 to 72 hours
               while it actively tries to destroy what you're creating.
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
-              {[{ ic: '⚑', t: '5 Hunters' }, { ic: '⏱', t: '48–72 Hours' }, { ic: '$', t: 'DRIFT Bounty' }, { ic: '★', t: 'Raid Badge' }].map(f => (
+              {[{ ic: '⚑', t: '5 Seekers' }, { ic: '⏱', t: '48–72 Hours' }, { ic: '$', t: 'SHARD Bounty' }, { ic: '★', t: 'Raid Badge' }].map(f => (
                 <span key={f.t} className="chip" style={{ padding: '4px 10px', fontSize: 11, display: 'inline-flex', gap: 6 }}><span>{f.ic}</span>{f.t}</span>
               ))}
             </div>
@@ -1197,7 +1197,7 @@ export default function RaidView() {
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <button className="btn btn-primary" disabled={!raidName.trim() || !selectedRole || busy || (spendableDrift < RAID_ENTRY_COST && !isAdmin)} onClick={handleCreate}>
-                {busy ? 'Creating...' : `Create Raid → (${RAID_ENTRY_COST} $HUNT)`}
+                {busy ? 'Creating...' : `Create Raid → (${RAID_ENTRY_COST} $SHARD)`}
               </button>
               <button className="btn" onClick={() => { setCreating(false); setRaidName(''); setSelectedRole(null) }}>Cancel</button>
             </div>
@@ -1224,7 +1224,7 @@ export default function RaidView() {
                     <div className="raid-open-header">
                       <div style={{ fontFamily: 'var(--f-mono)', fontSize: 14, color: 'var(--ink-1)', fontWeight: 600 }}>{raid.name}</div>
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{mems.length}/5 hunters</div>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{mems.length}/5 seekers</div>
                         <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: expirySoon ? 'var(--magenta)' : 'var(--ink-3)' }}>
                           {expirySoon ? `⚠ expires in ${remainMin}m` : `expires in ${remainMin}m`}
                         </div>
@@ -1243,7 +1243,7 @@ export default function RaidView() {
                             onClick={canJoin ? () => setJoiningRaid({ raidId: raid.id, role: k }) : undefined}
                           >
                             <span className="slot-icon">{r.icon}</span>
-                            <span className="slot-name">{member ? (isMe ? 'YOU' : (member.profiles?.name ?? 'Pilot')) : r.label.split(' ')[0]}</span>
+                            <span className="slot-name">{member ? (isMe ? 'YOU' : (member.profiles?.name ?? 'Seeker')) : r.label.split(' ')[0]}</span>
                           </div>
                         )
                       })}
@@ -1252,7 +1252,7 @@ export default function RaidView() {
                       <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Join as {ROLES[joiningRaid.role]?.label}?</span>
                         <button className="btn btn-primary" style={{ fontSize: 11, padding: '4px 10px' }} disabled={busy || (spendableDrift < RAID_ENTRY_COST && !isAdmin)}
-                          onClick={() => handleJoin(joiningRaid.raidId, joiningRaid.role)}>Join → ({RAID_ENTRY_COST} $HUNT)</button>
+                          onClick={() => handleJoin(joiningRaid.raidId, joiningRaid.role)}>Join → ({RAID_ENTRY_COST} $SHARD)</button>
                         <button className="btn" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setJoiningRaid(null)}>Cancel</button>
                       </div>
                     )}
@@ -1274,7 +1274,7 @@ export default function RaidView() {
         <div className="raid-waiting-header">
           <div>
             <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
-              {isLeader ? 'SQUAD LEADER' : 'WAITING'} · {members.length}/5 HUNTERS
+              {isLeader ? 'SQUAD LEADER' : 'WAITING'} · {members.length}/5 SEEKERS
               {isAdmin && <span className="chip" style={{ marginLeft: 10, padding: '1px 6px', fontSize: 8, color: 'var(--magenta)' }}>ADMIN MODE</span>}
             </div>
             <h2 style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-0.02em' }}>{activeRaid.name}</h2>
@@ -1297,11 +1297,11 @@ export default function RaidView() {
                   {member
                     ? (isMe
                         ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ color: 'var(--magenta)' }}>YOU — {member.profiles?.name ?? 'Pilot'}</span>
+                            <span style={{ color: 'var(--magenta)' }}>YOU — {member.profiles?.name ?? 'Seeker'}</span>
                             {myFlagged > 0 && <span className="integrity-flag" title={`${myFlagged} flagged gate submission${myFlagged !== 1 ? 's' : ''} on record`}>⚠</span>}
                           </span>
-                        : member.profiles?.name ?? 'Pilot')
-                    : 'AWAITING HUNTER'}
+                        : member.profiles?.name ?? 'Seeker')
+                    : 'AWAITING SEEKER'}
                 </div>
                 <div className="rrc-owns">{r.owns}</div>
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--rc)', letterSpacing: '0.08em', marginTop: 4 }}>
@@ -1338,7 +1338,7 @@ export default function RaidView() {
         {isLeader ? (
           <div style={{ marginTop: 20, display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-primary" disabled={!full || busy} onClick={handleStart}>
-              {busy ? 'Launching...' : full ? 'Launch Raid — Enter Gate Zero →' : `Waiting for ${5 - members.length} more hunter${5 - members.length !== 1 ? 's' : ''}...`}
+              {busy ? 'Launching...' : full ? 'Launch Raid — Enter Gate Zero →' : `Waiting for ${5 - members.length} more seeker${5 - members.length !== 1 ? 's' : ''}...`}
             </button>
             {isAdmin && (
               <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)' }}>Admin mode — solo launch enabled</span>
@@ -1375,7 +1375,7 @@ export default function RaidView() {
             <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--violet)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>Phase 01 — The Descent · Hours 0–4</div>
             <h2 style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 8 }}>{activeRaid.name}</h2>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink-2)', maxWidth: 560, lineHeight: 1.7 }}>
-              No Hunter touches code for four hours. Produce all five documents. Every member must understand each before Phase 02 begins.
+              No Seeker touches code for four hours. Produce all five documents. Every member must understand each before Phase 02 begins.
             </p>
           </div>
           <button className="btn" style={{ color: isLeader ? 'var(--magenta)' : undefined, flexShrink: 0, fontSize: 12 }} disabled={busy} onClick={handleLeave}>
@@ -1394,10 +1394,10 @@ export default function RaidView() {
 
           {/* DOC 01 — DATA CONTRACT */}
           <div className="descent-doc">
-            {docHead(1, 'Data Contract', 'Vault Hunter writes · All five approve')}
+            {docHead(1, 'Data Contract', 'Vault Seeker writes · All five approve')}
             {expandedDoc === 1 && (
               <div className="descent-doc-body">
-                <p className="descent-desc">The complete database schema — every table, every column, every type, every constraint. Produced as a Prisma schema or raw SQL. Not a sketch. The Vault Hunter executes this as-is during Phase 02.</p>
+                <p className="descent-desc">The complete database schema — every table, every column, every type, every constraint. Produced as a Prisma schema or raw SQL. Not a sketch. The Vault Seeker executes this as-is during Phase 02.</p>
                 {[
                   { name: 'users', cols: [['id','uuid','PRIMARY KEY'],['email','text','UNIQUE NOT NULL'],['password','text','NOT NULL — hashed'],['role','text',"DEFAULT 'citizen' — citizen | operator | admin"],['created_at','timestamptz','DEFAULT now()']] },
                   { name: 'refresh_tokens', cols: [['id','uuid','PRIMARY KEY'],['user_id','uuid','FK → users ON DELETE CASCADE'],['token','text','UNIQUE NOT NULL'],['expires_at','timestamptz','NOT NULL'],['created_at','timestamptz','DEFAULT now()']] },
@@ -1417,17 +1417,17 @@ export default function RaidView() {
                     ))}
                   </div>
                 ))}
-                <div className="descent-rule">Every FK constraint must be explicit. Every cascade behavior must be decided. The Vault Hunter cannot change this schema after Descent ends without a full party vote — every other role builds against it.</div>
+                <div className="descent-rule">Every FK constraint must be explicit. Every cascade behavior must be decided. The Vault Seeker cannot change this schema after Descent ends without a full party vote — every other role builds against it.</div>
               </div>
             )}
           </div>
 
           {/* DOC 02 — SIGNAL CONTRACT */}
           <div className="descent-doc">
-            {docHead(2, 'Signal Contract', 'Signal Hunter writes · Interface + Cipher approve')}
+            {docHead(2, 'Signal Contract', 'Signal Seeker writes · Interface + Cipher approve')}
             {expandedDoc === 2 && (
               <div className="descent-doc-body">
-                <p className="descent-desc">The complete API contract — every endpoint, every request shape, every response shape, every error format. Not approximate. Exact. The Interface Hunter builds against this contract — any deviation breaks the frontend.</p>
+                <p className="descent-desc">The complete API contract — every endpoint, every request shape, every response shape, every error format. Not approximate. Exact. The Interface Seeker builds against this contract — any deviation breaks the frontend.</p>
                 {[
                   { group: 'AUTH', rows: [['POST','/api/auth/register','none','{ email, password, name }'],['POST','/api/auth/login','none','{ email, password }'],['POST','/api/auth/refresh','none','refresh token via httpOnly cookie'],['POST','/api/auth/logout','token','{}'],['GET','/api/auth/me','token','{}']] },
                   { group: 'DISTRICTS', rows: [['GET','/api/districts','token','list all'],['GET','/api/districts/:id','token','single'],['POST','/api/districts','admin','{ name }'],['PATCH','/api/districts/:id','admin','{ status }']] },
@@ -1462,10 +1462,10 @@ export default function RaidView() {
 
           {/* DOC 03 — CIPHER CONTRACT */}
           <div className="descent-doc">
-            {docHead(3, 'Cipher Contract', 'Cipher Hunter writes · Signal Hunter approves')}
+            {docHead(3, 'Cipher Contract', 'Cipher Seeker writes · Signal Seeker approves')}
             {expandedDoc === 3 && (
               <div className="descent-doc-body">
-                <p className="descent-desc">The complete auth flow — how tokens are issued, validated, refreshed, and revoked. Every Hunter reads this because every layer touches auth. If the Cipher Hunter changes this spec mid-raid, it is a breaking change and the Signal Hunter must be notified immediately.</p>
+                <p className="descent-desc">The complete auth flow — how tokens are issued, validated, refreshed, and revoked. Every Seeker reads this because every layer touches auth. If the Cipher Seeker changes this spec mid-raid, it is a breaking change and the Signal Seeker must be notified immediately.</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   <div>
                     <div className="descent-section-label">Token Architecture</div>
@@ -1504,16 +1504,16 @@ export default function RaidView() {
 
           {/* DOC 04 — ENVIRONMENT CONTRACT */}
           <div className="descent-doc">
-            {docHead(4, 'Environment Contract', 'Architect Hunter writes · All five approve')}
+            {docHead(4, 'Environment Contract', 'Architect Seeker writes · All five approve')}
             {expandedDoc === 4 && (
               <div className="descent-doc-body">
-                <p className="descent-desc">Every environment variable the system needs, what it's for, and who owns the value. Produced as a .env.example committed to the repo. The Architect Hunter ensures every variable exists in production before Hour 40 — missing variables at deploy time are a raid failure condition.</p>
+                <p className="descent-desc">Every environment variable the system needs, what it's for, and who owns the value. Produced as a .env.example committed to the repo. The Architect Seeker ensures every variable exists in production before Hour 40 — missing variables at deploy time are a raid failure condition.</p>
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, background: 'oklch(1 0 0 / 0.03)', border: '1px solid oklch(1 0 0 / 0.08)', borderRadius: 8, padding: '14px 16px', lineHeight: 2.1 }}>
                   {[
-                    { comment: '# DATABASE — Vault Hunter owns these values', vars: ['DATABASE_URL=postgresql://user:password@host:5432/dbname'] },
-                    { comment: '# AUTH — Cipher Hunter owns these values', vars: ['ACCESS_TOKEN_SECRET=minimum-32-character-random-string','REFRESH_TOKEN_SECRET=minimum-32-character-random-string-different'] },
-                    { comment: '# SERVER — Signal Hunter owns these values', vars: ['PORT=3000','NODE_ENV=production','ALLOWED_ORIGINS=https://your-frontend-domain.com'] },
-                    { comment: '# FRONTEND — Interface Hunter owns these values', vars: ['VITE_API_URL=https://your-api-domain.com'] },
+                    { comment: '# DATABASE — Vault Seeker owns these values', vars: ['DATABASE_URL=postgresql://user:password@host:5432/dbname'] },
+                    { comment: '# AUTH — Cipher Seeker owns these values', vars: ['ACCESS_TOKEN_SECRET=minimum-32-character-random-string','REFRESH_TOKEN_SECRET=minimum-32-character-random-string-different'] },
+                    { comment: '# SERVER — Signal Seeker owns these values', vars: ['PORT=3000','NODE_ENV=production','ALLOWED_ORIGINS=https://your-frontend-domain.com'] },
+                    { comment: '# FRONTEND — Interface Seeker owns these values', vars: ['VITE_API_URL=https://your-api-domain.com'] },
                   ].map((sec, i) => (
                     <div key={i} style={{ marginBottom: i < 3 ? 10 : 0 }}>
                       <div style={{ color: 'var(--ink-4)' }}>{sec.comment}</div>
@@ -1537,7 +1537,7 @@ export default function RaidView() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   <div>
                     <div className="descent-section-label">Services</div>
-                    {[['Frontend','React + Vite','Interface Hunter','Vercel · Netlify · Cloudflare Pages'],['API Server','Node.js + Express','Signal Hunter','Railway · Render · Fly.io'],['Database','PostgreSQL','Vault Hunter','Railway · Supabase · Render']].map(([svc,stack,owner,opts]) => (
+                    {[['Frontend','React + Vite','Interface Seeker','Vercel · Netlify · Cloudflare Pages'],['API Server','Node.js + Express','Signal Seeker','Railway · Render · Fly.io'],['Database','PostgreSQL','Vault Seeker','Railway · Supabase · Render']].map(([svc,stack,owner,opts]) => (
                       <div key={svc} style={{ display: 'grid', gridTemplateColumns: '100px 160px 140px 1fr', gap: 10, padding: '6px 0', fontFamily: 'var(--f-mono)', fontSize: 11, borderBottom: '1px solid oklch(1 0 0 / 0.04)' }}>
                         <span style={{ color: 'var(--ink-1)', fontWeight: 600 }}>{svc}</span>
                         <span style={{ color: 'var(--teal)' }}>{stack}</span>
@@ -1554,7 +1554,7 @@ export default function RaidView() {
                   </div>
                   <div>
                     <div className="descent-section-label">Connection Rules</div>
-                    {[['CORS','API must list the exact frontend URL in ALLOWED_ORIGINS — not a wildcard'],['SSL','Database connection string must include SSL params for all production hosts'],['Cookies','Frontend fetch calls must include credentials: \'include\' for cookies to reach the API'],['Hosting lock','No Hunter changes their service host after Descent ends without a party vote']].map(([k,v]) => (
+                    {[['CORS','API must list the exact frontend URL in ALLOWED_ORIGINS — not a wildcard'],['SSL','Database connection string must include SSL params for all production hosts'],['Cookies','Frontend fetch calls must include credentials: \'include\' for cookies to reach the API'],['Hosting lock','No Seeker changes their service host after Descent ends without a party vote']].map(([k,v]) => (
                       <div key={k} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 10, padding: '6px 0', fontFamily: 'var(--f-mono)', fontSize: 11, borderBottom: '1px solid oklch(1 0 0 / 0.04)' }}>
                         <span style={{ color: 'var(--amber)' }}>{k}</span><span style={{ color: 'var(--ink-3)' }}>{v}</span>
                       </div>
@@ -1573,7 +1573,7 @@ export default function RaidView() {
             <span className="pledge-glyph">⊕</span>
             <div>
               <div className="pledge-title">ANTI-AI PLEDGE</div>
-              <div className="pledge-desc">Every Hunter must swear before the Build begins. No AI writes your code. No tool completes your work. The raid tests what YOU can build.</div>
+              <div className="pledge-desc">Every Seeker must swear before the Build begins. No AI writes your code. No tool completes your work. The raid tests what YOU can build.</div>
             </div>
           </div>
           <div className="pledge-roster">
@@ -1585,7 +1585,7 @@ export default function RaidView() {
                 <div key={k} className={`pledge-member${pledged ? ' pledged' : m ? '' : ' absent'}`}>
                   <span className="pledge-check">{pledged ? '✓' : m ? '○' : '—'}</span>
                   <span style={{ color: m ? r.color : 'var(--ink-4)', fontFamily: 'var(--f-mono)', fontSize: 10 }}>{r.icon}</span>
-                  <span className="pledge-name">{m ? (m.user_id === user?.id ? 'YOU' : (m.profiles?.name ?? 'Pilot')) : r.label.split(' ')[0]}</span>
+                  <span className="pledge-name">{m ? (m.user_id === user?.id ? 'YOU' : (m.profiles?.name ?? 'Seeker')) : r.label.split(' ')[0]}</span>
                 </div>
               )
             })}
@@ -1596,10 +1596,10 @@ export default function RaidView() {
             </button>
           )}
           {myPledged && !allPledged && (
-            <div className="pledge-wait">Pledge taken. Waiting for all Hunters to confirm...</div>
+            <div className="pledge-wait">Pledge taken. Waiting for all Seekers to confirm...</div>
           )}
           {allPledged && (
-            <div className="pledge-all-clear">All Hunters pledged. Squad integrity confirmed.</div>
+            <div className="pledge-all-clear">All Seekers pledged. Squad integrity confirmed.</div>
           )}
         </div>
 
@@ -1609,7 +1609,7 @@ export default function RaidView() {
               {busy ? 'Starting...' : 'Descent Complete — Begin Build →'}
             </button>
             {!allPledged && !isAdmin && (
-              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)' }}>Waiting for all Hunters to take the Anti-AI Pledge</span>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)' }}>Waiting for all Seekers to take the Anti-AI Pledge</span>
             )}
           </div>
         ) : (

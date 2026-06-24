@@ -56,7 +56,7 @@ const VARIANT_HTML = [
     <h3>◈ CITIZEN SEARCH</h3>
     <input class="cr-input" id="search-input" type="text" placeholder="Search citizens…" autocomplete="off" />
     <ul class="cr-list" id="citizen-list">
-      <li>Alpha-7 · Sector Zero · Pilot</li>
+      <li>Alpha-7 · Sector Zero · Seeker</li>
       <li>Bravo-12 · Command Centre · Engineer</li>
       <li>Echo-3 · Reactor Grid · Technician</li>
       <li>Delta-9 · Signal Tower · Operator</li>
@@ -69,7 +69,7 @@ const VARIANT_HTML = [
     <form id="register-form">
       <div class="cr-field">
         <label class="cr-lbl" for="reg-email">EMAIL</label>
-        <input class="cr-input" id="reg-email" type="text" placeholder="pilot@sector.zero" autocomplete="off" />
+        <input class="cr-input" id="reg-email" type="text" placeholder="seeker@sector.zero" autocomplete="off" />
         <div class="cr-err" id="email-error"></div>
       </div>
       <button class="cr-submit" type="submit">REGISTER CITIZEN</button>
@@ -97,8 +97,8 @@ const VARIANT_HTML = [
     </div>
   </div>
   <div class="cr-sec">
-    <h3>◈ PILOT SEARCH</h3>
-    <input class="cr-input" id="search-input" type="text" placeholder="Search pilots…" autocomplete="off" />
+    <h3>◈ SEEKER SEARCH</h3>
+    <input class="cr-input" id="search-input" type="text" placeholder="Search seekers…" autocomplete="off" />
     <ul class="cr-list" id="citizen-list">
       <li>Strike-1 · Ops Division · Lead</li>
       <li>Cipher-4 · Intel Unit · Analyst</li>
@@ -109,14 +109,14 @@ const VARIANT_HTML = [
     </ul>
   </div>
   <div class="cr-sec">
-    <h3>▶ PILOT ENLIST</h3>
+    <h3>▶ SEEKER ENLIST</h3>
     <form id="register-form">
       <div class="cr-field">
         <label class="cr-lbl" for="reg-email">COMM CHANNEL</label>
-        <input class="cr-input" id="reg-email" type="text" placeholder="pilot@command.hq" autocomplete="off" />
+        <input class="cr-input" id="reg-email" type="text" placeholder="seeker@command.hq" autocomplete="off" />
         <div class="cr-err" id="email-error"></div>
       </div>
-      <button class="cr-submit" type="submit">ENLIST PILOT</button>
+      <button class="cr-submit" type="submit">ENLIST SEEKER</button>
     </form>
   </div>
   <div class="cr-sec">
@@ -538,7 +538,7 @@ export default function Quest9() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+700 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+700 SHARD</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+450</div></div>
           </div>
         </aside>
@@ -638,7 +638,7 @@ export default function Quest9() {
             <strong>The city lives because you wired it.</strong>
           </p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+700</div></div>
+            <div className="r"><div className="l">$SHARD EARNED</div><div className="v">+700</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+450</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">JS Operator I</div></div>
             <div className="r"><div className="l">ITEM</div><div className="v">Control Room Badge</div></div>

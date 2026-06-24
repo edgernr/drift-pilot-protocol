@@ -44,13 +44,13 @@ export default function Login() {
       <div className="login-left">
         <div>
           <div className="login-logo">
-            <img src="/LOGO.svg" alt="Hunter Protocol" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Void Shards" style={{ height: 28 }} />
           </div>
           <div className="login-hero">
             <span className="chip chip-teal" style={{ marginTop: 80, display: 'inline-flex' }}>
               <span className="dot dot-pulse" /> SEASON 01 · LIVE
             </span>
-            <h1>Welcome back,<br /><span className="gradient-text">pilot.</span></h1>
+            <h1>Welcome back,<br /><span className="gradient-text">seeker.</span></h1>
             <p>Log in to resume your missions, claim your streak rewards, and push your rank up the leaderboard.</p>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default function Login() {
         <div className="panel panel-glow login-card">
           <span className="back-link" onClick={() => goto('landing')}>← back to home</span>
           <h2 style={{ marginTop: 24 }}>Log in</h2>
-          <p className="sub">New pilot? <span className="link" onClick={() => goto('signup')}>Create an account →</span></p>
+          <p className="sub">New seeker? <span className="link" onClick={() => goto('signup')}>Create an account →</span></p>
 
           {banMsg && (
             <div className="login-ban">
@@ -81,7 +81,7 @@ export default function Login() {
               <label>Email</label>
               <input
                 type="email"
-                placeholder="pilot@driftpilotprotocol.xyz"
+                placeholder="seeker@voidshards.xyz"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"

@@ -94,7 +94,7 @@ export default function PilotProfile() {
 
   if (loading) return (
     <div className="pp-shell">
-      <div className="pp-state">LOADING PILOT DATA...</div>
+      <div className="pp-state">LOADING SEEKER DATA...</div>
     </div>
   )
 
@@ -102,7 +102,7 @@ export default function PilotProfile() {
     <div className="pp-shell">
       <div className="pp-state">
         <div className="pp-state-glyph">⊘</div>
-        <div className="pp-state-title">PILOT NOT FOUND</div>
+        <div className="pp-state-title">SEEKER NOT FOUND</div>
         <div className="pp-state-sub">This callsign doesn't exist in the records.</div>
         <a href="/" className="btn btn-primary" style={{ marginTop: 24 }}>Return to Base →</a>
       </div>
@@ -117,7 +117,7 @@ export default function PilotProfile() {
     <div className="pp-shell">
       <div className="pp-card">
 
-        <a href="/" className="pp-back">← hunterprotocol.net</a>
+        <a href="/" className="pp-back">← voidshards.net</a>
 
         {/* Avatar */}
         <div className="pp-avatar" style={{
@@ -135,9 +135,9 @@ export default function PilotProfile() {
           LV.{pilot.level} {pilot.levelLabel}
         </div>
 
-        <h1 className="pp-name" style={pilot.is_subscribed ? { color: USERNAME_COLORS[pilot.username_color]?.value ?? undefined } : undefined}>{pilot.name ?? 'PILOT'}</h1>
+        <h1 className="pp-name" style={pilot.is_subscribed ? { color: USERNAME_COLORS[pilot.username_color]?.value ?? undefined } : undefined}>{pilot.name ?? 'SEEKER'}</h1>
         {pilot.is_subscribed && <div style={{ display: 'inline-block', marginTop: 8, fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', color: 'var(--magenta)', border: '1px solid color-mix(in oklch, var(--magenta) 45%, transparent)', background: 'color-mix(in oklch, var(--magenta) 12%, transparent)', borderRadius: 999, padding: '3px 10px' }}>◈ SEASON 01 PASS</div>}
-        <div className="pp-since">Pilot since {joined}</div>
+        <div className="pp-since">Seeker since {joined}</div>
 
         {/* Stats row */}
         <div className="pp-stats-row">
@@ -153,7 +153,7 @@ export default function PilotProfile() {
           <div className="pp-stat-sep" />
           <div className="pp-stat">
             <div className="pp-stat-val" style={{ color: 'var(--magenta)' }}>{fmt(pilot.totalHunt)}</div>
-            <div className="pp-stat-lbl">$HUNT EARNED</div>
+            <div className="pp-stat-lbl">$SHARD EARNED</div>
           </div>
         </div>
 
@@ -211,9 +211,9 @@ export default function PilotProfile() {
 
         {/* CTA */}
         <div className="pp-cta">
-          <div className="pp-cta-brand">HUNTER PROTOCOL</div>
+          <div className="pp-cta-brand">VOID SHARDS</div>
           <div className="pp-cta-sub">Learn. Build. Earn. Clear the gates. Raid the tower.</div>
-          <a href="/" className="btn btn-primary" style={{ marginTop: 16 }}>Join the Protocol →</a>
+          <a href="/" className="btn btn-primary" style={{ marginTop: 16 }}>Join Void Shards →</a>
         </div>
 
         <button className="pp-copy-btn" onClick={copyLink}>

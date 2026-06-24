@@ -32,7 +32,7 @@ export default function Signup() {
       <div className="signup-wrap">
         <div className="signup-left">
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Hunter Protocol" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Void Shards" style={{ height: 28 }} />
           </div>
         </div>
         <div className="signup-right">
@@ -55,14 +55,14 @@ export default function Signup() {
       <div className="signup-left">
         <div>
           <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Hunter Protocol" style={{ height: 28 }} />
+            <img src="/LOGO.svg" alt="Void Shards" style={{ height: 28 }} />
           </div>
           <div className="signup-hero">
             <span className="chip chip-violet" style={{ marginTop: 80, display: 'inline-flex' }}>
               <span className="dot dot-pulse" /> ENLISTING · SEASON 01
             </span>
-            <h1>Welcome, pilot.<br /><span className="gradient-text">Let's suit up.</span></h1>
-            <p>Create your account and start earning $HUNT from day one.</p>
+            <h1>Welcome, seeker.<br /><span className="gradient-text">Let's suit up.</span></h1>
+            <p>Create your account and start earning $SHARD from day one.</p>
           </div>
         </div>
       </div>
@@ -71,13 +71,13 @@ export default function Signup() {
         <div className="panel panel-glow signup-card">
           <span className="back-link" onClick={() => goto('landing')}>← back to home</span>
           <h2 style={{ marginTop: 24 }}>Create your account</h2>
-          <p className="sub">Already a pilot? <span className="signup-login-link" onClick={() => goto('login')}>Log in →</span></p>
+          <p className="sub">Already a seeker? <span className="signup-login-link" onClick={() => goto('login')}>Log in →</span></p>
 
           {displayError && <div className="signup-error">{displayError}</div>}
 
           <form onSubmit={handleSubmit} className="signup-form">
             <div className="signup-field">
-              <label>Pilot name</label>
+              <label>Seeker name</label>
               <input
                 type="text"
                 placeholder="e.g. Axon"
@@ -91,7 +91,7 @@ export default function Signup() {
               <label>Email</label>
               <input
                 type="email"
-                placeholder="pilot@driftpilotprotocol.xyz"
+                placeholder="seeker@voidshards.xyz"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"

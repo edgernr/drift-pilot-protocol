@@ -3,7 +3,7 @@
 -- Run in the Supabase SQL Editor. Idempotent (create or replace).
 --
 -- When a raid leader disbands a lobby (pre-start) raid, every member's
--- 1000 $HUNT entry should be returned. Members can refund their OWN entry
+-- 1000 $SHARD entry should be returned. Members can refund their OWN entry
 -- client-side (RLS allows deleting your own gate_unlocks), but the leader
 -- can't delete OTHER members' rows — so this SECURITY DEFINER function does
 -- it, authorized only for the raid's creator (or an admin).

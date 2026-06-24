@@ -2,8 +2,8 @@
   "name": "eva-react",
   "private": true,
   "version": "1.0.4",
-  "description": "Hunter Protocol - gamified coding academy. Learn, build, and earn DRIFT.",
-  "author": "Hunter Protocol <technjmd@gmail.com>",
+  "description": "Void Shards - gamified coding academy. Learn, build, and earn SHARD.",
+  "author": "Void Shards <technjmd@gmail.com>",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {

@@ -8,7 +8,7 @@ const SCREEN_NAMES = {
   '/terms': 'FLIGHT RULES — TERMS OF SERVICE',
   '/privacy': 'PRIVACY POLICY',
   '/downloads': 'DOWNLOAD DESKTOP APP',
-  '/dashboard': 'PILOT HQ',
+  '/dashboard': 'SEEKER HQ',
   '/quest': 'GATE 01 — THE DOCUMENT TOMB',
   '/quest2': 'GATE 02 — THE SEMANTIC CRYPT',
   '/quest3': 'GATE 03 — THE FORM GATE',
@@ -19,10 +19,10 @@ const SCREEN_NAMES = {
   '/quest8': 'GATE 08 — THE COLLAPSE',
   '/quest9': 'GATE 09 — THE CONTROL ROOM',
   '/quest10': 'GATE 10 — THE STATIC CITY',
-  // Hunter Academy
-  '/academy': 'HUNTER ACADEMY',
+  // Void Academy
+  '/academy': 'VOID ACADEMY',
   '/academy/onboarding': 'BUILDER SETUP',
-  '/academy/dashboard': 'HUNTER ACADEMY — BUILDER HQ',
+  '/academy/dashboard': 'VOID ACADEMY — BUILDER HQ',
   '/academy/gate/s01': 'GATE S-01 — THE FIRST BLOCK',
   '/academy/gate/s02': 'GATE S-02 — THE REPEAT MACHINE',
   '/academy/gate/s03': 'GATE S-03 — THE DECISION POINT',

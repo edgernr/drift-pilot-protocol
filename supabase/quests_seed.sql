@@ -1,5 +1,5 @@
 -- ============================================================
--- Hunter Protocol — Act I quests seed (World 01)
+-- Void Shards — Act I quests seed (World 01)
 -- Run AFTER pretest_setup.sql (which creates public.quests).
 -- Idempotent: clears World-1 rows then inserts exactly the 10 BUILT gates,
 -- so the skill tree shows 10 (not the stale 15) and no ch11-15 node renders.

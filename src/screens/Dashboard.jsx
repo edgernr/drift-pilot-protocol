@@ -281,7 +281,7 @@ export default function Dashboard() {
         }
         const ranked = data.map((p, i) => ({
           id: p.id,
-          name: p.name || 'Pilot',
+          name: p.name || 'Seeker',
           totalXp: p.total_xp ?? 0,
           rank: i + 1,
         }))
@@ -348,7 +348,7 @@ export default function Dashboard() {
     'act1-ch09': { label: 'Gate 09 — The Control Room',  icon: '⬡' },
     'act1-ch10': { label: 'Gate 10 — The Static City',   icon: '📡' },
   }
-  // Source of truth for $HUNT payouts lives in AuthContext.HUNT_REWARDS —
+  // Source of truth for $SHARD payouts lives in AuthContext.HUNT_REWARDS —
   // mirror it directly so wallet credits, transactions, and notifications match.
   const HUNT_REWARDS_UI = HUNT_REWARDS
   function resolveQuestMeta(questId, xpEarned) {
@@ -356,7 +356,7 @@ export default function Dashboard() {
     if (questId?.startsWith('raid:')) return { label: 'Raid completed', icon: '⚔️', drift: xpEarned ?? 0, kind: 'raid' }
     return { label: questId, icon: '◈', drift: 0, kind: 'unknown' }
   }
-  const pilotName = profile?.name ?? 'Pilot'
+  const pilotName = profile?.name ?? 'Seeker'
   const streak = profile?.streak ?? 0
   const streakMult = profile?.streakMultiplier ?? 1
   const xpMult = profile?.xpMultiplier ?? 1
@@ -423,10 +423,10 @@ export default function Dashboard() {
             {/* ── Step 1: Welcome + Lore ── */}
             {onboardStep === 1 && (<>
               <div className="welcome-glyph onboard-glyph-pulse">◈</div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>HUNTER PROTOCOL</div>
-              <h2 className="welcome-title">Welcome, Pilot.</h2>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>VOID SHARDS</div>
+              <h2 className="welcome-title">Welcome, Seeker.</h2>
               <p className="welcome-body">
-                EVA City is a neon district where the old code has corrupted. As a Drift Pilot you'll clear the Gates — debugging sectors, building real projects, and earning $HUNT.<br /><br />
+                EVA City is a neon district where the old code has corrupted. As a Seeker you'll clear the Gates — debugging sectors, building real projects, and earning $SHARD.<br /><br />
                 Clear all 10 gates in Act I to unlock the Reactive Sector. Raid the tower for bonus rewards.
               </p>
               <div className="onboard-dots">
@@ -453,7 +453,7 @@ export default function Dashboard() {
                     <span className="onboard-gate-icon">{g.icon}</span>
                     <span className="onboard-gate-name">{g.name}</span>
                     <span className="onboard-gate-sub">{g.sub}</span>
-                    <span className="onboard-gate-reward">+{g.xp} XP · +{g.drift} $HUNT</span>
+                    <span className="onboard-gate-reward">+{g.xp} XP · +{g.drift} $SHARD</span>
                   </div>
                 ))}
               </div>
@@ -468,7 +468,7 @@ export default function Dashboard() {
               <div className="welcome-glyph">◈</div>
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>STEP 3 OF 3</div>
               <h2 className="welcome-title">Confirm Your Callsign</h2>
-              <p className="welcome-body" style={{ marginBottom: 0 }}>This is how you'll appear on the leaderboard and your shareable pilot profile.</p>
+              <p className="welcome-body" style={{ marginBottom: 0 }}>This is how you'll appear on the leaderboard and your shareable seeker profile.</p>
               <input
                 className="onboard-name-input"
                 value={onboardName || profile?.name || ''}
@@ -542,11 +542,11 @@ export default function Dashboard() {
       )}
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => { goto('landing'); setSidebarOpen(false) }}>
-          <img src="/LOGO.svg" alt="HUNTER PROTOCOL" style={{ height: 40 }} />
+          <img src="/LOGO.svg" alt="VOID SHARDS" style={{ height: 40 }} />
         </div>
 
         <div>
-          <div className="section-label">Pilot HQ</div>
+          <div className="section-label">Seeker HQ</div>
           <div className="navlist">
             <a className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><span className="ic">◈</span> Dashboard</a>
             <a onClick={gotoActiveQuest}><span className="ic">▶</span> Active Quest</a>
@@ -558,7 +558,7 @@ export default function Dashboard() {
         <div>
           <div className="section-label">Rewards</div>
           <div className="navlist">
-            <a className={view === 'wallet' ? 'active' : ''} onClick={() => setView('wallet')}><span className="ic">$</span> $HUNT Wallet</a>
+            <a className={view === 'wallet' ? 'active' : ''} onClick={() => setView('wallet')}><span className="ic">$</span> $SHARD Wallet</a>
             <a className={view === 'leaderboard' ? 'active' : ''} onClick={() => setView('leaderboard')}><span className="ic">♦</span> Leaderboard</a>
           </div>
         </div>
@@ -584,7 +584,7 @@ export default function Dashboard() {
             <span className="dot" style={{ color: profile?.wallet ? 'var(--lime)' : 'var(--ink-3)' }} />
             {shortenWallet(profile?.wallet)}
           </div>
-          <div className="bal">{fmt(spendableDrift)}<span className="u">$HUNT</span></div>
+          <div className="bal">{fmt(spendableDrift)}<span className="u">$SHARD</span></div>
         </div>
       </aside>
 
@@ -632,7 +632,7 @@ export default function Dashboard() {
                             <span style={{ fontSize: 18, flexShrink: 0 }}>{meta.icon}</span>
                             <div>
                               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>{meta.label} cleared</div>
-                              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', marginTop: 2 }}>+{meta.drift} $HUNT · {new Date(c.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', marginTop: 2 }}>+{meta.drift} $SHARD · {new Date(c.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                             </div>
                           </div>
                         )
@@ -749,9 +749,9 @@ export default function Dashboard() {
             <div className="stats-grid">
               {[
                 { color: 'var(--teal)',    label: 'TOTAL XP',        val: fmt(totalXp),       delta: 'lifetime earned' },
-                { color: 'var(--magenta)', label: '$HUNT BALANCE',   val: fmt(spendableDrift), unit: 'DRIFT', delta: `${fmt(totalHunt)} earned · ${fmt(totalHuntSpent)} spent` },
+                { color: 'var(--magenta)', label: '$SHARD BALANCE',   val: fmt(spendableDrift), unit: 'SHARD', delta: `${fmt(totalHunt)} earned · ${fmt(totalHuntSpent)} spent` },
                 { color: 'var(--violet)',  label: 'QUESTS CLEARED',  val: String(gatesDone), unit: `/${quests.length || 10}`, delta: `${Math.min(100, Math.round(gatesDone / (quests.length || 10) * 100))}% of Act I` },
-                { color: 'var(--amber)',   label: 'GLOBAL RANK',     val: myRank ? `#${myRank}` : '—', delta: myRank ? `of ${lbData.length} pilots` : lbData.length > 0 ? 'not ranked yet' : 'loading...' },
+                { color: 'var(--amber)',   label: 'GLOBAL RANK',     val: myRank ? `#${myRank}` : '—', delta: myRank ? `of ${lbData.length} seekers` : lbData.length > 0 ? 'not ranked yet' : 'loading...' },
               ].map(s => (
                 <div key={s.label} className="stat">
                   <div className="label"><span className="dot" style={{ color: s.color }} />{s.label}</div>
@@ -972,7 +972,7 @@ export default function Dashboard() {
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'oklch(0.72 0.28 340 / 0.06)', border: '1px solid oklch(0.72 0.28 340 / 0.2)', borderRadius: 10, padding: '12px 18px', fontFamily: 'var(--f-mono)', fontSize: 11 }}>
                   <span style={{ fontSize: 20 }}>🔓</span>
-                  <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 10 gates</strong> sequentially with a Season Pass — no $HUNT spend needed.</span>
+                  <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 10 gates</strong> sequentially with a Season Pass — no $SHARD spend needed.</span>
                   <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px', flexShrink: 0 }} onClick={handleCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? 'Loading…' : 'Get Season Pass →'}
                   </button>
@@ -1022,12 +1022,12 @@ export default function Dashboard() {
                         uStatus === 'unlocking' ? (
                           <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--ink-3)' }}>...</span>
                         ) : uStatus === 'insufficient' ? (
-                          <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--magenta)' }}>Need {huntCost} $HUNT</span>
+                          <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--magenta)' }}>Need {huntCost} $SHARD</span>
                         ) : (
                           <button
                             style={{ padding: '2px 8px', fontSize: 9, color: 'var(--magenta)', background: 'none', border: '1px solid oklch(0.72 0.28 340 / 0.4)', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--f-mono)' }}
                             onClick={e => { e.stopPropagation(); handleUnlock(chKey, huntCost) }}
-                          >{huntCost} $HUNT</button>
+                          >{huntCost} $SHARD</button>
                         )
                       )}
                     </div>
@@ -1040,7 +1040,7 @@ export default function Dashboard() {
           <>
             <div className="st-header">
               <div>
-                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>$HUNT Wallet</h2>
+                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>$SHARD Wallet</h2>
                 <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                   Off-chain balance · Season 01
                 </p>
@@ -1061,19 +1061,19 @@ export default function Dashboard() {
                 <div style={{ position: 'absolute', right: 30, bottom: -70, width: 170, height: 170, borderRadius: '50%', background: 'oklch(1 0 0 / 0.04)', pointerEvents: 'none' }} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative' }}>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'oklch(1 0 0 / 0.6)', letterSpacing: '0.14em' }}>HUNTER PROTOCOL</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'oklch(1 0 0 / 0.6)', letterSpacing: '0.14em' }}>VOID SHARDS</div>
                   <div style={{ width: 32, height: 24, background: 'linear-gradient(135deg, oklch(0.85 0.15 75), oklch(0.70 0.20 50))', borderRadius: 4 }} />
                 </div>
 
                 <div style={{ position: 'relative' }}>
                   <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.12em', marginBottom: 6 }}>BALANCE</div>
                   <div style={{ fontSize: 40, fontWeight: 700, color: 'oklch(1 0 0 / 0.95)', letterSpacing: '-0.02em', lineHeight: 1 }}>{fmt(spendableDrift)}</div>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'oklch(1 0 0 / 0.5)', marginTop: 4 }}>$HUNT</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'oklch(1 0 0 / 0.5)', marginTop: 4 }}>$SHARD</div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
                   <div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>PILOT</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>SEEKER</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: nameColor ?? 'oklch(1 0 0 / 0.85)' }}>{pilotName.toUpperCase()}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -1114,7 +1114,7 @@ export default function Dashboard() {
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', marginBottom: 4 }}>ON-CHAIN · SEPOLIA TESTNET</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--amber)' }}>
                       {onChainBalance === null ? '—' : fmt(onChainBalance)}
-                      <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--ink-3)', marginLeft: 6 }}>$HUNT</span>
+                      <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--ink-3)', marginLeft: 6 }}>$SHARD</span>
                     </div>
                   </div>
                   <a
@@ -1131,7 +1131,7 @@ export default function Dashboard() {
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Transaction History</div>
                 <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
                   {completions.length === 0 && unlocks.length === 0 ? (
-                    <div style={{ padding: '24px 20px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No transactions yet. Clear a gate to earn $HUNT.</div>
+                    <div style={{ padding: '24px 20px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No transactions yet. Clear a gate to earn $SHARD.</div>
                   ) : (
                     [
                       ...completions.map(c => ({ type: 'earn', quest_id: c.quest_id, date: c.completed_at, drift: resolveQuestMeta(c.quest_id, c.xp_earned).drift, xp_earned: c.xp_earned })),
@@ -1182,7 +1182,7 @@ export default function Dashboard() {
               <div>
                 <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Leaderboard</h2>
                 <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                  Season 01 · {lbData.length} pilot{lbData.length !== 1 ? 's' : ''} ranked
+                  Season 01 · {lbData.length} seeker{lbData.length !== 1 ? 's' : ''} ranked
                 </p>
               </div>
             </div>
@@ -1212,7 +1212,7 @@ export default function Dashboard() {
               <div>
                 <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Admin Panel</h2>
                 <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                  {flaggedRows.length} flagged · {allPilots.length} pilots
+                  {flaggedRows.length} flagged · {allPilots.length} seekers
                 </p>
               </div>
             </div>
@@ -1228,7 +1228,7 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                      <span>Description</span><span>Pilot</span><span>View</span><span>Date</span><span>Status</span>
+                      <span>Description</span><span>Seeker</span><span>View</span><span>Date</span><span>Status</span>
                     </div>
                     {bugReports.map((b, i) => (
                       <div key={b.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center', gap: 8 }}>
@@ -1266,7 +1266,7 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 64px 64px 90px 72px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                      <span>Pilot</span><span>Gate</span><span>Time</span><span>Pastes</span><span>Date</span><span>Action</span>
+                      <span>Seeker</span><span>Gate</span><span>Time</span><span>Pastes</span><span>Date</span><span>Action</span>
                     </div>
                     {flaggedRows.map((row, i) => (
                       <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 64px 64px 90px 72px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
@@ -1288,12 +1288,12 @@ export default function Dashboard() {
 
             <div className="section-block">
               <div className="sb-head">
-                <h3>Pilot Management</h3>
-                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{allPilots.length} pilots</span>
+                <h3>Seeker Management</h3>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{allPilots.length} seekers</span>
               </div>
               <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 170px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  <span>Pilot</span><span>Season Pass</span><span>Ban Status</span><span>Actions</span>
+                  <span>Seeker</span><span>Season Pass</span><span>Ban Status</span><span>Actions</span>
                 </div>
                 {allPilots.map((p, i) => {
                   const banned = p.banned_until && (p.banned_until === '2099-01-01T00:00:00Z' || new Date(p.banned_until) > new Date())
@@ -1370,7 +1370,7 @@ export default function Dashboard() {
 
             <div className="set-grid">
               <div className="section-block">
-                <div className="sb-head"><h3>Pilot Profile</h3></div>
+                <div className="sb-head"><h3>Seeker Profile</h3></div>
                 <div className="panel set-form">
                   <div className="set-field">
                     <label className="set-label">Display Name</label>
@@ -1378,7 +1378,7 @@ export default function Dashboard() {
                       className="set-input"
                       value={settingsName}
                       onChange={e => setSettingsName(e.target.value)}
-                      placeholder="Your pilot name"
+                      placeholder="Your seeker name"
                     />
                   </div>
                   <div className="set-field">
@@ -1547,7 +1547,7 @@ export default function Dashboard() {
                 <div className="sb-head"><h3>Public Profile</h3></div>
                 <div className="panel set-form">
                   <div className="set-field">
-                    <div className="set-label">Share your pilot profile</div>
+                    <div className="set-label">Share your seeker profile</div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input
                         className="set-input set-readonly"

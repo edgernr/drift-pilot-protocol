@@ -9,7 +9,7 @@ export default function Terms() {
     <div className="container" style={{ maxWidth: 820, paddingTop: 48, paddingBottom: 96 }}>
       <nav className="nav" style={{ marginBottom: 32 }}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => goto('landing')}>
-          <img src="/LOGO.svg" alt="HUNTER PROTOCOL" style={{ height: 36 }} />
+          <img src="/LOGO.svg" alt="VOID SHARDS" style={{ height: 36 }} />
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => goto('landing')}>← Back to home</button>
       </nav>
@@ -21,7 +21,7 @@ export default function Terms() {
             Terms of Service
           </h1>
           <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 13 }}>
-            Hunter Protocol &amp; Hunter Academy
+            Void Shards &amp; Void Academy
           </p>
           <p style={{ color: 'var(--amber)', fontStyle: 'italic', fontSize: 14, marginTop: 10 }}>
             *Draft — pending legal review*
@@ -33,9 +33,8 @@ export default function Terms() {
 
         <div style={{ color: 'var(--ink-1)', fontSize: 15, lineHeight: 1.7 }}>
           <p style={{ marginBottom: 20 }}>
-            These Terms of Service ("Terms") govern your use of Hunter Protocol and the Drift
-            Builders Academy (together, the "Service"), a gamified coding education platform operated
-            by the Hunter Protocol team ("we", "us"). By creating an account or using the Service
+            These Terms of Service ("Terms") govern your use of Void Shards and the Void Academy (together, the "Service"), a gamified coding education platform operated
+            by the Void Shards team ("we", "us"). By creating an account or using the Service
             you agree to these Terms. If you do not agree, do not use the Service.
           </p>
 
@@ -50,12 +49,12 @@ export default function Terms() {
 
           <Section n="2" title="Eligibility &amp; Age Requirements">
             <p>
-              Hunter Protocol (the main academy) is intended for users aged 16 and older. If you
+              Void Shards (the main academy) is intended for users aged 16 and older. If you
               are under the age of majority in your jurisdiction, you may only use the Service with the
               involvement and consent of a parent or legal guardian.
             </p>
             <p style={{ marginTop: 12 }}>
-              <strong>Hunter Academy (ages 8–16):</strong> The Academy is designed for minors.
+              <strong>Void Academy (ages 8–16):</strong> The Academy is designed for minors.
               For any learner under the age of majority, an account may only be created and held by a
               parent or legal guardian. The <strong>account holder must be the parent or legal
               guardian</strong>, who must provide verified consent before a child may participate. The
@@ -68,9 +67,9 @@ export default function Terms() {
 
           <Section n="3" title="Description of the Service">
             <p>
-              The Service is a gamified coding academy. Hunter Protocol teaches modern frontend
+              The Service is a gamified coding academy. Void Shards teaches modern frontend
               development (HTML, CSS, JavaScript, TypeScript, React and related topics) through quests,
-              "gates", XP, levels, leaderboards, and in-app rewards. Hunter Academy teaches
+              "gates", XP, levels, leaderboards, and in-app rewards. Void Academy teaches
               ages 8–16 across visual block coding, Python, and JavaScript/React tracks through short,
               graded coding challenges and quizzes.
             </p>
@@ -108,17 +107,17 @@ export default function Terms() {
             </p>
           </Section>
 
-          <Section n="6" title="$HUNT — In-App Reward Only">
+          <Section n="6" title="$SHARD — In-App Reward Only">
             <p>
-              <strong>$HUNT is an in-app reward used within the Service.</strong> It represents
+              <strong>$SHARD is an in-app reward used within the Service.</strong> It represents
               progress and engagement and is intended for use inside the academy (for example, to
               unlock or replay content or to apply XP multipliers, where such features exist).
             </p>
             <ul style={{ margin: '10px 0 0', paddingLeft: 22 }}>
-              <li><strong>$HUNT has no guaranteed monetary value.</strong> We make no promise that it can be redeemed, exchanged, sold, or converted into fiat currency or any other asset.</li>
-              <li>$HUNT is <strong>not</strong> a security, investment, share, or financial instrument, and is <strong>not</strong> intended to be one.</li>
+              <li><strong>$SHARD has no guaranteed monetary value.</strong> We make no promise that it can be redeemed, exchanged, sold, or converted into fiat currency or any other asset.</li>
+              <li>$SHARD is <strong>not</strong> a security, investment, share, or financial instrument, and is <strong>not</strong> intended to be one.</li>
               <li>Nothing in the Service constitutes financial, investment, legal, or tax advice. Any market figures, prices, or tokenomics shown in marketing or demo materials are illustrative and not an offer, guarantee, or promise of value.</li>
-              <li>We may adjust, cap, expire, or discontinue $HUNT balances, earn rates, and mechanics at any time, including for Phase-1 launch.</li>
+              <li>We may adjust, cap, expire, or discontinue $SHARD balances, earn rates, and mechanics at any time, including for Phase-1 launch.</li>
             </ul>
           </Section>
 
@@ -144,7 +143,7 @@ export default function Terms() {
               restrict, or permanently terminate your access — with or without notice — if you violate
               these Terms, engage in cheating or abuse, or where required to protect the Service or
               other users. On termination, your right to use the Service ends and any in-app balances,
-              including $HUNT, may be forfeited.
+              including $SHARD, may be forfeited.
             </p>
           </Section>
 

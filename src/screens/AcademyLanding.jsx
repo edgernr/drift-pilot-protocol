@@ -41,7 +41,7 @@ export default function AcademyLanding() {
     <>
       <nav className="nav">
         <div className="logo">
-          <img src="/LOGO.svg" alt="HUNTER PROTOCOL" style={{ height: 40 }} />
+          <img src="/LOGO.svg" alt="VOID SHARDS" style={{ height: 40 }} />
           <span className="chip chip-amber" style={{ fontSize: 9, padding: '2px 8px' }}>ACADEMY</span>
         </div>
         <ul>
@@ -68,7 +68,7 @@ export default function AcademyLanding() {
           <div className="hero-inner">
             <div className="reveal">
               <span className="chip chip-amber">
-                <span className="dot dot-pulse" /> DRIFT BUILDERS ACADEMY
+                <span className="dot dot-pulse" /> VOID ACADEMY
               </span>
               <h1>
                 <span className="line">Build the</span>
@@ -81,7 +81,7 @@ export default function AcademyLanding() {
               </p>
               <div className="hero-ctas">
                 <button className="btn btn-primary" onClick={handleEnter}>
-                  {user ? 'Enter Hunter Academy →' : 'Start Building →'}
+                  {user ? 'Enter Void Academy →' : 'Start Building →'}
                 </button>
                 <button className="btn btn-ghost" onClick={() => goto('landing')}>
                   Main Platform
@@ -233,18 +233,18 @@ export default function AcademyLanding() {
           <span className="eyebrow">READY TO BUILD</span>
           <h2 style={{ marginTop: 16 }}>
             Press start.<br />
-            <span className="gradient-text">Hunter Academy awaits.</span>
+            <span className="gradient-text">Void Academy awaits.</span>
           </h2>
           <p>No token economy. No financial mechanics. Just building.<br />Parent account required for ages 8–13.</p>
           <button className="btn btn-primary" onClick={handleEnter}>
-            {user ? 'Enter Hunter Academy →' : 'Start Building →'}
+            {user ? 'Enter Void Academy →' : 'Start Building →'}
           </button>
         </div>
       </section>
 
       <footer>
         <div className="container inner">
-          <div>© 2026 Hunter Academy · No token economy · Ages 8–16</div>
+          <div>© 2026 Void Academy · No token economy · Ages 8–16</div>
           <div className="right">
             <a onClick={() => goto('landing')} style={{ cursor: 'pointer' }}>Main Platform</a>
             <a onClick={() => goto('terms')} style={{ cursor: 'pointer' }}>Terms</a>

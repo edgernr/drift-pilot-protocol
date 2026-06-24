@@ -266,7 +266,7 @@ export default function AcademyOnboarding() {
             disabled={submitting || !name.trim()}
             onClick={handleConfirm}
           >
-            {submitting ? 'ENTERING...' : 'ENTER HUNTER ACADEMY →'}
+            {submitting ? 'ENTERING...' : 'ENTER VOID ACADEMY →'}
           </button>
         </div>
       )}
@@ -277,7 +277,7 @@ export default function AcademyOnboarding() {
           <div className="ao-message-icon">🌱</div>
           <h2 className="ao-message-title">Not quite yet.</h2>
           <p className="ao-message-text">
-            Hunter Academy opens at age 8. Come back when you're ready —
+            Void Academy opens at age 8. Come back when you're ready —
             it'll still be here.
           </p>
           <button className="ao-btn-ghost" onClick={() => goto('academy')}>
@@ -293,11 +293,11 @@ export default function AcademyOnboarding() {
           <h2 className="ao-message-title">You're ready for the real thing.</h2>
           <p className="ao-message-text">
             {redirectReason === '17+'
-              ? `${name} is 17 or older — the main Drift platform is built for you.`
+              ? `${name} is 17 or older — the main Void Shards platform is built for you.`
               : `${name} already knows the language. The Abyss is waiting.`}
           </p>
           <button className="ao-btn-primary" onClick={() => goto('signup')}>
-            JOIN DRIFT PROTOCOL →
+            JOIN VOID SHARDS →
           </button>
           <button className="ao-btn-ghost" onClick={() => goto('academy')}>
             ← Back to Academy

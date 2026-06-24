@@ -49,7 +49,7 @@ const VARIANTS = [
   Starve it by satisfying all 10 scanner conditions:
 
   1. Wrap everything in a <form>
-  2. Pilot name: <input type="text"> with id + <label for="...">
+  2. Seeker name: <input type="text"> with id + <label for="...">
   3. Contact email: <input type="email"> with id + <label for="...">
   4. Mission type: <select> with <option> children + <label for="...">
   5. Priority level: at least 2 <input type="radio"> sharing a name
@@ -401,7 +401,7 @@ export default function Quest3() {
           </div>
 
           <div className="dq-rewards">
-            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+700 DRIFT</div></div>
+            <div className="dq-reward eva"><div className="l">REWARD</div><div className="v">+700 SHARD</div></div>
             <div className="dq-reward xp"><div className="l">XP</div><div className="v">+300</div></div>
           </div>
         </aside>
@@ -489,7 +489,7 @@ export default function Quest3() {
           <h2>The Label Eater collapses.</h2>
           <p>It couldn't find a single unlabeled input to feed on. Every field had identity. Every type was correct. <strong>The dungeon had nothing left to consume.</strong></p>
           <div className="dq-complete-rewards">
-            <div className="r"><div className="l">$HUNT EARNED</div><div className="v">+700</div></div>
+            <div className="r"><div className="l">$SHARD EARNED</div><div className="v">+700</div></div>
             <div className="r"><div className="l">XP GAINED</div><div className="v">+300</div></div>
             <div className="r"><div className="l">CORE</div><div className="v">Label Eater Core</div></div>
             <div className="r"><div className="l">RANK</div><div className="v">D License</div></div>

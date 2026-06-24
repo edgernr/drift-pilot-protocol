@@ -1,5 +1,5 @@
 -- ============================================================
--- Hunter Protocol — PRE-TEST SETUP
+-- Void Shards — PRE-TEST SETUP
 -- Run ONCE in the Supabase SQL Editor before opening to testers.
 -- Idempotent + safe to re-run on an existing project
 -- (CREATE ... IF NOT EXISTS / CREATE OR REPLACE / DROP POLICY IF EXISTS).
@@ -216,7 +216,7 @@ create policy "br_admin_all" on public.bug_reports
 create or replace view public.leaderboard as
   select
     p.id,
-    coalesce(p.name, 'Pilot') as name,
+    coalesce(p.name, 'Seeker') as name,
     coalesce(sum(qc.xp_earned) filter (where qc.quest_id not like '%:bank'), 0)::bigint as total_xp
   from public.profiles p
   left join public.quest_completions qc on qc.user_id = p.id
