@@ -1,7 +1,7 @@
 {
   "name": "eva-react",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Void Shards - gamified coding academy. Learn, build, and earn SHARD.",
   "author": "Void Shards <technjmd@gmail.com>",
   "type": "module",
