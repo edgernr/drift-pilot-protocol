@@ -11,12 +11,12 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [resetMsg, setResetMsg] = useState(null)
-  const [banMsg, setBanMsg] = useState(() => {
+  const [banMsg] = useState(() => {
     const v = localStorage.getItem('hp_ban_until')
     if (!v) return null
     if (v === '2099-01-01T00:00:00Z') return 'Your account has been permanently suspended.'
     const d = new Date(v)
-    if (d > new Date()) return `Your account is suspended until ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
+    if (d > new Date()) return `Account suspended until ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`
     localStorage.removeItem('hp_ban_until')
     return null
   })
@@ -29,10 +29,7 @@ export default function Login() {
   }
 
   async function handleForgot() {
-    if (!email.trim()) {
-      setResetMsg('Enter your email above first, then tap Forgot.')
-      return
-    }
+    if (!email.trim()) { setResetMsg('Enter your email above first, then tap Forgot.'); return }
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/dashboard`,
     })
@@ -42,42 +39,41 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <div className="login-left">
-        <div>
-          <div className="login-logo">
-            <img src="/LOGO.svg" alt="Void Shards" style={{ height: 28 }} />
-          </div>
-          <div className="login-hero">
-            <span className="chip chip-teal" style={{ marginTop: 80, display: 'inline-flex' }}>
-              <span className="dot dot-pulse" /> SEASON 01 · LIVE
-            </span>
-            <h1>Welcome back,<br /><span className="gradient-text">seeker.</span></h1>
-            <p>Log in to resume your missions, claim your streak rewards, and push your rank up the leaderboard.</p>
-          </div>
+        <div className="auth-brand">
+          <span className="auth-mark" />
+          Void Shards
+        </div>
+
+        <div className="login-hero">
+          <span className="auth-eyebrow">// Re-entering the system</span>
+          <h1>
+            Welcome back,<br />
+            <span className="tint-cyan">Seeker.</span>
+          </h1>
+          <p>Log in to resume your missions, claim your streak rewards, and push your rank up the ladder.</p>
+        </div>
+
+        <div className="auth-status">
+          <span className="pulse" />
+          Season 01 · The Abyss is live
         </div>
       </div>
 
       <div className="login-right">
-        <div className="panel panel-glow login-card">
-          <span className="back-link" onClick={() => goto('landing')}>← back to home</span>
-          <h2 style={{ marginTop: 24 }}>Log in</h2>
+        <div className="auth-card">
+          <div className="auth-br tl" /><div className="auth-br tr" />
+          <div className="auth-br bl" /><div className="auth-br br2" />
+
+          <button className="auth-back" onClick={() => goto('landing')}>← back to home</button>
+          <h2>Log in</h2>
           <p className="sub">New seeker? <span className="link" onClick={() => goto('signup')}>Create an account →</span></p>
 
-          {banMsg && (
-            <div className="login-ban">
-              <div style={{ fontSize: 16, marginBottom: 6 }}>🚫</div>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Access Suspended</div>
-              <div style={{ opacity: 0.8 }}>{banMsg}</div>
-            </div>
-          )}
-          {error && <div className="login-error">{error}</div>}
-          {resetMsg && (
-            <div className="login-error" style={{ color: 'var(--teal)', borderColor: 'var(--teal)', background: 'transparent' }}>
-              {resetMsg}
-            </div>
-          )}
+          {banMsg && <div className="auth-ban">🚫 {banMsg}</div>}
+          {error && !resetMsg && <div className="auth-error">{error}</div>}
+          {resetMsg && <div className="auth-msg">{resetMsg}</div>}
 
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="login-field">
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="auth-field">
               <label>Email</label>
               <input
                 type="email"
@@ -88,10 +84,10 @@ export default function Login() {
                 required
               />
             </div>
-            <div className="login-field">
+            <div className="auth-field">
               <label>
                 Password
-                <span className="login-forgot" role="button" tabIndex={0} onClick={handleForgot}>Forgot?</span>
+                <button type="button" className="auth-forgot" onClick={handleForgot}>Forgot?</button>
               </label>
               <input
                 type="password"
@@ -102,13 +98,16 @@ export default function Login() {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: 8 }} disabled={loading}>
-              {loading ? 'Logging in…' : 'Launch →'}
+            <button type="submit" className="auth-btn-gold" disabled={loading}>
+              {loading ? 'Logging in…' : 'Enter the void →'}
             </button>
           </form>
 
-          <div className="login-footer">
-            By continuing you agree to the <span className="link" style={{ color: 'var(--teal)', cursor: 'pointer' }} onClick={() => goto('terms')}>Flight Rules</span> &amp; <span className="link" style={{ color: 'var(--teal)', cursor: 'pointer' }} onClick={() => goto('privacy')}>Privacy Policy</span>
+          <div className="auth-footer">
+            By continuing you agree to the{' '}
+            <span className="link" onClick={() => goto('terms')}>Terms</span>
+            {' '}&amp;{' '}
+            <span className="link" onClick={() => goto('privacy')}>Privacy Policy</span>
           </div>
         </div>
       </div>

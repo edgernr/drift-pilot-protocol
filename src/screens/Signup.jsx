@@ -31,19 +31,28 @@ export default function Signup() {
     return (
       <div className="signup-wrap">
         <div className="signup-left">
-          <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Void Shards" style={{ height: 28 }} />
+          <div className="auth-brand">
+            <span className="auth-mark" />
+            Void Shards
+          </div>
+          <div />
+          <div className="auth-status">
+            <span className="pulse" />
+            Season 01 · The Abyss is live
           </div>
         </div>
         <div className="signup-right">
-          <div className="panel panel-glow signup-card" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>📬</div>
+          <div className="auth-card auth-sent">
+            <div className="auth-br tl" /><div className="auth-br tr" />
+            <div className="auth-br bl" /><div className="auth-br br2" />
+            <div className="auth-sent-icon">📬</div>
             <h2>Check your inbox</h2>
-            <p className="sub" style={{ marginBottom: 28 }}>
-              We sent a confirmation link to <strong style={{ color: 'var(--ink-0)' }}>{email}</strong>.
+            <p className="sub" style={{ marginBottom: 32 }}>
+              We sent a confirmation link to{' '}
+              <span className="auth-sent-email">{email}</span>.
               Click it to activate your account.
             </p>
-            <button className="btn btn-ghost" onClick={() => goto('login')}>Back to login</button>
+            <button className="auth-btn-ghost" onClick={() => goto('login')}>Back to login</button>
           </div>
         </div>
       </div>
@@ -53,30 +62,39 @@ export default function Signup() {
   return (
     <div className="signup-wrap">
       <div className="signup-left">
-        <div>
-          <div className="signup-logo">
-            <img src="/LOGO.svg" alt="Void Shards" style={{ height: 28 }} />
-          </div>
-          <div className="signup-hero">
-            <span className="chip chip-violet" style={{ marginTop: 80, display: 'inline-flex' }}>
-              <span className="dot dot-pulse" /> ENLISTING · SEASON 01
-            </span>
-            <h1>Welcome, seeker.<br /><span className="gradient-text">Let's suit up.</span></h1>
-            <p>Create your account and start earning $SHARD from day one.</p>
-          </div>
+        <div className="auth-brand">
+          <span className="auth-mark" />
+          Void Shards
+        </div>
+
+        <div className="signup-hero">
+          <span className="auth-eyebrow">// Enlisting · Season 01</span>
+          <h1>
+            Welcome,<br />
+            <span className="tint-gold">Seeker.</span>
+          </h1>
+          <p>Create your account and start earning $SHARD from day one.</p>
+        </div>
+
+        <div className="auth-status">
+          <span className="pulse" />
+          Season 01 · The Abyss is live
         </div>
       </div>
 
       <div className="signup-right">
-        <div className="panel panel-glow signup-card">
-          <span className="back-link" onClick={() => goto('landing')}>← back to home</span>
-          <h2 style={{ marginTop: 24 }}>Create your account</h2>
-          <p className="sub">Already a seeker? <span className="signup-login-link" onClick={() => goto('login')}>Log in →</span></p>
+        <div className="auth-card">
+          <div className="auth-br tl" /><div className="auth-br tr" />
+          <div className="auth-br bl" /><div className="auth-br br2" />
 
-          {displayError && <div className="signup-error">{displayError}</div>}
+          <button className="auth-back" onClick={() => goto('landing')}>← back to home</button>
+          <h2>Create account</h2>
+          <p className="sub">Already a seeker? <span className="link" onClick={() => goto('login')}>Log in →</span></p>
 
-          <form onSubmit={handleSubmit} className="signup-form">
-            <div className="signup-field">
+          {displayError && <div className="auth-error">{displayError}</div>}
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="auth-field">
               <label>Seeker name</label>
               <input
                 type="text"
@@ -87,7 +105,7 @@ export default function Signup() {
                 required
               />
             </div>
-            <div className="signup-field">
+            <div className="auth-field">
               <label>Email</label>
               <input
                 type="email"
@@ -98,8 +116,11 @@ export default function Signup() {
                 required
               />
             </div>
-            <div className="signup-field">
-              <label>Wallet address <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>(optional)</span></label>
+            <div className="auth-field">
+              <label>
+                Wallet address
+                <span className="opt">(optional)</span>
+              </label>
               <input
                 type="text"
                 placeholder="0x... or .sol address"
@@ -109,7 +130,7 @@ export default function Signup() {
                 spellCheck={false}
               />
             </div>
-            <div className="signup-field">
+            <div className="auth-field">
               <label>Password</label>
               <input
                 type="password"
@@ -120,7 +141,7 @@ export default function Signup() {
                 required
               />
             </div>
-            <div className="signup-field">
+            <div className="auth-field">
               <label>Confirm password</label>
               <input
                 type="password"
@@ -131,15 +152,16 @@ export default function Signup() {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: 4 }} disabled={loading}>
-              {loading ? 'Creating account…' : 'Launch →'}
+            <button type="submit" className="auth-btn-gold" disabled={loading}>
+              {loading ? 'Creating account…' : 'Awaken →'}
             </button>
           </form>
 
-          <div className="signup-footer">
+          <div className="auth-footer">
             By continuing you agree to the{' '}
-            <span className="signup-legal-link" onClick={() => goto('terms')}>Flight Rules</span> &amp;{' '}
-            <span className="signup-legal-link" onClick={() => goto('privacy')}>Privacy Policy</span>
+            <span className="link" onClick={() => goto('terms')}>Terms</span>
+            {' '}&amp;{' '}
+            <span className="link" onClick={() => goto('privacy')}>Privacy Policy</span>
           </div>
         </div>
       </div>
