@@ -1,0 +1,233 @@
+/* ── DungeonTab — Void Hunter palette, compact/dense layout ─────────────────── */
+
+.dtab-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 10px 12px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+/* ── Enemy SVG art ── */
+.dtab-enemy-svg {
+  width: 80px;
+  height: 80px;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Boss modifier — gold glow */
+.dtab-enemy-svg.dtab-boss {
+  filter: drop-shadow(0 0 8px rgba(245, 196, 83, 0.35));
+}
+
+/* Faceless modifier — no special style, selector exists for specificity */
+.dtab-enemy-svg.dtab-faceless {
+}
+
+/* ── Enemy header ── */
+.dtab-enemy-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.dtab-enemy-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #eaf6f5;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dtab-tier-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #f5c453;
+  border: 1px solid rgba(245, 196, 83, 0.4);
+  padding: 1px 4px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.dtab-tier-badge.boss {
+  background: #f5c453;
+  color: #08080c;
+  border-color: #f5c453;
+}
+
+/* ── HP rows ── */
+.dtab-hp-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dtab-hp-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dtab-hp-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.dtab-enemy-fill {
+  background: linear-gradient(90deg, #c0205a, #ff3d8b);
+}
+
+.dtab-player-fill {
+  background: linear-gradient(90deg, #1ab8b0, #3df0e8);
+}
+
+.dtab-player-fill.low {
+  background: linear-gradient(90deg, #c0205a, #ff3d8b);
+  animation: dtab-hp-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes dtab-hp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+.dtab-hp-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(234, 246, 245, 0.35);
+  flex-shrink: 0;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+/* ── Arena ── */
+.dtab-arena {
+  flex: 1;
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dtab-idle-overlay {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: rgba(234, 246, 245, 0.2);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* ── Ability row ── */
+.dtab-ability-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 6px;
+  padding-bottom: 0;
+  flex-wrap: wrap;
+}
+
+.dtab-ability-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: rgba(234, 246, 245, 0.35);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.dtab-ability-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #3df0e8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dtab-combo-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: #f5c453;
+  border: 1px solid rgba(245, 196, 83, 0.3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: 0.06em;
+}
+
+/* ── Lore ── */
+.dtab-lore {
+  font-family: 'Saira', sans-serif;
+  font-size: 9px;
+  color: rgba(234, 246, 245, 0.35);
+  line-height: 1.5;
+  flex-shrink: 0;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Player HP section ── */
+.dtab-player-section {
+  flex-shrink: 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dtab-player-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.dtab-player-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: #3df0e8;
+  text-transform: uppercase;
+}
+
+.dtab-player-label.low {
+  color: #ff3d8b;
+  animation: dtab-label-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes dtab-label-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}

@@ -84,6 +84,18 @@
 /* === RIGHT: Preview === */
 .dq-preview-wrap { display: flex; flex-direction: column; padding: 20px; gap: 12px; min-height: 0; overflow: hidden; }
 .dq-preview-label { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.15em; flex-shrink: 0; }
+
+/* Right-panel tab bar — PREVIEW / COMBAT switcher */
+.dq-rtabs { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--line); margin: -4px 0 0; }
+.dq-rtab {
+  flex: 1; padding: 8px 10px;
+  font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; color: var(--ink-3);
+  transition: color 0.13s, border-color 0.13s;
+}
+.dq-rtab:hover { color: var(--ink-1); }
+.dq-rtab.active { color: #3df0e8; border-bottom-color: #3df0e8; }
 .dq-dungeon-scene { flex: 1; background: #09060f; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 19px, rgba(0,0,0,0.18) 19px, rgba(0,0,0,0.18) 20px); }
 .dq-dungeon-scene::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 28px; background: repeating-linear-gradient(90deg, #1c1828 0px, #1c1828 47px, #14101e 47px, #14101e 48px); }
 .dq-torch { position: absolute; top: 30%; width: 10px; z-index: 2; }

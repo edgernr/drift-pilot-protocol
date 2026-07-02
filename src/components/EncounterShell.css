@@ -1,0 +1,780 @@
+/* ── EncounterShell — Unified Gate Layout ──────────────────────────────────── */
+/* Grid: 56px top bar / 1fr body / 48px bottom HUD */
+/* Body: 300px left rail / 1fr editor / 340px combat rail */
+
+.es-shell {
+  display: grid;
+  grid-template-rows: 56px 1fr 48px;
+  height: 100vh;
+  overflow: hidden;
+  background: #08080c;
+  color: #eaf6f5;
+  font-family: 'Saira', sans-serif;
+  position: relative;  /* so fixed Daemon is relative to this */
+}
+
+/* ── Top bar ── */
+.es-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: #0d0d12;
+  border-bottom: 1px solid rgba(61,240,232,0.1);
+  gap: 12px;
+  min-width: 0;
+}
+
+.es-topbar-back {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(234,246,245,0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  transition: color 0.15s;
+}
+.es-topbar-back:hover { color: #3df0e8; }
+
+.es-topbar-center {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+.es-rank-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: rgba(245,196,83,0.6);
+  text-transform: uppercase;
+  display: block;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.es-gate-title {
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #eaf6f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.es-topbar-xp {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.es-xp-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(234,246,245,0.35);
+  text-transform: uppercase;
+}
+.es-xp-track {
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.es-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1ab8b0, #3df0e8);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* ── Body ── */
+.es-body {
+  display: grid;
+  grid-template-columns: 300px 1fr 340px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Left rail ── */
+.es-left-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  background: #0a0a10;
+  overflow: hidden;
+}
+
+.es-scene {
+  flex-shrink: 0;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+  overflow: hidden;
+}
+.es-scene-enemy-name {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: rgba(234,246,245,0.3);
+  text-transform: uppercase;
+}
+
+.es-narrator {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.es-narrator-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: rgba(61,240,232,0.5);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.es-narrator-text {
+  font-family: 'Saira', sans-serif;
+  font-size: 10px;
+  line-height: 1.55;
+  color: rgba(234,246,245,0.45);
+  font-style: italic;
+}
+
+.es-handler-wrap {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  min-height: 0;
+}
+
+.es-scanner {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(61,240,232,0.2) transparent;
+}
+.es-scanner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 6px;
+}
+.es-scanner-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: rgba(234,246,245,0.3);
+  text-transform: uppercase;
+}
+.es-scanner-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #ff3d8b;
+}
+.es-scanner-count.clear { color: #3df0e8; }
+
+.es-ward {
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.es-ward:hover { background: rgba(255,255,255,0.025); }
+.es-ward-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.es-ward-icon {
+  font-size: 9px;
+  flex-shrink: 0;
+  width: 12px;
+  text-align: center;
+}
+.es-ward-icon.pass { color: #3df0e8; }
+.es-ward-icon.fail { color: #ff3d8b; opacity: 0.7; }
+.es-ward-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(234,246,245,0.5);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.es-ward.passed .es-ward-label { color: rgba(61,240,232,0.55); text-decoration: line-through; }
+.es-ward-hint {
+  padding: 4px 12px 4px 31px;
+  font-family: 'Saira', sans-serif;
+  font-size: 9px;
+  color: rgba(234,246,245,0.3);
+  line-height: 1.5;
+  font-style: italic;
+  border-top: 1px solid rgba(255,255,255,0.03);
+}
+
+/* ── Editor column ── */
+.es-editor-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.es-editor-header {
+  flex-shrink: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: #0f0f16;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.es-editor-filename {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(234,246,245,0.5);
+}
+.es-editor-errors {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #ff3d8b;
+}
+.es-editor-errors.clear { color: rgba(61,240,232,0.5); }
+
+.es-monaco-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Cast strip */
+.es-cast-strip {
+  flex-shrink: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 12px;
+  background: #0f0f16;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.es-cast-btn {
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid #3df0e8;
+  color: #3df0e8;
+  padding: 6px 18px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.es-cast-btn:hover {
+  background: rgba(61,240,232,0.08);
+  box-shadow: 0 0 12px rgba(61,240,232,0.2);
+}
+.es-cast-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.es-cast-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.es-cast-bar-fill {
+  height: 100%;
+  background: #3df0e8;
+  box-shadow: 0 0 6px #3df0e8;
+  animation: es-cast-sweep 0.38s ease-out forwards;
+}
+@keyframes es-cast-sweep {
+  from { width: 0; opacity: 1; }
+  80%  { width: 100%; opacity: 1; }
+  to   { width: 100%; opacity: 0; }
+}
+.es-combo-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(245,196,83,0.5);
+  flex-shrink: 0;
+}
+.es-combo-display.active { color: #f5c453; }
+
+/* ── Combat rail ── */
+.es-combat-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: #090910;
+}
+
+/* Enemy HP block — fixed home, top of combat rail */
+.es-enemy-hp-block {
+  flex-shrink: 0;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.es-enemy-target-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: rgba(255,61,139,0.6);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.es-enemy-target-label span { color: rgba(234,246,245,0.4); }
+.es-hp-track {
+  height: 5px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.es-hp-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.es-enemy-fill {
+  background: linear-gradient(90deg, #c0205a, #ff3d8b);
+  box-shadow: 0 0 6px rgba(255,61,139,0.5);
+}
+.es-player-fill {
+  background: linear-gradient(90deg, #1ab8b0, #3df0e8);
+  box-shadow: 0 0 6px rgba(61,240,232,0.4);
+}
+.es-player-fill.low {
+  animation: es-hp-pulse 0.8s ease-in-out infinite;
+}
+@keyframes es-hp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+.es-hp-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(234,246,245,0.3);
+  margin-top: 4px;
+  display: block;
+  letter-spacing: 0.06em;
+}
+
+/* Tab toggle */
+.es-tab-bar {
+  flex-shrink: 0;
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.es-tab-btn {
+  flex: 1;
+  height: 34px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: rgba(234,246,245,0.3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.es-tab-btn.active {
+  color: #3df0e8;
+  border-bottom-color: #3df0e8;
+}
+.es-tab-btn:hover:not(.active) { color: rgba(234,246,245,0.55); }
+
+/* Tab content */
+.es-tab-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Preview tab */
+.es-preview-tab {
+  width: 100%;
+  height: 100%;
+}
+.es-preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}
+
+/* Combat scene tab */
+.es-combat-scene {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255,61,139,0.04) 0%, transparent 70%);
+}
+.es-combat-enemy-art {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.es-combat-enemy-art .dtab-enemy-svg {
+  width: 100px;
+  height: 100px;
+}
+
+/* Daemon inside COMBAT tab — override Daemon.css position:fixed */
+.es-combat-scene .d-outer {
+  position: absolute !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 2 !important;
+}
+
+/* Damage numbers inside combat scene */
+.es-dmg-num {
+  position: absolute;
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 10;
+  animation: es-dmg-rise 0.9s ease-out forwards;
+  letter-spacing: 0.03em;
+}
+.es-dmg-hit {
+  color: #ff3d8b;
+  text-shadow: 0 0 12px rgba(255,61,139,0.7);
+  top: 30%;
+  right: 30%;
+}
+.es-dmg-damage {
+  color: #f5c453;
+  text-shadow: 0 0 12px rgba(245,196,83,0.6);
+  bottom: 30%;
+  left: 20%;
+}
+@keyframes es-dmg-rise {
+  0%   { opacity: 1; transform: translateY(0) scale(1.15); }
+  20%  { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-32px) scale(0.9); }
+}
+
+/* ── Bottom HUD ── */
+.es-bottom-hud {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: #0d0d12;
+  border-top: 1px solid rgba(61,240,232,0.08);
+  gap: 12px;
+}
+
+.es-hud-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.es-hud-identity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(234,246,245,0.35);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.es-player-hp-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.es-player-hp-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: #3df0e8;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.es-player-hp-label.low { color: #ff3d8b; }
+.es-player-hp-track {
+  width: 100px;
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.es-player-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1ab8b0, #3df0e8);
+  border-radius: 2px;
+  transition: width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.es-player-hp-fill.low {
+  background: linear-gradient(90deg, #c0205a, #ff3d8b);
+  animation: es-hp-pulse 0.8s ease-in-out infinite;
+}
+.es-hud-hp-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: rgba(234,246,245,0.3);
+  white-space: nowrap;
+}
+
+.es-hud-center {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: rgba(234,246,245,0.25);
+  text-transform: uppercase;
+  text-align: center;
+  flex-shrink: 0;
+}
+.es-hud-right {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(61,240,232,0.4);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* ── Vignette flash ── */
+.es-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 88;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(255,61,139,0.38) 100%);
+  animation: es-vignette-out 0.65s ease-out forwards;
+}
+@keyframes es-vignette-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Fell overlay ── */
+.es-fell-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,8,12,0.93);
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: es-fell-in 0.4s ease-out;
+}
+@keyframes es-fell-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.es-fell-inner {
+  text-align: center;
+  max-width: 420px;
+  padding: 0 24px;
+}
+.es-fell-title {
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 52px;
+  font-weight: 700;
+  color: #ff3d8b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  margin-bottom: 6px;
+  text-shadow: 0 0 32px rgba(255,61,139,0.5);
+}
+.es-fell-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(234,246,245,0.35);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.es-fell-progress {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #3df0e8;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+.es-fell-btn {
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid #3df0e8;
+  color: #3df0e8;
+  padding: 12px 36px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  border-radius: 4px;
+}
+.es-fell-btn:hover {
+  background: rgba(61,240,232,0.1);
+  box-shadow: 0 0 16px rgba(61,240,232,0.25);
+}
+
+/* ── Completion modal ── */
+.es-completion-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,8,12,0.92);
+  z-index: 190;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: es-fell-in 0.4s ease-out;
+}
+.es-completion-inner {
+  max-width: 480px;
+  width: 100%;
+  padding: 32px;
+  background: #0f0f18;
+  border: 1px solid rgba(61,240,232,0.15);
+  border-radius: 6px;
+}
+.es-completion-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #f5c453;
+  text-transform: uppercase;
+  border: 1px solid rgba(245,196,83,0.3);
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 12px;
+}
+.es-completion-heading {
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #eaf6f5;
+  margin-bottom: 8px;
+}
+.es-completion-body {
+  font-size: 12px;
+  color: rgba(234,246,245,0.55);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+.es-completion-body strong { color: #eaf6f5; }
+.es-completion-rewards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 4px;
+}
+.es-completion-reward {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+.es-completion-reward-label { color: rgba(234,246,245,0.4); }
+.es-completion-reward-val { color: #f5c453; }
+.es-completion-next-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: rgba(234,246,245,0.3);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.es-completion-next-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(61,240,232,0.1);
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+.es-completion-next-icon { font-size: 20px; }
+.es-completion-next-title {
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #eaf6f5;
+}
+.es-completion-next-sub {
+  font-size: 10px;
+  color: rgba(234,246,245,0.4);
+}
+.es-completion-btn {
+  width: 100%;
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: #3df0e8;
+  color: #08080c;
+  border: none;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.es-completion-btn:hover { background: #5af4ee; }
+
+/* ── Responsive ── */
+@media (max-width: 1280px) {
+  .es-body { grid-template-columns: 260px 1fr 300px; }
+}
+
+@media (max-width: 1100px) {
+  .es-body { grid-template-columns: 0 1fr 0; }
+  .es-left-rail { display: none; }
+  .es-combat-rail { display: none; }
+}

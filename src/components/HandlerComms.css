@@ -1,0 +1,79 @@
+/* ── HandlerComms — NPC comms panel ────────────────────────────────────────── */
+
+.hc-panel {
+  position: fixed;
+  bottom: 108px;
+  left: 14px;
+  width: 244px;
+  z-index: 92;
+  pointer-events: none;
+
+  background: rgba(8, 8, 12, 0.9);
+  border: 1px solid rgba(61, 240, 232, 0.3);
+  border-left: 2px solid #3df0e8;
+  border-radius: 0 4px 4px 0;
+  padding: 10px 14px;
+  backdrop-filter: blur(8px);
+
+  animation: hc-enter 0.28s ease-out, hc-exit 0.4s ease-in 4.6s forwards;
+}
+@keyframes hc-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hc-exit {
+  to   { opacity: 0; transform: translateY(8px); }
+}
+
+.hc-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.hc-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3df0e8;
+  box-shadow: 0 0 4px #3df0e8;
+  flex-shrink: 0;
+  animation: hc-dot-pulse 1.3s ease-in-out infinite;
+}
+@keyframes hc-dot-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+.hc-label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #3df0e8;
+  flex: 1;
+}
+
+.hc-signal {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: rgba(61, 240, 232, 0.38);
+  flex-shrink: 0;
+}
+
+.hc-message {
+  font-family: 'Saira', sans-serif;
+  font-size: 11.5px;
+  color: rgba(234, 246, 245, 0.88);
+  line-height: 1.55;
+}
+
+@media (max-width: 768px) {
+  .hc-panel { width: 200px; }
+}
+@media (max-width: 480px) {
+  .hc-panel { display: none; }
+}

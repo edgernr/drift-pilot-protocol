@@ -1,0 +1,181 @@
+/* ── Daemon — Phase 2 procedural construct ─────────────────────────────────── */
+/* Void Hunter palette: #3df0e8 cyan · #ff3d8b magenta · #f5c453 gold · #08080c bg */
+
+.d-outer {
+  position: fixed;
+  bottom: 108px;
+  right: 22px;
+  z-index: 91;
+  pointer-events: none;
+  width: 82px;
+  height: 100px;
+  overflow: visible;
+  animation: d-float 3.4s ease-in-out infinite;
+}
+@keyframes d-float {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-10px); }
+}
+
+.d-body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ── Ability name flash ─── */
+.d-ability-name {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Saira Condensed', 'Saira', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #f5c453;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(245, 196, 83, 0.85);
+  animation: d-ability-flash 0.75s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes d-ability-flash {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(5px);  }
+  22%  { opacity: 1; transform: translateX(-50%) translateY(0);    }
+  72%  { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-14px); }
+}
+
+/* ── SVG base styles ─── */
+.d-aura {
+  fill: rgba(61, 240, 232, 0.03);
+  stroke: rgba(61, 240, 232, 0.18);
+  stroke-width: 1;
+  animation: d-aura-pulse 3.4s ease-in-out infinite;
+}
+@keyframes d-aura-pulse {
+  0%, 100% { stroke-opacity: 0.12; fill-opacity: 0.03; }
+  50%       { stroke-opacity: 0.32; fill-opacity: 0.07; }
+}
+
+.d-hex {
+  fill: rgba(8, 8, 12, 0.85);
+  stroke: #3df0e8;
+  stroke-width: 1.5;
+}
+.d-hex-inner {
+  fill: rgba(61, 240, 232, 0.05);
+  stroke: rgba(61, 240, 232, 0.28);
+  stroke-width: 0.8;
+}
+.d-head {
+  fill: rgba(61, 240, 232, 0.1);
+  stroke: #3df0e8;
+  stroke-width: 1.5;
+}
+
+.d-beam {
+  stroke: #3df0e8;
+  stroke-width: 1;
+  animation: d-beam-pulse 2.2s ease-in-out infinite;
+}
+@keyframes d-beam-pulse {
+  0%, 100% { opacity: 0.25; }
+  50%       { opacity: 0.7;  }
+}
+
+.d-node-top {
+  fill: #3df0e8;
+  filter: drop-shadow(0 0 3px #3df0e8);
+  animation: d-node-pulse 2.2s ease-in-out infinite;
+}
+@keyframes d-node-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1;   }
+}
+
+.d-eye-glow {
+  animation: d-eye-glow-pulse 2.6s ease-in-out infinite;
+}
+@keyframes d-eye-glow-pulse {
+  0%, 100% { fill: rgba(61, 240, 232, 0.08); }
+  50%       { fill: rgba(61, 240, 232, 0.28); }
+}
+
+.d-eye {
+  fill: #3df0e8;
+  filter: drop-shadow(0 0 3px #3df0e8);
+  animation: d-eye-pulse 2.6s ease-in-out infinite;
+}
+@keyframes d-eye-pulse {
+  0%, 100% { opacity: 0.65; }
+  50%       { opacity: 1;    }
+}
+
+.d-arm {
+  fill: rgba(61, 240, 232, 0.07);
+  stroke: rgba(61, 240, 232, 0.45);
+  stroke-width: 1;
+}
+
+.d-trace {
+  stroke: rgba(61, 240, 232, 0.28);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  animation: d-trace-dash 1.6s linear infinite;
+}
+@keyframes d-trace-dash {
+  from { stroke-dashoffset: 0;   }
+  to   { stroke-dashoffset: -14; }
+}
+
+.d-node {
+  fill: rgba(61, 240, 232, 0.45);
+  animation: d-node-pulse 2.8s ease-in-out infinite;
+}
+
+/* ── Attack state ─── */
+.d-attack {
+  animation: d-attack-lunge 0.48s ease-out forwards;
+}
+@keyframes d-attack-lunge {
+  0%   { transform: translateX(0)     scale(1);    }
+  28%  { transform: translateX(-20px) scale(1.13); }
+  60%  { transform: translateX(-14px) scale(1.06); }
+  100% { transform: translateX(0)     scale(1);    }
+}
+.d-attack .d-hex      { stroke: rgba(255, 255, 255, 0.9); stroke-width: 2; }
+.d-attack .d-head     { stroke: rgba(255, 255, 255, 0.9); fill: rgba(255, 255, 255, 0.15); }
+.d-attack .d-eye      { fill: #fff; filter: drop-shadow(0 0 6px #fff); }
+.d-attack .d-arm      { fill: rgba(61, 240, 232, 0.25); stroke: #3df0e8; }
+.d-attack .d-aura     { fill: rgba(61, 240, 232, 0.12); stroke: #3df0e8; stroke-width: 2; }
+.d-attack .d-node-top { fill: #fff; filter: drop-shadow(0 0 6px #fff); }
+
+/* ── Glitch state ─── */
+.d-glitch {
+  animation: d-glitch-anim 0.68s ease-out forwards;
+}
+@keyframes d-glitch-anim {
+  0%   { transform: translateX(0);     filter: none; }
+  10%  { transform: translateX(-6px) skewX(-4deg); filter: hue-rotate(160deg) brightness(1.7); }
+  22%  { transform: translateX(5px)  skewX(3deg);  filter: none; }
+  34%  { transform: translateX(-4px) skewX(-2deg); filter: hue-rotate(-80deg) brightness(0.6); }
+  46%  { transform: translateX(3px)  skewX(1deg);  filter: none; }
+  58%  { transform: translateX(-2px);              filter: hue-rotate(55deg) brightness(1.4); }
+  72%  { transform: translateX(2px);               filter: none; }
+  100% { transform: translateX(0);                 filter: none; }
+}
+.d-glitch .d-hex   { stroke: #ff3d8b; stroke-width: 1.5; }
+.d-glitch .d-head  { stroke: #ff3d8b; fill: rgba(255, 61, 139, 0.08); }
+.d-glitch .d-eye   { fill: #ff3d8b; filter: drop-shadow(0 0 5px #ff3d8b); animation: none; }
+.d-glitch .d-aura  { stroke: rgba(255, 61, 139, 0.5); }
+
+/* ── Responsive ─── */
+@media (max-width: 768px) {
+  .d-outer { bottom: 90px; right: 12px; width: 66px; height: 80px; }
+}
+@media (max-width: 480px) {
+  .d-outer { display: none; }
+}

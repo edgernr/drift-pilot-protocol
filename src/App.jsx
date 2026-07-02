@@ -2,9 +2,11 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { NavigationProvider } from './context/NavigationContext'
 import { AuthProvider } from './context/AuthContext'
 import { AcademyProvider } from './context/AcademyContext'
+import { CombatProvider } from './context/CombatContext'
 import RouteTransition from './components/RouteTransition'
 import ProtectedRoute from './components/ProtectedRoute'
 import GateRoute from './components/GateRoute'
+import GameHUD from './components/GameHUD'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
 import Signup from './screens/Signup'
@@ -186,12 +188,15 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <AcademyProvider>
+          <CombatProvider>
           <NavigationProvider>
             <div className="grid-bg" />
             <div className="noise" />
             <RouteTransition />
             <AnimatedRoutes />
+            <GameHUD />
           </NavigationProvider>
+          </CombatProvider>
         </AcademyProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -542,7 +542,17 @@ export default function Dashboard() {
       )}
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => { goto('landing'); setSidebarOpen(false) }}>
-          <img src="/LOGO.svg" alt="VOID SHARDS" style={{ height: 40 }} />
+          <svg width="150" height="40" viewBox="0 0 172 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="VOID SHARDS">
+            <path d="M13 2L23 16L13 38L3 16Z" stroke="#f5c453" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M13 2L23 16L13 18Z" fill="#f5c45330"/>
+            <path d="M13 2L3 16L13 18Z" fill="#f5c45318"/>
+            <path d="M23 16L13 38L13 18Z" fill="#f5c4530d"/>
+            <path d="M3 16L13 38L13 18Z" fill="#f5c45516"/>
+            <path d="M3 16H23" stroke="#f5c45340" strokeWidth="0.6"/>
+            <path d="M13 2L16.5 7.5" stroke="white" strokeWidth="0.7" strokeLinecap="round" strokeOpacity="0.5"/>
+            <text x="31" y="28" fontFamily="'Saira Condensed','Arial Narrow',Arial,sans-serif" fontSize="22" fontWeight="700" letterSpacing="1.5" fill="#eaf6f5">VOID</text>
+            <text x="90" y="28" fontFamily="'Saira Condensed','Arial Narrow',Arial,sans-serif" fontSize="22" fontWeight="700" letterSpacing="1.5" fill="#3df0e8">SHARDS</text>
+          </svg>
         </div>
 
         <div>
@@ -982,7 +992,7 @@ export default function Dashboard() {
             )}
 
             <div className="st-grid">
-              {quests.map((q) => {
+              {quests.filter(q => q.chapter === 1).map((q) => {
                 const chKey = `act1-ch${String(q.chapter).padStart(2, '0')}`
                 const prevChKey = `act1-ch${String(q.chapter - 1).padStart(2, '0')}`
                 const isDone = doneQuests.has(chKey) || doneQuests.has(q.id)
@@ -1062,7 +1072,31 @@ export default function Dashboard() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative' }}>
                   <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'oklch(1 0 0 / 0.6)', letterSpacing: '0.14em' }}>VOID SHARDS</div>
-                  <div style={{ width: 32, height: 24, background: 'linear-gradient(135deg, oklch(0.85 0.15 75), oklch(0.70 0.20 50))', borderRadius: 4 }} />
+                  {/* Void Shards logo — procedural SVG crystal shard */}
+                  <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                    {/* Outer shard outline */}
+                    <path d="M22 2L40 16L22 42L4 16Z" stroke="#f5c453" strokeWidth="1.4" strokeLinejoin="round"/>
+                    {/* Upper-right facet — brightest */}
+                    <path d="M22 2L40 16L22 18Z" fill="#f5c45330"/>
+                    {/* Upper-left facet */}
+                    <path d="M22 2L4 16L22 18Z" fill="#f5c45318"/>
+                    {/* Lower-right facet */}
+                    <path d="M40 16L22 42L22 18Z" fill="#f5c4530e"/>
+                    {/* Lower-left facet — subtle */}
+                    <path d="M4 16L22 42L22 18Z" fill="#f5c45316"/>
+                    {/* Horizontal girdle line */}
+                    <path d="M4 16H40" stroke="#f5c45348" strokeWidth="0.7"/>
+                    {/* Left culet ridge */}
+                    <path d="M22 2L14 16" stroke="#f5c45540" strokeWidth="0.7"/>
+                    {/* Right culet ridge */}
+                    <path d="M22 2L30 16" stroke="#f5c45555" strokeWidth="0.8"/>
+                    {/* Inner void facet diamond */}
+                    <path d="M22 9L30 16L22 26L14 16Z" stroke="#f5c45330" strokeWidth="0.7" fill="none"/>
+                    {/* Center pip */}
+                    <circle cx="22" cy="16" r="1.3" fill="#f5c45365"/>
+                    {/* Top-right glint */}
+                    <path d="M22 2L25.5 7.5" stroke="white" strokeWidth="0.8" strokeLinecap="round" strokeOpacity="0.55"/>
+                  </svg>
                 </div>
 
                 <div style={{ position: 'relative' }}>

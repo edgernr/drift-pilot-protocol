@@ -264,8 +264,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 /* ============= Layout ============= */
 .container { max-width: 1280px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 2; }
-section { position: relative; z-index: 2; padding: 120px 0; }
-section:first-of-type { padding-top: 40px; }
+section { position: relative; z-index: 2; }
 .section-head { display: flex; flex-direction: column; gap: 16px; margin-bottom: 64px; max-width: 720px; }
 .section-head h2 { font-size: clamp(40px, 5vw, 64px); }
 .section-head p { color: var(--ink-1); font-size: 18px; max-width: 560px; }

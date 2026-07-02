@@ -1,0 +1,839 @@
+/* ── ArenaShell — game-prototype arena layout for Gate 01 ───────────────────── */
+/* Palette: #08080c bg · #3df0e8 cyan · #f5c453 gold · #ff3d8b magenta · #eaf6f5 text */
+
+/* ─── Shell ──────────────────────────────────────────────────────────────────── */
+.ar-shell {
+  display: grid;
+  grid-template-rows: 56px 1fr 52px;
+  height: 100vh;
+  overflow: hidden;
+  background: #08080c;
+  color: #eaf6f5;
+  font-family: 'Saira', sans-serif;
+}
+
+/* ─── Topbar ─────────────────────────────────────────────────────────────────── */
+.ar-topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  border-bottom: 1px solid #1a1a28;
+  background: #06060c;
+  z-index: 20;
+}
+.ar-topbar-back {
+  color: #3df0e8;
+  background: none;
+  border: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px 8px;
+  opacity: 0.6;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.ar-topbar-back:hover { opacity: 1; }
+.ar-topbar-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ar-rank-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #f5c453;
+  text-transform: uppercase;
+}
+.ar-gate-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #eaf6f5;
+}
+/* Boss HP (top-right of topbar — spec: "BOSS · 100 HP on top") */
+.ar-boss-hp-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 200px;
+}
+.ar-boss-hp-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #ff3d8b80;
+  text-transform: uppercase;
+}
+.ar-boss-hp-track {
+  width: 180px;
+  height: 5px;
+  background: #1e1e2e;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ar-boss-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff3d8b, #ff7cb0);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.ar-boss-hp-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f540;
+}
+
+/* ─── Main ───────────────────────────────────────────────────────────────────── */
+.ar-main {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ─── Left rail ──────────────────────────────────────────────────────────────── */
+.ar-rail {
+  background: #08080f;
+  border-right: 1px solid #161620;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: #222238 transparent;
+}
+.ar-section-head {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #3df0e870;
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1a1a28;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ar-section-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+}
+.ar-section-count.clear { color: #3df0e8; }
+.ar-section-count.errors { color: #ff3d8b; }
+.ar-narrator {
+  font-size: 11.5px;
+  color: #eaf6f580;
+  line-height: 1.65;
+  margin: 0;
+  font-style: italic;
+}
+.ar-handler-wrap {
+  /* contained handler comms */
+}
+.ar-ward {
+  padding: 6px 8px;
+  border: 1px solid #161620;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  margin-bottom: 4px;
+}
+.ar-ward:hover { border-color: #2a2a40; }
+.ar-ward.passed {
+  border-color: #3df0e830;
+  background: #3df0e806;
+}
+.ar-ward-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ar-ward-icon {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  width: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ar-ward-icon.pass { color: #3df0e8; }
+.ar-ward-icon.fail { color: #ff3d8b; }
+.ar-ward-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #eaf6f5;
+  line-height: 1.45;
+}
+.ar-ward.passed .ar-ward-label { color: #3df0e8; }
+.ar-ward-hint {
+  font-size: 11px;
+  color: #eaf6f580;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #1a1a28;
+  line-height: 1.55;
+}
+/* Preview iframe (document scan) */
+.ar-preview-wrap iframe,
+.ar-preview-frame {
+  width: 100%;
+  height: 130px;
+  border: 1px solid #1a1a28;
+  border-radius: 2px;
+  background: #04040a;
+  display: block;
+}
+
+/* ─── Arena ──────────────────────────────────────────────────────────────────── */
+.ar-arena {
+  position: relative;
+  overflow: hidden;
+  /* Procedural dungeon background — pure CSS, no assets */
+  background:
+    radial-gradient(ellipse at 50% -5%,  #1a0a3a 0%, transparent 55%),
+    radial-gradient(ellipse at 10% 80%,  #001820 0%, transparent 45%),
+    radial-gradient(ellipse at 90% 80%,  #200808 0%, transparent 45%),
+    linear-gradient(180deg, #060610 0%, #0e0820 35%, #180c08 70%, #06060e 100%);
+}
+
+/* Stone floor — perspective lines */
+.ar-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 42%;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent 38px,
+    #1e1e3018 38px,
+    #1e1e3018 39px
+  );
+  transform: perspective(320px) rotateX(26deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+/* Floor vertical lines for grid feel */
+.ar-floor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 59px,
+    #1e1e3012 59px,
+    #1e1e3012 60px
+  );
+}
+
+/* Torches */
+.ar-torch {
+  position: absolute;
+  top: 22%;
+  width: 6px;
+  height: 22px;
+  background: linear-gradient(180deg, #f5c45390 0%, #f5c45320 100%);
+  border-radius: 50% 50% 10% 10%;
+  pointer-events: none;
+}
+.ar-torch-l { left: 7%; }
+.ar-torch-r { right: 7%; }
+.ar-torch::before {
+  content: '';
+  position: absolute;
+  top: -28px;
+  left: -18px;
+  width: 42px;
+  height: 42px;
+  background: radial-gradient(circle, #f5c45322 0%, transparent 70%);
+  border-radius: 50%;
+  animation: torch-pulse 2.2s ease-in-out infinite alternate;
+}
+.ar-torch-r::before { animation-delay: 0.7s; }
+@keyframes torch-pulse {
+  from { opacity: 0.5; transform: scale(0.85); }
+  to   { opacity: 1;   transform: scale(1.15); }
+}
+
+/* ─── Boss ───────────────────────────────────────────────────────────────────── */
+.ar-boss-wrap {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform-origin: bottom center;
+  z-index: 2;
+}
+/* Boss HP bar floating above the villain */
+.ar-boss-hp-above {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 200px;
+}
+.ar-boss-hp-above-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #ff3d8b90;
+  text-transform: uppercase;
+}
+.ar-boss-hp-above-track {
+  width: 100%;
+  height: 5px;
+  background: #1e1e2e;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ar-boss-hp-above-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff3d8b, #ff7cb0);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.ar-boss-hp-above-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f540;
+}
+.ar-boss-svg-wrap {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Override dtab-enemy-svg size in arena */
+.ar-boss-svg-wrap .dtab-enemy-svg {
+  width: 200px !important;
+  height: 200px !important;
+  filter: drop-shadow(0 0 18px #ff3d8b30);
+}
+
+/* Boss animation states */
+.ar-boss-wrap.idle .ar-boss-svg-wrap {
+  animation: boss-breathe 3.2s ease-in-out infinite;
+}
+.ar-boss-wrap.hurt .ar-boss-svg-wrap {
+  animation: boss-hurt 0.45s ease-out;
+}
+.ar-boss-wrap.enraged .ar-boss-svg-wrap {
+  animation: boss-enrage 1.8s ease-in-out infinite;
+}
+.ar-boss-wrap.enraged .dtab-enemy-svg {
+  filter: drop-shadow(0 0 28px #ff3d8b70) !important;
+}
+.ar-boss-wrap.dead .ar-boss-svg-wrap {
+  animation: boss-death 1.1s ease-out forwards;
+}
+
+@keyframes boss-breathe {
+  0%, 100% { transform: scaleY(1) translateY(0); }
+  50%       { transform: scaleY(1.025) translateY(-4px); }
+}
+@keyframes boss-hurt {
+  0%   { transform: translateX(0); filter: brightness(1); }
+  18%  { transform: translateX(-22px) scale(0.94); filter: brightness(5) saturate(0.1); }
+  55%  { transform: translateX(8px); filter: brightness(1.2); }
+  100% { transform: translateX(0);   filter: brightness(1); }
+}
+@keyframes boss-enrage {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  30%      { transform: scale(1.04) rotate(-1deg) translateX(-3px); }
+  60%      { transform: scale(1.02) rotate(1deg) translateX(2px); }
+}
+@keyframes boss-death {
+  0%   { transform: scale(1) rotate(0deg);   opacity: 1; }
+  25%  { transform: scale(1.12) rotate(-4deg); opacity: 0.9; }
+  100% { transform: scale(0.2) rotate(20deg);  opacity: 0; }
+}
+
+/* ─── Hero / Daemon ──────────────────────────────────────────────────────────── */
+.ar-hero-wrap {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 100px;
+  height: 130px;
+}
+/* Override Daemon's fixed positioning so it renders in the arena */
+.ar-hero-wrap .d-outer {
+  position: relative !important;
+  bottom: auto !important;
+  right: auto !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ─── Damage numbers ─────────────────────────────────────────────────────────── */
+.ar-dmg-num {
+  position: absolute;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  z-index: 15;
+  animation: dmg-float 0.95s ease-out forwards;
+  top: 40%;
+}
+.ar-dmg-hit    { color: #3df0e8; text-shadow: 0 0 14px #3df0e8; right: 24%; }
+.ar-dmg-damage { color: #ff3d8b; text-shadow: 0 0 14px #ff3d8b; left: 18%; }
+@keyframes dmg-float {
+  from { opacity: 1; transform: translateY(0) scale(1.2); }
+  to   { opacity: 0; transform: translateY(-72px) scale(1); }
+}
+
+/* ─── Projectile — glowing energy bolt fired on STRIKE ──────────────────────── */
+/* Starts above the hero (bottom ~26%) and flies upward to the boss (top ~10%). */
+.ar-projectile {
+  position: absolute;
+  left: 50%;
+  bottom: 26%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 24px;
+  /* Bright head at top, fading trail below */
+  background: linear-gradient(to top, transparent 0%, #3df0e860 30%, #3df0e8 70%, #ffffff 100%);
+  border-radius: 50% 50% 30% 30%;
+  box-shadow: 0 0 10px 3px #3df0e870, 0 0 24px 6px #3df0e830;
+  pointer-events: none;
+  z-index: 8;
+  animation: proj-fly 0.42s ease-in forwards;
+}
+/* Second pass glow ring */
+.ar-projectile::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -3px;
+  right: -3px;
+  bottom: 60%;
+  background: radial-gradient(ellipse, #3df0e840 0%, transparent 70%);
+  border-radius: 50%;
+}
+@keyframes proj-fly {
+  0% {
+    transform: translateX(-50%) translateY(0) scaleY(1);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-65vh) scaleY(0.7);
+    opacity: 0;
+  }
+}
+
+/* ─── Red-edge vignette (player hit) ────────────────────────────────────────── */
+.ar-vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 80px #ff3d8b40;
+  animation: vignette-flash 0.55s ease-out forwards;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes vignette-flash {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ─── Floating code panel ────────────────────────────────────────────────────── */
+/* Panel chrome: header 26px + footer 34px = 60px. Monaco gets the rest. */
+.ar-code-panel {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(7, 7, 14, 0.96);
+  border: 1px solid #3df0e828;
+  border-radius: 4px;
+  box-shadow: 0 8px 48px #00000080, 0 0 24px #3df0e810;
+  backdrop-filter: blur(6px);
+  z-index: 10;
+  user-select: none;
+}
+.ar-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  height: 26px;
+  border-bottom: 1px solid #1a1a28;
+  background: #06060c;
+  border-radius: 4px 4px 0 0;
+  cursor: grab;
+  flex-shrink: 0;
+}
+.ar-panel-header:active { cursor: grabbing; }
+.ar-panel-filename {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #3df0e8;
+  letter-spacing: 0.08em;
+}
+.ar-panel-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+.ar-panel-status.errors { color: #ff3d8b; }
+.ar-panel-status.clear  { color: #3df0e8; }
+/* Monaco needs an explicit pixel height — flex alone doesn't resolve height: 100% */
+.ar-monaco-wrap {
+  height: 260px;
+  overflow: hidden;
+}
+/* Allow normal mouse interaction inside Monaco */
+.ar-monaco-wrap * { user-select: text; }
+.ar-panel-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  height: 34px;
+  border-top: 1px solid #1a1a28;
+  background: #06060c;
+  border-radius: 0 0 4px 4px;
+  flex-shrink: 0;
+}
+.ar-strike-btn {
+  background: none;
+  border: 1px solid #3df0e860;
+  color: #3df0e8;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  padding: 4px 18px;
+  cursor: pointer;
+  border-radius: 2px;
+  text-transform: uppercase;
+  transition: all 0.12s;
+}
+.ar-strike-btn:hover:not(:disabled) {
+  background: #3df0e812;
+  border-color: #3df0e8;
+  box-shadow: 0 0 14px #3df0e824;
+}
+.ar-strike-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+/* Ready state — pulses gold when at least one new fix is waiting to be struck */
+.ar-strike-btn.ready {
+  border-color: #f5c453;
+  color: #f5c453;
+  animation: strike-ready 1.1s ease-in-out infinite;
+}
+.ar-strike-btn.ready:hover {
+  background: #f5c45318;
+  border-color: #f5c453;
+}
+@keyframes strike-ready {
+  0%, 100% { box-shadow: 0 0 8px #f5c45338; }
+  50%       { box-shadow: 0 0 22px #f5c45370, 0 0 6px #f5c45350 inset; }
+}
+.ar-cast-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: #1a1a28;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ar-cast-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3df0e8, #3df0e860);
+  transform-origin: left;
+  animation: cast-sweep 0.4s ease-out forwards;
+}
+@keyframes cast-sweep {
+  from { transform: scaleX(0); opacity: 1; }
+  80%  { transform: scaleX(1); opacity: 1; }
+  to   { transform: scaleX(1); opacity: 0; }
+}
+.ar-combo-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #f5c453;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.ar-combo-chip.active { opacity: 1; }
+
+/* ─── Bottom HUD ─────────────────────────────────────────────────────────────── */
+.ar-hud {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  border-top: 1px solid #161620;
+  background: #06060c;
+}
+.ar-hud-identity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #eaf6f550;
+  white-space: nowrap;
+}
+.ar-player-hp-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ar-player-hp-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #3df0e870;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+.ar-player-hp-label.low { color: #ff3d8b; }
+.ar-hp-track {
+  width: 140px;
+  height: 5px;
+  background: #1a1a28;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ar-player-hp-fill {
+  height: 100%;
+  background: #3df0e8;
+  border-radius: 2px;
+  transition: width 0.4s ease, background 0.4s;
+}
+.ar-player-hp-fill.low { background: #ff3d8b; }
+.ar-hud-hp-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #eaf6f540;
+}
+.ar-hud-region {
+  flex: 1;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f525;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ar-hud-right {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #3df0e850;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+/* ─── Overlays ───────────────────────────────────────────────────────────────── */
+.ar-fell-overlay {
+  position: fixed;
+  inset: 0;
+  background: #08080ce0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.ar-fell-inner {
+  text-align: center;
+  max-width: 340px;
+  padding: 48px 32px;
+}
+.ar-fell-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  color: #ff3d8b;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.ar-fell-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #eaf6f530;
+  letter-spacing: 0.14em;
+  margin-bottom: 18px;
+}
+.ar-fell-progress {
+  font-size: 13px;
+  color: #eaf6f570;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+.ar-fell-btn {
+  background: none;
+  border: 1px solid #ff3d8b;
+  color: #ff3d8b;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  padding: 10px 36px;
+  cursor: pointer;
+  border-radius: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.ar-fell-btn:hover {
+  background: #ff3d8b18;
+  box-shadow: 0 0 24px #ff3d8b28;
+}
+.ar-completion-overlay {
+  position: fixed;
+  inset: 0;
+  background: #08080ce8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.ar-completion-inner {
+  max-width: 440px;
+  width: 90%;
+  background: #0c0c14;
+  border: 1px solid #3df0e828;
+  border-radius: 4px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ar-completion-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: #3df0e8;
+  text-transform: uppercase;
+}
+.ar-completion-heading {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #eaf6f5;
+  text-transform: uppercase;
+}
+.ar-completion-body {
+  font-size: 13px;
+  color: #eaf6f570;
+  line-height: 1.65;
+  margin: 0;
+}
+.ar-completion-rewards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ar-completion-reward {
+  background: #08080c;
+  border: 1px solid #1a1a28;
+  border-radius: 3px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ar-completion-reward-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: #eaf6f528;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.ar-completion-reward-val {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #f5c453;
+}
+.ar-completion-next-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f530;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.ar-completion-next-card {
+  background: #08080c;
+  border: 1px solid #1a1a28;
+  border-radius: 3px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ar-completion-next-icon { font-size: 22px; }
+.ar-completion-next-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #eaf6f5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ar-completion-next-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f538;
+}
+.ar-completion-btn {
+  background: none;
+  border: 1px solid #3df0e850;
+  color: #3df0e8;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.ar-completion-btn:hover {
+  background: #3df0e812;
+  border-color: #3df0e8;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .ar-main { grid-template-columns: 200px 1fr; }
+  .ar-code-panel { width: 300px; }
+  .ar-boss-svg-wrap,
+  .ar-boss-svg-wrap .dtab-enemy-svg { width: 160px !important; height: 160px !important; }
+}
+@media (max-width: 768px) {
+  .ar-main { grid-template-columns: 1fr; }
+  .ar-rail { display: none; }
+  .ar-code-panel { width: calc(100% - 24px); left: 12px; right: 12px; top: 12px; }
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function QuestQuiz({ quiz, onPass }) {
+export default function QuestQuiz({ quiz, onPass, onFail }) {
   const [answer, setAnswer] = useState(null)
   const [checked, setChecked] = useState(false)
 
@@ -41,7 +41,7 @@ export default function QuestQuiz({ quiz, onPass }) {
           <button
             className="btn btn-primary"
             disabled={answer === null}
-            onClick={() => setChecked(true)}
+            onClick={() => { setChecked(true); if (answer !== quiz.correct) onFail?.() }}
             style={{ width: '100%' }}
           >
             Check Answer →
