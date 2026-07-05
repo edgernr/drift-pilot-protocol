@@ -172,6 +172,56 @@
 .d-glitch .d-eye   { fill: #ff3d8b; filter: drop-shadow(0 0 5px #ff3d8b); animation: none; }
 .d-glitch .d-aura  { stroke: rgba(255, 61, 139, 0.5); }
 
+/* ── Fury state (kill-shot cinematic) ─── */
+.d-fury {
+  animation: d-fury-charge 1.6s ease-out forwards;
+}
+@keyframes d-fury-charge {
+  0%   { transform: scale(1)    translateY(0);     filter: none; }
+  22%  { transform: scale(1.09) translateY(-6px);  filter: brightness(2.5); }
+  55%  { transform: scale(1.18) translateY(-12px); filter: brightness(5) saturate(0.3); }
+  100% { transform: scale(1.26) translateY(-18px); filter: brightness(8) saturate(0); }
+}
+.d-fury .d-eye {
+  animation: d-fury-eye 0.11s ease-in-out infinite alternate;
+}
+@keyframes d-fury-eye {
+  from { fill: #3df0e8; filter: drop-shadow(0 0 6px #3df0e8); }
+  to   { fill: #fff;    filter: drop-shadow(0 0 18px #fff) drop-shadow(0 0 34px #3df0e8); }
+}
+.d-fury .d-eye-glow {
+  animation: d-fury-glow 0.13s ease-in-out infinite alternate;
+}
+@keyframes d-fury-glow {
+  from { fill: rgba(61,240,232,0.25); }
+  to   { fill: rgba(255,255,255,0.72); }
+}
+.d-fury .d-hex {
+  animation: d-fury-hex 0.15s ease-in-out infinite alternate;
+}
+@keyframes d-fury-hex {
+  from { stroke: #3df0e8; fill: rgba(61,240,232,0.06); }
+  to   { stroke: #fff;    fill: rgba(255,255,255,0.22); }
+}
+.d-fury .d-hex-inner { fill: rgba(255,255,255,0.14); animation: none; }
+.d-fury .d-head {
+  animation: d-fury-head 0.17s ease-in-out infinite alternate;
+}
+@keyframes d-fury-head {
+  from { stroke: #3df0e8; fill: rgba(61,240,232,0.08); }
+  to   { stroke: #fff;    fill: rgba(255,255,255,0.3); }
+}
+.d-fury .d-aura {
+  animation: d-fury-aura 0.19s ease-in-out infinite alternate;
+}
+@keyframes d-fury-aura {
+  from { fill: rgba(61,240,232,0.04); stroke: #3df0e8; }
+  to   { fill: rgba(255,255,255,0.28); stroke: #fff; }
+}
+.d-fury .d-arm    { fill: rgba(255,255,255,0.2); stroke: #fff; animation: none; }
+.d-fury .d-node-top { fill: #fff; filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 22px #3df0e8); animation: none; opacity: 1; }
+.d-fury .d-beam   { stroke: #fff; stroke-width: 2; opacity: 1; animation: none; }
+
 /* ── Responsive ─── */
 @media (max-width: 768px) {
   .d-outer { bottom: 90px; right: 12px; width: 66px; height: 80px; }

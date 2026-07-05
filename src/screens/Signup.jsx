@@ -9,7 +9,6 @@ export default function Signup() {
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [wallet, setWallet] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [localError, setLocalError] = useState(null)
@@ -20,7 +19,7 @@ export default function Signup() {
     setLocalError(null)
     clearError()
     if (password !== confirm) { setLocalError('Passwords do not match.'); return }
-    const result = await signup(email, password, name.trim(), wallet.trim() || null)
+    const result = await signup(email, password, name.trim(), null)
     if (result === 'ok') goto('dashboard')
     if (result === 'confirm') setEmailSent(true)
   }
@@ -114,20 +113,6 @@ export default function Signup() {
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"
                 required
-              />
-            </div>
-            <div className="auth-field">
-              <label>
-                Wallet address
-                <span className="opt">(optional)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="0x... or .sol address"
-                value={wallet}
-                onChange={e => setWallet(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
               />
             </div>
             <div className="auth-field">

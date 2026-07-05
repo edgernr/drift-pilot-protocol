@@ -8,7 +8,6 @@ import RaidView from './RaidView'
 
 function fmt(n) { return (n ?? 0).toLocaleString() }
 function initials(name) { return (name ?? 'PL').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) }
-function shortenWallet(w) { return w ? `${w.slice(0, 6)}...${w.slice(-4)}` : 'Not linked' }
 function fmtTime(s) { if (!s) return '—'; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
 
 
@@ -89,10 +88,7 @@ export default function Dashboard() {
   const [quests, setQuests] = useState([])
   const [lbData, setLbData] = useState([])
   const [settingsName, setSettingsName] = useState('')
-  const [settingsWallet, setSettingsWallet] = useState('')
-  const [walletError, setWalletError] = useState(null)
   const [saveStatus, setSaveStatus] = useState(null)
-  const [onChainBalance, setOnChainBalance] = useState(null)
 
   const LB_GRADS = [
     'oklch(0.72 0.28 340), oklch(0.55 0.26 290)',
@@ -118,44 +114,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (profile?.is_parent) goto('academy/dashboard')
   }, [profile?.is_parent, goto])
-
-  const DRIFT_TOKEN_ADDRESS = '0x60FE1910182602942Bcf297fFF7244f6f4ed8633'
-
-  async function fetchOnChainDrift(wallet) {
-    // No RPC configured → on-chain balance is unavailable (return null so the UI
-    // shows "—" rather than a misleading on-chain 0 or a fetch(undefined) error).
-    if (!import.meta.env.VITE_ALCHEMY_RPC) return null
-    const data = '0x70a08231' + wallet.slice(2).toLowerCase().padStart(64, '0')
-    try {
-      const res = await fetch(import.meta.env.VITE_ALCHEMY_RPC, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_call', params: [{ to: DRIFT_TOKEN_ADDRESS, data }, 'latest'], id: 1 }),
-      })
-      const { result } = await res.json()
-      if (!result || result === '0x') return 0
-      return Number(BigInt(result) / (10n ** 18n))
-    } catch { return 0 }
-  }
-
-  async function connectMetaMask() {
-    setWalletError(null)
-    if (!window.ethereum) {
-      setWalletError('MetaMask not detected — install it to link a wallet.')
-      return
-    }
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-      if (accounts[0]) setSettingsWallet(accounts[0])
-    } catch {
-      setWalletError('Wallet connection cancelled.')
-    }
-  }
-
-  useEffect(() => {
-    if (view !== 'wallet' || !profile?.wallet) return
-    fetchOnChainDrift(profile.wallet).then(setOnChainBalance)
-  }, [view, profile?.wallet])
 
   useEffect(() => {
     localStorage.setItem('dash-view', view)
@@ -291,15 +249,13 @@ export default function Dashboard() {
 
   function openSettings() {
     setSettingsName(profile?.name ?? '')
-    setSettingsWallet(profile?.wallet ?? '')
-    setWalletError(null)
     setSaveStatus(null)
     setView('settings')
   }
 
   async function handleSave() {
     setSaveStatus('saving')
-    const ok = await updateProfile(settingsName, settingsWallet)
+    const ok = await updateProfile(settingsName, profile?.wallet ?? null)
     setSaveStatus(ok ? 'saved' : 'error')
     if (ok) setTimeout(() => setSaveStatus(null), 2500)
   }
@@ -591,8 +547,8 @@ export default function Dashboard() {
 
         <div className="wallet-card">
           <div className="addr">
-            <span className="dot" style={{ color: profile?.wallet ? 'var(--lime)' : 'var(--ink-3)' }} />
-            {shortenWallet(profile?.wallet)}
+            <span className="dot" style={{ color: 'var(--lime)' }} />
+            SEEKER VAULT
           </div>
           <div className="bal">{fmt(spendableDrift)}<span className="u">$SHARD</span></div>
         </div>
@@ -1111,8 +1067,8 @@ export default function Dashboard() {
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: nameColor ?? 'oklch(1 0 0 / 0.85)' }}>{pilotName.toUpperCase()}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>WALLET</div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'oklch(1 0 0 / 0.7)' }}>{profile?.wallet ? shortenWallet(profile.wallet) : 'Not linked'}</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>EARNED BY</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'oklch(1 0 0 / 0.7)' }}>CLEARING GATES</div>
                   </div>
                 </div>
               </div>
@@ -1140,25 +1096,6 @@ export default function Dashboard() {
                   <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--ink-2)' }}>{totalHuntSpent > 0 ? `-${fmt(totalHuntSpent)}` : '0'}</div>
                 </div>
               </div>
-
-              {/* On-chain balance */}
-              {profile?.wallet && (
-                <div className="panel" style={{ width: '100%', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', marginBottom: 4 }}>ON-CHAIN · SEPOLIA TESTNET</div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 600, color: 'var(--amber)' }}>
-                      {onChainBalance === null ? '—' : fmt(onChainBalance)}
-                      <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--ink-3)', marginLeft: 6 }}>$SHARD</span>
-                    </div>
-                  </div>
-                  <a
-                    href={`https://sepolia.etherscan.io/token/${DRIFT_TOKEN_ADDRESS}?a=${profile.wallet}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', textDecoration: 'none' }}
-                  >etherscan ↗</a>
-                </div>
-              )}
 
               {/* Transaction history */}
               <div style={{ width: '100%' }}>
@@ -1414,22 +1351,6 @@ export default function Dashboard() {
                       onChange={e => setSettingsName(e.target.value)}
                       placeholder="Your seeker name"
                     />
-                  </div>
-                  <div className="set-field">
-                    <label className="set-label">Wallet Address</label>
-                    <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                      <input
-                        className="set-input"
-                        value={settingsWallet}
-                        onChange={e => setSettingsWallet(e.target.value)}
-                        placeholder="0x... (optional)"
-                        style={{ flex: 1, minWidth: 0 }}
-                      />
-                      <button className="btn-metamask" onClick={connectMetaMask} title="Auto-fill from MetaMask">
-                        🦊
-                      </button>
-                    </div>
-                    {walletError && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)', marginTop: 6, display: 'block' }}>{walletError}</span>}
                   </div>
                   <div className="set-field">
                     <label className="set-label">Season Pass</label>

@@ -41,7 +41,6 @@ export default function Privacy() {
             <p>We collect the following information directly from you and as you use the Service:</p>
             <ul style={{ margin: '10px 0 0', paddingLeft: 22 }}>
               <li><strong>Account details:</strong> your email address and display name (and, for Academy accounts, the parent/guardian's account details and the learner's display name).</li>
-              <li><strong>Optional wallet address:</strong> if you choose to connect one, we store your public wallet address. This is optional and not required to use the Service.</li>
               <li><strong>Learning progress &amp; analytics:</strong> your quest/gate completions, XP, levels, badges, and in-app $SHARD balance, plus gameplay analytics such as time spent on challenges and paste counts (used for progress tracking and anti-cheat).</li>
               <li><strong>Technical data:</strong> basic information your browser provides (for example, general device/browser type) needed to deliver and secure the Service.</li>
             </ul>

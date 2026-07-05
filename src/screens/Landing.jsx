@@ -26,8 +26,8 @@ const FAQS = [
     a: 'No. Gate 01 is E-rank — designed for complete beginners. The System checks your code against clear objectives and you progress at your own pace.' },
   { q: 'How do Void Shards actually work?',
     a: "Shards are points you earn by clearing Gates and holding streaks. Spend them in-game on hints, retries, and cosmetics. They're stored in your Seeker profile — no purchase required, ever." },
-  { q: 'Do I need a crypto wallet?',
-    a: "No. A wallet is entirely optional. The whole game — every Gate, rank, and reward — works without one. Connecting a wallet only lets you optionally claim Shards on-chain if that's something you want." },
+  { q: 'Is there any crypto in this?',
+    a: "No. Void Shards are in-game points, earned only by playing — like XP in any game. There's no wallet, no purchase, and nothing on-chain. You learn, you earn, you spend them in-game. That's it." },
   { q: 'Is the code real, or just quizzes?',
     a: "Real. You write actual code in a live editor and the System grades it against the Gate's objectives. Each gate has an anti-cheat quiz to confirm you understood what you built." },
   { q: 'Is there a track for kids?',
@@ -402,7 +402,7 @@ export default function Landing() {
                 ))}
               </div>
               <div className="wallet-note">
-                <b>Wallet optional.</b> Void Shards are in-app points by default. If you ever want to claim them on-chain you can connect a wallet — but you never have to, and nothing in the game is gated behind one.
+                <b>Points, not crypto.</b> Void Shards are in-game progression points — earned by clearing Gates, spent on hints, retries, and cosmetics. No wallet, no purchases, nothing on-chain.
               </div>
             </div>
           </div>
@@ -428,7 +428,7 @@ export default function Landing() {
                 </div>
               </div>
               <div className="lp-disclaimer">
-                ⚠ Void Shards is an independent learning platform. It is <b>not affiliated with, sponsored by, or endorsed by any cryptocurrency project</b>. "$SHARD" / "Void Shards" are in-app progression points; any optional on-chain claim is a convenience feature, not an investment, and carries no promise of value.
+                ⚠ Void Shards is an independent learning platform. It is <b>not affiliated with, sponsored by, or endorsed by any cryptocurrency project</b>. "$SHARD" / "Void Shards" are in-app progression points — not a cryptocurrency, not an investment, and they carry no monetary value.
               </div>
             </div>
 
