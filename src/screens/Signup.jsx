@@ -108,7 +108,7 @@ export default function Signup() {
               <label>Email</label>
               <input
                 type="email"
-                placeholder="seeker@voidshards.xyz"
+                placeholder="seeker@voidshards.net"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"
