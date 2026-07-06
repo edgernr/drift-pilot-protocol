@@ -29,5 +29,6 @@ supabase/.temp/
 # electron-builder output
 release
 
-# internal docs/guides — kept local only, not published to the repo
+# internal docs/guides and loose notes — kept local only
+docs/
 *.md
