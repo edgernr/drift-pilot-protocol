@@ -520,7 +520,7 @@ export default function EncounterShell({ config }) {
         <div className="es-fell-overlay">
           <div className="es-fell-inner">
             <div className="es-fell-title">DAEMON FELL</div>
-            <div className="es-fell-sub">KIRA // HANDLER</div>
+            <div className="es-fell-sub">VERA // HANDLER</div>
             <div className="es-fell-progress">
               {passedCount > 0
                 ? `${passedCount}/${config.wards.length} checks survived — no progress lost.`

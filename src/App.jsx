@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { NavigationProvider } from './context/NavigationContext'
 import { AuthProvider } from './context/AuthContext'
 import { AcademyProvider } from './context/AcademyContext'
@@ -14,6 +14,9 @@ import Terms from './screens/Terms'
 import Privacy from './screens/Privacy'
 import Downloads from './screens/Downloads'
 import Dashboard from './screens/Dashboard'
+import Prologue from './screens/Prologue'
+import Interlude1 from './screens/Interlude1'
+import Interlude2 from './screens/Interlude2'
 import Quest from './screens/Quest'
 import Quest2 from './screens/Quest2'
 import Quest3 from './screens/Quest3'
@@ -102,7 +105,12 @@ function AnimatedRoutes() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/downloads" element={<Downloads />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/quest" element={<ProtectedRoute><Quest /></ProtectedRoute>} />
+        <Route path="/prologue" element={<ProtectedRoute><Prologue /></ProtectedRoute>} />
+        <Route path="/interlude1" element={<GateRoute requires={['act1-ch01']}><Interlude1 /></GateRoute>} />
+        <Route path="/interlude2" element={<GateRoute requires={['act1-ch03']}><Interlude2 /></GateRoute>} />
+        {/* Gate 01 has no prerequisites, but GateRoute (requires=[]) still applies
+            the new-hunter prologue check — new accounts cannot URL-skip Zero Hour. */}
+        <Route path="/quest" element={<GateRoute requires={[]}><Quest /></GateRoute>} />
         <Route path="/quest2" element={<GateRoute requires={['act1-ch01']}><Quest2 /></GateRoute>} />
         <Route path="/quest3" element={<GateRoute requires={['act1-ch01', 'act1-ch02']}><Quest3 /></GateRoute>} />
         <Route path="/quest4" element={<GateRoute requires={['act1-ch01', 'act1-ch02', 'act1-ch03']} unlockKey="act1-ch04"><Quest4 /></GateRoute>} />
@@ -113,71 +121,8 @@ function AnimatedRoutes() {
         <Route path="/quest9" element={<GateRoute requires={['act1-ch08']} unlockKey="act1-ch09"><Quest9 /></GateRoute>} />
         <Route path="/quest10" element={<GateRoute requires={['act1-ch09']} unlockKey="act1-ch10"><Quest10 /></GateRoute>} />
         <Route path="/pilot/:id" element={<PilotProfile />} />
-        {/* Void Academy */}
-        <Route path="/academy" element={<AcademyLanding />} />
-        <Route path="/academy/signup" element={<AcademySignup />} />
-        <Route path="/academy/onboarding" element={<ProtectedRoute><AcademyOnboarding /></ProtectedRoute>} />
-        <Route path="/academy/dashboard" element={<ProtectedRoute><AcademyDashboard /></ProtectedRoute>} />
-        <Route path="/academy/gate/s01" element={<ProtectedRoute><GateS01 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s02" element={<ProtectedRoute><GateS02 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s03" element={<ProtectedRoute><GateS03 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s04" element={<ProtectedRoute><GateS04 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s05" element={<ProtectedRoute><GateS05 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s06" element={<ProtectedRoute><GateS06 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s07" element={<ProtectedRoute><GateS07 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s08" element={<ProtectedRoute><GateS08 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s09" element={<ProtectedRoute><GateS09 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s10" element={<ProtectedRoute><GateS10 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s11" element={<ProtectedRoute><GateS11 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s12" element={<ProtectedRoute><GateS12 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s13" element={<ProtectedRoute><GateS13 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s14" element={<ProtectedRoute><GateS14 /></ProtectedRoute>} />
-        <Route path="/academy/gate/s15" element={<ProtectedRoute><GateS15 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p01" element={<ProtectedRoute><GateP01 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p02" element={<ProtectedRoute><GateP02 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p03" element={<ProtectedRoute><GateP03 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p04" element={<ProtectedRoute><GateP04 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p05" element={<ProtectedRoute><GateP05 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p06" element={<ProtectedRoute><GateP06 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p07" element={<ProtectedRoute><GateP07 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p08" element={<ProtectedRoute><GateP08 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p09" element={<ProtectedRoute><GateP09 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p10" element={<ProtectedRoute><GateP10 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p11" element={<ProtectedRoute><GateP11 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p12" element={<ProtectedRoute><GateP12 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p13" element={<ProtectedRoute><GateP13 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p14" element={<ProtectedRoute><GateP14 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p15" element={<ProtectedRoute><GateP15 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j01" element={<ProtectedRoute><GateJ01 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j02" element={<ProtectedRoute><GateJ02 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j03" element={<ProtectedRoute><GateJ03 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j04" element={<ProtectedRoute><GateJ04 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j05" element={<ProtectedRoute><GateJ05 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j06" element={<ProtectedRoute><GateJ06 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j07" element={<ProtectedRoute><GateJ07 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j08" element={<ProtectedRoute><GateJ08 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j09" element={<ProtectedRoute><GateJ09 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j10" element={<ProtectedRoute><GateJ10 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p16" element={<ProtectedRoute><GateP16 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p17" element={<ProtectedRoute><GateP17 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p18" element={<ProtectedRoute><GateP18 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p19" element={<ProtectedRoute><GateP19 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p20" element={<ProtectedRoute><GateP20 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p21" element={<ProtectedRoute><GateP21 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p22" element={<ProtectedRoute><GateP22 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p23" element={<ProtectedRoute><GateP23 /></ProtectedRoute>} />
-        <Route path="/academy/gate/p24" element={<ProtectedRoute><GateP24 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j11" element={<ProtectedRoute><GateJ11 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j12" element={<ProtectedRoute><GateJ12 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j13" element={<ProtectedRoute><GateJ13 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j14" element={<ProtectedRoute><GateJ14 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j15" element={<ProtectedRoute><GateJ15 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j16" element={<ProtectedRoute><GateJ16 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j17" element={<ProtectedRoute><GateJ17 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j18" element={<ProtectedRoute><GateJ18 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j19" element={<ProtectedRoute><GateJ19 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j20" element={<ProtectedRoute><GateJ20 /></ProtectedRoute>} />
-        <Route path="/academy/gate/j21" element={<ProtectedRoute><GateJ21 /></ProtectedRoute>} />
+        {/* Void Academy — hidden for Season 01 rework */}
+        <Route path="/academy/*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )

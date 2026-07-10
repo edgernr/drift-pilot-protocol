@@ -358,6 +358,19 @@ export function AuthProvider({ children }) {
     return !error
   }
 
+  // Season 01 prologue gating: flips profiles.prologue_done (see supabase/prologue_done.sql).
+  // Called once, at the end of the "Zero Hour" flow. No XP/$SHARD — the prologue
+  // deliberately pays nothing; Gate 01 is the first real payout.
+  async function markPrologueDone() {
+    if (!user) return false
+    const { error } = await supabase
+      .from('profiles')
+      .update({ prologue_done: true })
+      .eq('id', user.id)
+    if (!error) await fetchProfile(user.id)
+    return !error
+  }
+
   async function sendPasswordReset() {
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
       redirectTo: authRedirectTo(),
@@ -387,7 +400,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, updateUsernameColor, refundRaidEntry, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, updateUsernameColor, markPrologueDone, refundRaidEntry, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )

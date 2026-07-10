@@ -43,13 +43,15 @@ const fmt = n => {
 
 export default function Landing() {
   const { goto } = useNav()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [stats, setStats] = useState({ pilots: null, gates: null })
   const [openFaq, setOpenFaq] = useState(0)
   const particleRef = useRef(null)
 
-  const enter = () => goto(user ? 'quest' : 'signup')
+  // New hunters (prologue not done, zero clears) enter through "Zero Hour".
+  const needsPrologue = profile?.prologue_done === false && (profile?.questsCompleted ?? 0) === 0
+  const enter = () => goto(user ? (needsPrologue ? 'prologue' : 'quest') : 'signup')
 
   // Nav scroll state
   useEffect(() => {

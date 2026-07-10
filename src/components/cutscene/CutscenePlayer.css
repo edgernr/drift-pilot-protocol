@@ -1,0 +1,168 @@
+/* CutscenePlayer — full-screen card system. Void Hunter palette, scoped. */
+
+.cs-wrap {
+  /* scoped palette (Void Hunter hex — matches CLAUDE.md) */
+  --cs-bg: #08080c;
+  --cs-cyan: #3df0e8;
+  --cs-gold: #f5c453;
+  --cs-magenta: #ff3d8b;
+  --cs-ink: #eaf6f5;
+  --cs-ink-dim: #7badb0;
+  --cs-line: rgba(120, 210, 205, 0.14);
+  --cs-f-display: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  --cs-f-body: 'Saira', system-ui, sans-serif;
+  --cs-f-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* In-flow full-viewport root — deliberately NOT position:fixed. The route
+     wrapper (.page-screen) animates transform/filter (screenIn), which makes
+     it the containing block for fixed descendants; since a fixed-root child
+     leaves it with zero height, a fixed cutscene collapses invisible. In-flow
+     100vh both paints correctly and props .page-screen open. */
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  z-index: 400; /* above quiz(200)/fell(180), below route transition(9998) */
+  background: var(--cs-bg);
+  color: var(--cs-ink);
+  font-family: var(--cs-f-body);
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ---- art layer ---- */
+.cs-art {
+  position: absolute;
+  inset: 0;
+  animation: cs-art-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cs-art > svg,
+.cs-art > div {
+  width: 100%;
+  height: 100%;
+}
+@keyframes cs-art-in {
+  from { opacity: 0; transform: scale(1.025); filter: blur(4px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+
+/* ---- top strip ---- */
+.cs-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  z-index: 2;
+}
+.cs-kicker {
+  font-family: var(--cs-f-mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--cs-ink-dim);
+  text-transform: uppercase;
+}
+.cs-dots {
+  display: flex;
+  gap: 7px;
+  margin-left: auto;
+}
+.cs-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(120, 210, 205, 0.18);
+  transition: all 0.25s ease;
+}
+.cs-dot.done { background: rgba(61, 240, 232, 0.45); }
+.cs-dot.on {
+  background: var(--cs-cyan);
+  box-shadow: 0 0 8px rgba(61, 240, 232, 0.7);
+  transform: scale(1.25);
+}
+.cs-skip {
+  font-family: var(--cs-f-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--cs-ink-dim);
+  background: rgba(180, 200, 255, 0.04);
+  border: 1px solid var(--cs-line);
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cs-skip:hover { color: var(--cs-ink); border-color: rgba(61, 240, 232, 0.4); }
+
+/* ---- copy panel ---- */
+.cs-copy {
+  position: absolute;
+  left: 50%;
+  bottom: 76px;
+  transform: translateX(-50%);
+  width: min(680px, calc(100% - 48px));
+  z-index: 2;
+  text-align: center;
+  animation: cs-copy-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes cs-copy-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.cs-speaker {
+  font-family: var(--cs-f-mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--cs-cyan);
+  margin-bottom: 10px;
+}
+.cs-tone-gorgoroth .cs-speaker { color: var(--cs-magenta); }
+.cs-tone-assoc .cs-speaker { color: var(--cs-gold); }
+.cs-line {
+  font-family: var(--cs-f-body);
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--cs-ink);
+  margin: 0 0 10px;
+  text-shadow: 0 2px 18px rgba(8, 8, 12, 0.9), 0 0 2px rgba(8, 8, 12, 1);
+  animation: cs-line-in 0.4s ease-out;
+}
+.cs-line strong, .cs-line b { color: var(--cs-cyan); font-weight: 600; }
+.cs-tone-gorgoroth .cs-line strong { color: var(--cs-magenta); }
+@keyframes cs-line-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---- continue affordance ---- */
+.cs-continue {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--cs-f-mono);
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  color: var(--cs-ink-dim);
+  z-index: 2;
+  animation: cs-cont-pulse 1.8s ease-in-out infinite;
+}
+.cs-continue.locked { animation: none; opacity: 0.35; }
+@keyframes cs-cont-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.3; }
+}
+
+/* ---- responsive (CLAUDE.md: 1100 / 768 / 480) ---- */
+@media (max-width: 768px) {
+  .cs-copy { bottom: 64px; }
+  .cs-line { font-size: 16px; }
+}
+@media (max-width: 480px) {
+  .cs-top { padding: 14px 16px; }
+  .cs-copy { bottom: 56px; width: calc(100% - 32px); }
+  .cs-line { font-size: 15px; line-height: 1.5; }
+}

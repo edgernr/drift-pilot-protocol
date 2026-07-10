@@ -1,0 +1,347 @@
+/* FallScene — CS-3 "THE FALL" (the signature cutscene).
+   One continuous vertical parallax fall, 9 stops. Scoped prefix: .fall- */
+
+.fall-wrap {
+  /* scoped Void Hunter palette */
+  --fall-bg: #08080c;
+  --fall-cyan: #3df0e8;
+  --fall-gold: #f5c453;
+  --fall-magenta: #ff3d8b;
+  --fall-ink: #eaf6f5;
+  --fall-ink-dim: #7badb0;
+  --fall-line: rgba(120, 210, 205, 0.14);
+  --fall-f-display: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  --fall-f-body: 'Saira', system-ui, sans-serif;
+  --fall-f-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --fall-ease: cubic-bezier(0.66, 0, 0.34, 1);
+
+  /* In-flow full-viewport root (NOT fixed): .page-screen animates
+     transform/filter (screenIn), making it the containing block for fixed
+     descendants — a fixed root collapses it to height 0 and renders
+     invisible. In-flow 100vh paints correctly and props .page-screen open. */
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  z-index: 400;
+  background: var(--fall-bg);
+  color: var(--fall-ink);
+  font-family: var(--fall-f-body);
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ---- parallax layers (translated inline per stop; rates differ) ---- */
+.fall-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  will-change: transform;
+  transition: transform 1.1s var(--fall-ease);
+}
+.fall-layer-far   { height: 380vh;  z-index: 1; }
+.fall-layer-world { height: 900vh;  z-index: 2; }
+.fall-layer-near  { height: 1220vh; z-index: 3; pointer-events: none; }
+
+.fall-far-svg { display: block; width: 100%; height: 100%; }
+
+.fall-stop {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+.fall-stop > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- near-layer debris shards ---- */
+.fall-debris {
+  position: absolute;
+  transform-origin: center;
+  animation: fall-drift 6s ease-in-out infinite alternate;
+}
+.fall-debris svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* ---- upward speed lines (intensity driven by --fall-streak-o / --fall-streak-t) ---- */
+.fall-streaks {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: var(--fall-streak-o, 0);
+  transition: opacity 0.7s ease;
+}
+.fall-streak {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  border-radius: 1px;
+  background: linear-gradient(to top,
+    rgba(61, 240, 232, 0),
+    rgba(61, 240, 232, 0.5),
+    rgba(234, 246, 245, 0.75));
+  animation: fall-streak var(--fall-streak-t, 0.9s) linear infinite;
+}
+.fall-streak.g {
+  background: linear-gradient(to top,
+    rgba(245, 196, 83, 0),
+    rgba(245, 196, 83, 0.45),
+    rgba(234, 246, 245, 0.6));
+}
+@keyframes fall-streak {
+  from { transform: translateY(108vh); }
+  to   { transform: translateY(-45vh); }
+}
+
+/* ---- IMPACT white flash (stop 8) ---- */
+.fall-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: var(--fall-ink);
+  pointer-events: none;
+  animation: fall-flash 1s ease-out forwards;
+}
+@keyframes fall-flash {
+  0%   { opacity: 0; }
+  6%   { opacity: 1; }
+  55%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---- reduced-motion crossfade veil (only animates under reduced motion) ---- */
+.fall-stopfade {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--fall-bg);
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes fall-fadein {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ---- top strip (mirrors .cs-top) ---- */
+.fall-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  z-index: 7;
+}
+.fall-kicker {
+  font-family: var(--fall-f-mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--fall-ink-dim);
+  text-transform: uppercase;
+}
+.fall-dots {
+  display: flex;
+  gap: 7px;
+  margin-left: auto;
+}
+.fall-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(120, 210, 205, 0.18);
+  transition: all 0.25s ease;
+}
+.fall-dot.done { background: rgba(61, 240, 232, 0.45); }
+.fall-dot.on {
+  background: var(--fall-cyan);
+  box-shadow: 0 0 8px rgba(61, 240, 232, 0.7);
+  transform: scale(1.25);
+}
+.fall-depth {
+  font-family: var(--fall-f-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--fall-ink-dim);
+  min-width: 150px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+/* ---- copy panel (mirrors .cs-copy) ---- */
+.fall-copy {
+  position: absolute;
+  left: 50%;
+  bottom: 76px;
+  transform: translateX(-50%);
+  width: min(680px, calc(100% - 48px));
+  z-index: 7;
+  text-align: center;
+  animation: fall-copy-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes fall-copy-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.fall-line {
+  font-family: var(--fall-f-body);
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--fall-ink);
+  margin: 0 0 10px;
+  text-shadow: 0 2px 18px rgba(8, 8, 12, 0.9), 0 0 2px rgba(8, 8, 12, 1);
+  animation: fall-line-in 0.4s ease-out;
+}
+.fall-line strong, .fall-line b { color: var(--fall-cyan); font-weight: 600; }
+@keyframes fall-line-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---- continue affordance (mirrors .cs-continue) ---- */
+.fall-continue {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--fall-f-mono);
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  color: var(--fall-ink-dim);
+  z-index: 7;
+  animation: fall-cont-pulse 1.8s ease-in-out infinite;
+}
+.fall-continue.locked { animation: none; opacity: 0.35; }
+@keyframes fall-cont-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.3; }
+}
+
+/* ---- in-art animation helpers (SVG groups) ---- */
+.fall-a-rise {
+  animation: fall-rise 0.9s linear infinite;
+}
+@keyframes fall-rise {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-192px); }
+}
+
+.fall-a-up {
+  animation: fall-up 4s ease-in-out infinite alternate;
+}
+@keyframes fall-up {
+  from { transform: translateY(26px); }
+  to   { transform: translateY(-26px); }
+}
+
+.fall-a-pulse {
+  animation: fall-pulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes fall-pulse {
+  from { opacity: 0.45; }
+  to   { opacity: 0.95; }
+}
+
+.fall-a-flicker {
+  animation: fall-flicker 3.4s linear infinite;
+}
+@keyframes fall-flicker {
+  0%, 100% { opacity: 0.85; }
+  8%  { opacity: 0.3; }
+  12% { opacity: 0.8; }
+  38% { opacity: 0.55; }
+  46% { opacity: 0.85; }
+  72% { opacity: 0.4; }
+  78% { opacity: 0.8; }
+}
+
+.fall-a-thread {
+  animation: fall-thread 2.2s linear infinite;
+}
+@keyframes fall-thread {
+  to { stroke-dashoffset: -208; }
+}
+
+.fall-a-drift {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fall-drift 5.5s ease-in-out infinite alternate;
+}
+@keyframes fall-drift {
+  from { transform: translateY(-8px)  rotate(var(--r, 0deg)); }
+  to   { transform: translateY(10px) rotate(calc(var(--r, 0deg) + 7deg)); }
+}
+
+.fall-a-dust {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fall-dust 4s linear infinite;
+}
+@keyframes fall-dust {
+  0%   { transform: translateY(0);     opacity: 0; }
+  18%  { opacity: 0.7; }
+  100% { transform: translateY(-70px); opacity: 0; }
+}
+
+.fall-a-mark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fall-mark 1.6s ease-in-out infinite alternate;
+}
+@keyframes fall-mark {
+  from { opacity: 0.35; transform: scale(1); }
+  to   { opacity: 0.95; transform: scale(1.25); }
+}
+
+.fall-a-wave {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fall-wave 2.8s ease-in-out infinite alternate;
+}
+@keyframes fall-wave {
+  from { opacity: 0.06; transform: translateX(24px); }
+  to   { opacity: 0.5;  transform: translateX(-14px); }
+}
+
+.fall-a-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fall-eye 7s ease-in-out infinite alternate;
+}
+@keyframes fall-eye {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-6px, -10px); }
+}
+
+/* ---- reduced motion: collapse the fall to simple fades ---- */
+@media (prefers-reduced-motion: reduce) {
+  .fall-layer { transition: none; }
+  .fall-streaks { display: none; }
+  .fall-stopfade { animation: fall-fadein 0.45s ease-out both; }
+  .fall-a-rise, .fall-a-up, .fall-a-pulse, .fall-a-flicker, .fall-a-thread,
+  .fall-a-drift, .fall-a-dust, .fall-a-wave, .fall-a-eye,
+  .fall-debris { animation: none; }
+  .fall-a-mark { animation-duration: 3.2s; } /* keep the mark's gentle pulse — it's story-critical */
+  .fall-flash { animation-duration: 0.6s; }
+}
+
+/* ---- responsive (CLAUDE.md: 1100 / 768 / 480) ---- */
+@media (max-width: 1100px) {
+  .fall-depth { min-width: 120px; }
+}
+@media (max-width: 768px) {
+  .fall-copy { bottom: 64px; }
+  .fall-line { font-size: 16px; }
+  .fall-depth { display: none; }
+}
+@media (max-width: 480px) {
+  .fall-top { padding: 14px 16px; }
+  .fall-copy { bottom: 56px; width: calc(100% - 32px); }
+  .fall-line { font-size: 15px; line-height: 1.5; }
+}

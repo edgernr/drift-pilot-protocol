@@ -613,7 +613,7 @@ export default function ArenaShell({ config }) {
           <span className="ar-hud-hp-val">{playerHP}/{PLAYER_HP_MAX}</span>
         </div>
         <div className="ar-hud-region">{config.region} · GATE {String(config.gateNum).padStart(2, '0')}</div>
-        <div className="ar-hud-right">● KIRA ON</div>
+        <div className="ar-hud-right">● VERA ON</div>
       </div>
 
       {/* ── Overlays ───────────────────────────────────────────────────────────── */}
@@ -622,7 +622,7 @@ export default function ArenaShell({ config }) {
         <div className="ar-fell-overlay">
           <div className="ar-fell-inner">
             <div className="ar-fell-title">DAEMON FELL</div>
-            <div className="ar-fell-sub">KIRA // HANDLER</div>
+            <div className="ar-fell-sub">VERA // HANDLER</div>
             <div className="ar-fell-progress">
               {passedCount > 0
                 ? `${passedCount}/${config.wards.length} checks survived — no progress lost.`

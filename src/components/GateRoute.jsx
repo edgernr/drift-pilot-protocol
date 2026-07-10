@@ -8,6 +8,12 @@ export default function GateRoute({ requires = [], unlockKey = null, children })
   if (!profile) return null
   // Admins can open any gate regardless of prerequisites.
   if (profile.is_admin) return children
+  // Season 01: brand-new hunters cannot enter ANY gate before "Zero Hour".
+  // Strict `=== false` — if the prologue_done migration hasn't run, the column
+  // is undefined and this guard stays inert (old behavior preserved).
+  if (profile.prologue_done === false && (profile.questsCompleted ?? 0) === 0) {
+    return <Navigate to="/prologue" replace />
+  }
   const hasUnlock = unlockKey ? profile.unlockedGateIds?.has(unlockKey) : false
   if (!hasUnlock && requires.some(id => !profile.completedQuestIds?.has(id))) {
     return <Navigate to="/dashboard" replace />

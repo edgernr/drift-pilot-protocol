@@ -1,0 +1,209 @@
+/* ============================================================
+   CS-1 "RUPTURE" — scene art styles (procedural SVG/CSS only)
+   Scoped prefix: .cs1-   Palette: #08080c / #3df0e8 / #f5c453 / #ff3d8b / #eaf6f5
+   Fast cuts: pulse timings 0.4–0.8s throughout.
+   ============================================================ */
+
+.cs1-fill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #08080c;
+}
+.cs1-fill svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cs1-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.cs1-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.cs1-display { font-family: 'Saira Condensed', 'Arial Narrow', sans-serif; }
+
+/* ---- card 1 — the exam floor tilts one degree ---- */
+.cs1-tilt {
+  position: absolute;
+  inset: -3%;
+  transform-origin: 50% 62%;
+  animation: cs1-tilt 2.4s cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+}
+.cs1-shudder {
+  position: absolute;
+  inset: 0;
+  animation: cs1-shudder 0.5s steps(2, end) infinite;
+}
+@keyframes cs1-tilt {
+  0%   { transform: rotate(0deg)    scale(1.05); }
+  40%  { transform: rotate(0.15deg) scale(1.05); }
+  70%  { transform: rotate(0.7deg)  scale(1.055); }
+  100% { transform: rotate(1deg)    scale(1.06); }
+}
+@keyframes cs1-shudder {
+  0%, 100% { transform: translate(0, 0); }
+  25%      { transform: translate(1.6px, -1px); }
+  50%      { transform: translate(-1.4px, 1.2px); }
+  75%      { transform: translate(1px, 1.4px); }
+}
+.cs1-drone { animation: cs1-bob 1.1s ease-in-out infinite alternate; }
+.cs1-drone.cs1-d2 { animation-duration: 0.9s; animation-delay: 0.25s; }
+.cs1-drone.cs1-d3 { animation-duration: 1.3s; animation-delay: 0.5s; }
+@keyframes cs1-bob {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-7px); }
+}
+.cs1-dot { animation: cs1-blink 0.8s steps(2, start) infinite; }
+@keyframes cs1-blink { 50% { opacity: 0.1; } }
+.cs1-glasslight { animation: cs1-glasslight 0.7s ease-in-out infinite alternate; }
+@keyframes cs1-glasslight { from { opacity: 0.7; } to { opacity: 1; } }
+
+/* ---- card 2 — every HUD element flashes crimson; klaxon bars ---- */
+.cs1-strobe  { animation: cs1-strobe 0.5s steps(2, start) infinite; }
+.cs1-strobe2 { animation: cs1-strobe 0.5s steps(2, start) infinite 0.25s; }
+@keyframes cs1-strobe { 50% { opacity: 0.25; } }
+.cs1-sweep   { animation: cs1-sweepL 0.5s linear infinite; }
+.cs1-sweep-r { animation: cs1-sweepR 0.5s linear infinite; }
+@keyframes cs1-sweepL { to { transform: translateX(-132px); } }
+@keyframes cs1-sweepR { to { transform: translateX(132px); } }
+.cs1-null { animation: cs1-nullflicker 0.55s steps(3, end) infinite; }
+@keyframes cs1-nullflicker {
+  0%, 100% { opacity: 1; }
+  40%      { opacity: 0.6; }
+  70%      { opacity: 0.9; }
+}
+.cs1-null-ghost { animation: cs1-ghost 0.4s steps(2, end) infinite; }
+@keyframes cs1-ghost {
+  0%, 100% { opacity: 0.35; transform: translateX(0); }
+  50%      { opacity: 0.12; transform: translateX(-7px); }
+}
+.cs1-cursor { animation: cs1-blink 0.6s steps(2, start) infinite; }
+.cs1-vign {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 61, 139, 0) 42%, rgba(255, 61, 139, 0.16) 100%);
+  animation: cs1-strobe 0.5s steps(2, start) infinite;
+  pointer-events: none;
+}
+.cs1-scan {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(to bottom, rgba(8, 8, 12, 0) 0 3px, rgba(8, 8, 12, 0.38) 3px 4px);
+  pointer-events: none;
+}
+
+/* ---- card 3 — the far wall peels into a magenta tear ---- */
+.cs1-tear-open {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: cs1-tearOpen 1.4s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+@keyframes cs1-tearOpen {
+  from { transform: scale(0.55, 0.12); opacity: 0.4; }
+  to   { transform: scale(1, 1); opacity: 1; }
+}
+.cs1-tear-pulse {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: cs1-tearPulse 0.6s ease-in-out infinite alternate;
+}
+@keyframes cs1-tearPulse {
+  from { transform: scale(1, 1); }
+  to   { transform: scale(1.05, 1.02); }
+}
+.cs1-static { animation: cs1-blink 0.4s steps(2, start) infinite; }
+.cs1-static.cs1-s2 { animation-delay: 0.15s; }
+.cs1-static.cs1-s3 { animation-delay: 0.3s; }
+.cs1-frag {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: cs1-frag 0.8s ease-out infinite;
+}
+.cs1-frag.cs1-f2 { animation-delay: 0.2s; }
+.cs1-frag.cs1-f3 { animation-delay: 0.45s; }
+.cs1-frag.cs1-f4 { animation-delay: 0.6s; }
+@keyframes cs1-frag {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  25%  { opacity: 0.9; }
+  100% { transform: translate(28px, -16px) rotate(20deg); opacity: 0; }
+}
+.cs1-proctor {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: cs1-turn 1.1s ease-out forwards;
+}
+.cs1-proctor.cs1-p2 { animation-delay: 0.15s; }
+.cs1-proctor.cs1-p3 { animation-delay: 0.3s; }
+.cs1-proctor.cs1-p4 { animation-delay: 0.45s; }
+@keyframes cs1-turn {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(3deg); }
+}
+
+/* ---- card 4 — GORGOROTH fills the tear ---- */
+.cs1-aura { animation: cs1-aurapulse 0.6s ease-in-out infinite alternate; }
+@keyframes cs1-aurapulse {
+  from { opacity: 0.35; }
+  to   { opacity: 0.85; }
+}
+.cs1-vein {
+  stroke-dasharray: 9 13;
+  animation: cs1-veinflow 0.75s linear infinite, cs1-veinpulse 0.75s ease-in-out infinite alternate;
+}
+.cs1-vein.cs1-v2 { animation-delay: 0.12s, 0.12s; }
+.cs1-vein.cs1-v3 { animation-delay: 0.24s, 0.24s; }
+.cs1-vein.cs1-v4 { animation-delay: 0.36s, 0.36s; }
+.cs1-vein.cs1-v5 { animation-delay: 0.48s, 0.48s; }
+.cs1-vein.cs1-v6 { animation-delay: 0.6s, 0.6s; }
+@keyframes cs1-veinflow { to { stroke-dashoffset: -44; } }
+@keyframes cs1-veinpulse {
+  from { opacity: 0.55; }
+  to   { opacity: 1; }
+}
+.cs1-eye { animation: cs1-eyeflicker 0.45s steps(2, end) infinite; }
+@keyframes cs1-eyeflicker {
+  0%, 100% { opacity: 1; }
+  55%      { opacity: 0.55; }
+}
+.cs1-breath {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  opacity: 0;
+  animation: cs1-breathL 1.4s ease-out infinite;
+}
+.cs1-breath.cs1-bR { animation-name: cs1-breathR; }
+.cs1-breath.cs1-b2 { animation-delay: 0.45s; }
+.cs1-breath.cs1-b3 { animation-delay: 0.9s; }
+@keyframes cs1-breathL {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
+  18%  { opacity: 0.4; }
+  100% { transform: translate(-56px, 34px) scale(1.7); opacity: 0; }
+}
+@keyframes cs1-breathR {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
+  18%  { opacity: 0.4; }
+  100% { transform: translate(52px, 30px) scale(1.7); opacity: 0; }
+}
+.cs1-glyph { opacity: 0; animation: cs1-glyphdrift 1.6s linear infinite; }
+.cs1-glyph.cs1-g2 { animation-delay: 0.55s; }
+.cs1-glyph.cs1-g3 { animation-delay: 1.05s; }
+@keyframes cs1-glyphdrift {
+  0%   { transform: translateY(0); opacity: 0; }
+  25%  { opacity: 0.5; }
+  100% { transform: translateY(22px); opacity: 0; }
+}
+
+/* ---- reduced motion: kill the heavy animation, keep the composition ---- */
+@media (prefers-reduced-motion: reduce) {
+  .cs1-tilt, .cs1-shudder, .cs1-drone, .cs1-dot, .cs1-glasslight,
+  .cs1-strobe, .cs1-strobe2, .cs1-sweep, .cs1-sweep-r, .cs1-null,
+  .cs1-null-ghost, .cs1-cursor, .cs1-vign,
+  .cs1-tear-open, .cs1-tear-pulse, .cs1-static, .cs1-frag, .cs1-proctor,
+  .cs1-aura, .cs1-vein, .cs1-eye, .cs1-breath, .cs1-glyph {
+    animation: none !important;
+  }
+  .cs1-tilt { transform: rotate(1deg) scale(1.06); }
+  .cs1-breath { opacity: 0.25; }
+  .cs1-glyph { opacity: 0.3; }
+}

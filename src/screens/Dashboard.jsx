@@ -111,9 +111,10 @@ export default function Dashboard() {
     localStorage.setItem('hunt-card-variant', cardVariant)
   }, [cardVariant])
 
-  useEffect(() => {
-    if (profile?.is_parent) goto('academy/dashboard')
-  }, [profile?.is_parent, goto])
+  // Academy hidden — is_parent redirect disabled
+  // useEffect(() => {
+  //   if (profile?.is_parent) goto('academy/dashboard')
+  // }, [profile?.is_parent, goto])
 
   useEffect(() => {
     localStorage.setItem('dash-view', view)
@@ -132,7 +133,16 @@ export default function Dashboard() {
     })
   }, [view, isAdmin])
 
-  const showWelcome = !welcomed && (profile?.questsCompleted ?? 0) === 0
+  // Season 01 prologue gating: brand-new hunters play "Zero Hour" before HQ.
+  // Strictly `=== false` — if the prologue_done migration hasn't run yet the
+  // column is undefined and nobody gets redirected.
+  const needsPrologue = profile?.prologue_done === false && (profile?.questsCompleted ?? 0) === 0
+  useEffect(() => {
+    if (needsPrologue) goto('prologue')
+  }, [needsPrologue, goto])
+
+  // Welcome modal yields to the prologue (which replaces its teaching role).
+  const showWelcome = !welcomed && (profile?.questsCompleted ?? 0) === 0 && !needsPrologue
 
   function dismissWelcome(andGo) {
     localStorage.setItem('hp_welcomed', '1')

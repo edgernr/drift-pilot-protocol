@@ -107,6 +107,28 @@ export function CombatProvider({ children }) {
     if (nextHP === 0) fall()
   }
 
+  // Scripted encounters only (prologue): enemy HP regenerates.
+  // Never changes phase; never triggers win/fall. Emits 'regen' for VFX.
+  function healEnemy(amount) {
+    if (phaseRef.current !== 'active') return
+    const healed = Math.min(ENEMY_HP_MAX, enemyHPRef.current + amount) - enemyHPRef.current
+    if (healed <= 0) return
+    const nextHP = enemyHPRef.current + healed
+    _setEnemy(nextHP)
+    emit('regen', { amount: healed, newEnemyHP: nextHP })
+  }
+
+  // Scripted encounters only (prologue): an authored hit on the player.
+  // Same damage semantics as the resolvers; falls at 0 like everything else.
+  function scriptedDamage(amount, source = 'scripted') {
+    if (phaseRef.current !== 'active') return
+    const nextHP = Math.max(0, playerHPRef.current - amount)
+    _setPlayer(nextHP)
+    _setCombo(0)
+    emit('damage', { amount, source, newPlayerHP: nextHP })
+    if (nextHP === 0) fall()
+  }
+
   // Player HP hit 0 — show fell screen, combo reset, no progress lost.
   function fall() {
     _setCombo(0)
@@ -142,6 +164,7 @@ export function CombatProvider({ children }) {
       damagePerCheck: dmgPerCheck.current,
       comboMult: comboMultiplier(combo),
       startEncounter, resolveCheck, resolveQuiz, resolveExecError, bleedDamage,
+      healEnemy, scriptedDamage,
       fall, win, respawn, resetEncounter,
       PLAYER_HP_MAX, ENEMY_HP_MAX, COMBAT_DAMAGE,
     }}>
