@@ -6,6 +6,7 @@ import { on } from '../lib/combatBus'
 import Daemon from './Daemon'
 import { ENEMY_SVGS } from './EnemySVGs'
 import { GORGOROTH_SCRIPT, CORRUPTIONS } from '../data/gates/prologueGorgoroth'
+import { createBossTimeline } from '../lib/bossTimeline'
 import './ArenaShell.css'
 import './PrologueEncounter.css'
 
@@ -88,7 +89,7 @@ export default function PrologueEncounter({ config, onWin, onLoss }) {
   const projIdRef = useRef(0)
   const hitCountRef = useRef(0)
   const corruptIdxRef = useRef(0)
-  const timersRef = useRef([])
+  const timelineRef = useRef(null)
   const bossHurtTimerRef = useRef(null)
   const prevPlayerHPRef = useRef(playerHP)
   const prevEnemyHPRef = useRef(enemyHP)
@@ -96,7 +97,6 @@ export default function PrologueEncounter({ config, onWin, onLoss }) {
   const winFiredRef = useRef(false)
   const corruptStartedRef = useRef(false)
   const escalatedRef = useRef(false)
-  const finisherIdRef = useRef(null)
   const aggroIdxRef = useRef(0)
 
   useEffect(() => { codeRef.current = code }, [code])
@@ -105,12 +105,6 @@ export default function PrologueEncounter({ config, onWin, onLoss }) {
   useEffect(() => { resolveCheckRef.current = resolveCheck }, [resolveCheck])
   useEffect(() => { healEnemyRef.current = healEnemy }, [healEnemy])
   useEffect(() => { scriptedDamageRef.current = scriptedDamage }, [scriptedDamage])
-
-  const pushTimer = useCallback((id) => { timersRef.current.push(id); return id }, [])
-  const clearTimers = useCallback(() => {
-    timersRef.current.forEach(id => { clearTimeout(id); clearInterval(id) })
-    timersRef.current = []
-  }, [])
 
   // ─── Comms helper ──────────────────────────────────────────────────────────
   const say = useCallback((msg, urgent = false) => {
@@ -188,16 +182,16 @@ export default function PrologueEncounter({ config, onWin, onLoss }) {
 
   const finisher = useCallback(() => {
     if (lossFiredRef.current) return
-    clearTimers()
+    timelineRef.current?.stop()
     setFinisherStage(1)
     bossAttackFx()
     camRef.current.trauma = 1.0
     camRef.current.punchZoom = 0.16
     say(config.script.finisher, true)
-    pushTimer(setTimeout(() => {
+    timelineRef.current?.after(650, () => {
       scriptedDamageRef.current?.(GORGOROTH_SCRIPT.finisher.damage, 'gorgoroth')
-    }, 650))
-  }, [clearTimers, pushTimer, bossAttackFx, say, config.script.finisher])
+    })
+  }, [bossAttackFx, say, config.script.finisher])
 
   const corruptTickRef = useRef(corruptTick)
   const aggroStrikeRef = useRef(aggroStrike)
@@ -206,45 +200,54 @@ export default function PrologueEncounter({ config, onWin, onLoss }) {
   useEffect(() => { aggroStrikeRef.current = aggroStrike }, [aggroStrike])
   useEffect(() => { finisherRef.current = finisher }, [finisher])
 
-  // Reschedulable pieces (escalation pulls them forward when the player is done early)
+  // Corruption start is deduped (scheduled path + escalation path can race);
+  // the repeating tick is a dynamic interval on the timeline.
   const startCorruption = useCallback(() => {
     if (corruptStartedRef.current || lossFiredRef.current) return
     corruptStartedRef.current = true
     corruptTickRef.current?.()
-    pushTimer(setInterval(() => corruptTickRef.current?.(), GORGOROTH_SCRIPT.corrupt.intervalMs))
-  }, [pushTimer])
+    timelineRef.current?.every(GORGOROTH_SCRIPT.corrupt.intervalMs, () => corruptTickRef.current?.())
+  }, [])
+  const startCorruptionRef = useRef(startCorruption)
+  useEffect(() => { startCorruptionRef.current = startCorruption }, [startCorruption])
 
-  const armFinisher = useCallback((delayMs) => {
-    clearTimeout(finisherIdRef.current)
-    finisherIdRef.current = pushTimer(setTimeout(() => finisherRef.current?.(), delayMs))
-  }, [pushTimer])
-
-  // ─── Start + scripted timeline ──────────────────────────────────────────────
-  // StrictMode-safe: NO run-once ref guard. The dev double-mount runs
-  // effect → cleanup (clears every timer) → effect again — a guard would leave
-  // the second mount with zero timers and a boss that never acts (the exact
-  // "he just stands there" bug). Arming is idempotent per mount; cleanup owns
-  // the teardown.
+  // ─── Start + scripted timeline (bossTimeline module — bible §7) ─────────────
+  // StrictMode-safe by module contract: arm on every effect run, cleanup owns
+  // teardown (see PROGRESS.md 2026-07-09 — never guard arming behind a ref
+  // that survives the dev double-mount).
   useEffect(() => {
     startEncounter(rigged ? GORGOROTH_SCRIPT.hpChecks : config.wards.length)
-    if (!rigged) return undefined
 
     const S = GORGOROTH_SCRIPT
     corruptStartedRef.current = false
     escalatedRef.current = false
 
-    pushTimer(setTimeout(() => {
-      setRegenActive(true)
-      say(config.script.regen, true)
-      pushTimer(setInterval(() => healEnemyRef.current?.(S.regen.perTick), S.regen.tickMs))
-      // his blood is awake — he starts swinging back
-      pushTimer(setInterval(() => aggroStrikeRef.current?.(), S.aggro.everyMs))
-    }, S.regen.delayMs))
-
-    pushTimer(setTimeout(() => startCorruption(), S.corrupt.afterMs))
-    armFinisher(S.finisher.afterMs)
-
-    return clearTimers
+    const tl = createBossTimeline(
+      rigged
+        ? {
+            schedule: [
+              { at: S.regen.delayMs, action: 'regenAnnounce' },
+              { at: S.corrupt.afterMs, action: 'corruptStart' },
+              { at: S.finisher.afterMs, action: 'finisher' },
+            ],
+            intervals: [
+              // first heal lands at delay+tick; his blood wakes, then he swings
+              { after: S.regen.delayMs, every: S.regen.tickMs, action: 'regenTick' },
+              { after: S.regen.delayMs, every: S.aggro.everyMs, action: 'aggro' },
+            ],
+          }
+        : { schedule: [], intervals: [] }, // exam: no script — timeline still hosts ad-hoc timers (kill-shot)
+      {
+        regenAnnounce: () => { setRegenActive(true); say(config.script.regen, true) },
+        regenTick: () => healEnemyRef.current?.(S.regen.perTick),
+        aggro: () => aggroStrikeRef.current?.(),
+        corruptStart: () => startCorruptionRef.current?.(),
+        finisher: () => finisherRef.current?.(),
+      }
+    )
+    timelineRef.current = tl
+    tl.start()
+    return () => { tl.stop(); timelineRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── GSAP virtual camera (ArenaShell pattern: --cx/--cy/--cz on the arena) ──
@@ -275,38 +278,39 @@ export default function PrologueEncounter({ config, onWin, onLoss }) {
   useEffect(() => {
     if (phase !== 'fell' || lossFiredRef.current) return
     lossFiredRef.current = true
-    clearTimers()
+    timelineRef.current?.stop()
     setFinisherStage(2)
     const t = setTimeout(() => onLoss?.(), GORGOROTH_SCRIPT.lossHoldMs)
     return () => clearTimeout(t)
-  }, [phase, onLoss, clearTimers])
+  }, [phase, onLoss])
 
   // ─── Win flow (exam only): kill-shot cinematic → overlay → onWin ───────────
   const launchKillShot = useCallback(() => {
     if (winFiredRef.current) return
     winFiredRef.current = true
+    const tl = timelineRef.current
     say(config.script.win)
     setDaemonState('fury')
     setDaemonAnimKey(k => k + 1)
-    pushTimer(setTimeout(() => {
+    tl?.after(450, () => {
       setShowKillFlash(true)
       camRef.current.trauma = 1.0
       camRef.current.punchZoom = 0.18
-      pushTimer(setTimeout(() => setShowKillFlash(false), 1100))
-    }, 450))
-    pushTimer(setTimeout(() => {
+      tl?.after(1100, () => setShowKillFlash(false))
+    })
+    tl?.after(700, () => {
       const pid = ++projIdRef.current
       setProjectiles(prev => [...prev, { id: pid, killShot: true }])
-      pushTimer(setTimeout(() => setProjectiles(prev => prev.filter(p => p.id !== pid)), 900))
-    }, 700))
-    pushTimer(setTimeout(() => {
+      tl?.after(900, () => setProjectiles(prev => prev.filter(p => p.id !== pid)))
+    })
+    tl?.after(980, () => {
       gsap.globalTimeline.pause()
       camRef.current.trauma = 1.0
       setTimeout(() => gsap.globalTimeline.resume(), 140)
       setBossDeathActive(true)
-    }, 980))
-    pushTimer(setTimeout(() => setShowWin(true), 2300))
-  }, [pushTimer, say, config.script.win])
+    })
+    tl?.after(2300, () => setShowWin(true))
+  }, [say, config.script.win])
 
   useEffect(() => {
     if (phase === 'won' && !rigged) launchKillShot()
@@ -388,10 +392,10 @@ export default function PrologueEncounter({ config, onWin, onLoss }) {
       escalatedRef.current = true
       const E = GORGOROTH_SCRIPT.escalate
       if (config.script.allStruck) say(config.script.allStruck, true)
-      pushTimer(setTimeout(() => startCorruption(), E.corruptDelayMs))
-      armFinisher(E.finisherDelayMs)
+      timelineRef.current?.after(E.corruptDelayMs, () => startCorruptionRef.current?.())
+      timelineRef.current?.reschedule('finisher', E.finisherDelayMs)
     }
-  }, [phase, evalWards, config, say, rigged, pushTimer, startCorruption, armFinisher])
+  }, [phase, evalWards, config, say, rigged])
 
   // ─── Draggable code panel (ArenaShell pattern) ─────────────────────────────
   const onPanelDragStart = useCallback((e) => {
