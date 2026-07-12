@@ -386,14 +386,304 @@ function GorgorothSVG() {
   )
 }
 
+function WhiteVoidSVG() {
+  // THE WHITE VOID — Gate 06 boss — an erasure entity, a rising white-out.
+  // Inverted design: a pale negative-space mass (#eaf6f5 + faint cyan) dissolving the
+  // grid from the top down — lines fading to nothing. Reads as absence, not creature.
+  return (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="dtab-enemy-svg">
+      <defs>
+        <radialGradient id="wv-mass" cx="50%" cy="45%" r="58%">
+          <stop offset="0%" stopColor="#eaf6f5" stopOpacity="0.55"/>
+          <stop offset="55%" stopColor="#eaf6f5" stopOpacity="0.2"/>
+          <stop offset="100%" stopColor="#eaf6f5" stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id="wv-fade" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stopColor="#3df0e8" stopOpacity="0.5"/>
+          <stop offset="65%" stopColor="#3df0e8" stopOpacity="0.15"/>
+          <stop offset="100%" stopColor="#3df0e8" stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      {/* The white-out — a shapeless descending absence, brightest at its heart */}
+      <ellipse cx="60" cy="42" rx="42" ry="34" fill="url(#wv-mass)"/>
+      <ellipse cx="60" cy="40" rx="27" ry="21" fill="rgba(234,246,245,0.14)"/>
+      <ellipse cx="60" cy="38" rx="15" ry="12" fill="rgba(234,246,245,0.26)"/>
+      {/* Irregular bleach lobes pushing outward — the leading edge of erasure */}
+      <ellipse cx="34" cy="52" rx="14" ry="9" fill="rgba(234,246,245,0.1)"/>
+      <ellipse cx="88" cy="48" rx="12" ry="8" fill="rgba(234,246,245,0.1)"/>
+      <ellipse cx="70" cy="60" rx="10" ry="6" fill="rgba(234,246,245,0.08)"/>
+      {/* The grid floor — still intact at the base */}
+      <line x1="12" y1="108" x2="108" y2="108" stroke="#3df0e8" strokeWidth="1" opacity="0.55"/>
+      <line x1="14" y1="96" x2="106" y2="96" stroke="#3df0e8" strokeWidth="0.8" opacity="0.4"/>
+      {/* Rising rows decay into dashes, then into nothing */}
+      <line x1="18" y1="84" x2="102" y2="84" stroke="#3df0e8" strokeWidth="0.7" opacity="0.28" strokeDasharray="8 5"/>
+      <line x1="24" y1="72" x2="96" y2="72" stroke="#3df0e8" strokeWidth="0.6" opacity="0.18" strokeDasharray="4 7"/>
+      <line x1="32" y1="61" x2="88" y2="61" stroke="#3df0e8" strokeWidth="0.5" opacity="0.1" strokeDasharray="2 10"/>
+      {/* Grid columns fading upward into the mass */}
+      <line x1="30" y1="110" x2="30" y2="58" stroke="url(#wv-fade)" strokeWidth="0.8"/>
+      <line x1="50" y1="110" x2="50" y2="48" stroke="url(#wv-fade)" strokeWidth="0.8"/>
+      <line x1="70" y1="110" x2="70" y2="48" stroke="url(#wv-fade)" strokeWidth="0.8"/>
+      <line x1="90" y1="110" x2="90" y2="58" stroke="url(#wv-fade)" strokeWidth="0.8"/>
+      {/* Half-eaten cells at the bleach line — top edges already gone */}
+      <path d="M36 78 L36 90 L48 90 L48 78" stroke="#3df0e8" strokeWidth="0.7" opacity="0.32"/>
+      <path d="M56 74 L56 88 L70 88" stroke="#3df0e8" strokeWidth="0.7" opacity="0.26"/>
+      <path d="M78 82 L78 92 L92 92 L92 86" stroke="#3df0e8" strokeWidth="0.6" opacity="0.22"/>
+      {/* Matter becoming nothing — stray dissolving points */}
+      <circle cx="42" cy="66" r="1" fill="#eaf6f5" opacity="0.5"/>
+      <circle cx="63" cy="56" r="0.8" fill="#eaf6f5" opacity="0.4"/>
+      <circle cx="81" cy="64" r="1.1" fill="#eaf6f5" opacity="0.45"/>
+      <circle cx="52" cy="70" r="0.7" fill="#3df0e8" opacity="0.3"/>
+      <circle cx="73" cy="71" r="0.6" fill="#3df0e8" opacity="0.25"/>
+      <circle cx="60" cy="64" r="0.9" fill="#eaf6f5" opacity="0.35"/>
+      {/* The same declaration, progressively erased as it rises */}
+      <text x="24" y="104" fill="rgba(61,240,232,0.35)" fontSize="6" fontFamily="JetBrains Mono, monospace">grid-template</text>
+      <text x="24" y="92" fill="rgba(61,240,232,0.2)" fontSize="6" fontFamily="JetBrains Mono, monospace">grid-temp</text>
+      <text x="24" y="80" fill="rgba(234,246,245,0.16)" fontSize="6" fontFamily="JetBrains Mono, monospace">grid-</text>
+      <text x="24" y="68" fill="rgba(234,246,245,0.1)" fontSize="6" fontFamily="JetBrains Mono, monospace">g</text>
+    </svg>
+  )
+}
+
+function InertSVG() {
+  // THE INERT — Gate 07 — a dead interface with no pulse.
+  // A flatlined-oscilloscope entity: heavy dark panel body, one flat line across its
+  // heart, rows of unlit control nodes. Deliberately still — nothing glows, nothing moves.
+  return (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="dtab-enemy-svg">
+      {/* Planted feet — it is not going anywhere */}
+      <rect x="26" y="98" width="18" height="8" fill="rgba(15,20,22,0.9)" stroke="rgba(61,240,232,0.2)" strokeWidth="0.8"/>
+      <rect x="76" y="98" width="18" height="8" fill="rgba(15,20,22,0.9)" stroke="rgba(61,240,232,0.2)" strokeWidth="0.8"/>
+      {/* Heavy slab body */}
+      <rect x="20" y="22" width="80" height="76" rx="3" fill="rgba(10,14,16,0.92)" stroke="rgba(61,240,232,0.35)" strokeWidth="1.2"/>
+      <rect x="24" y="26" width="72" height="68" rx="2" stroke="rgba(61,240,232,0.12)" strokeWidth="0.6"/>
+      {/* Oscilloscope screen — its chest */}
+      <rect x="30" y="34" width="60" height="30" rx="1.5" fill="rgba(5,8,10,0.95)" stroke="rgba(61,240,232,0.3)" strokeWidth="1"/>
+      {/* Faint graticule */}
+      <line x1="45" y1="36" x2="45" y2="62" stroke="#3df0e8" strokeWidth="0.4" opacity="0.08"/>
+      <line x1="60" y1="36" x2="60" y2="62" stroke="#3df0e8" strokeWidth="0.4" opacity="0.08"/>
+      <line x1="75" y1="36" x2="75" y2="62" stroke="#3df0e8" strokeWidth="0.4" opacity="0.08"/>
+      <line x1="32" y1="42" x2="88" y2="42" stroke="#3df0e8" strokeWidth="0.4" opacity="0.06"/>
+      <line x1="32" y1="56" x2="88" y2="56" stroke="#3df0e8" strokeWidth="0.4" opacity="0.06"/>
+      {/* The last heartbeat — a ghost of a blip, long gone */}
+      <path d="M34 49 L38 49 L40 45 L42 53 L44 49" stroke="#3df0e8" strokeWidth="0.7" opacity="0.1"/>
+      {/* The flatline across its heart */}
+      <line x1="44" y1="49" x2="88" y2="49" stroke="#3df0e8" strokeWidth="1.3" opacity="0.55"/>
+      {/* Unlit control nodes — two dead rows */}
+      <circle cx="38" cy="74" r="2.6" stroke="rgba(61,240,232,0.22)" strokeWidth="0.8"/>
+      <circle cx="49" cy="74" r="2.6" stroke="rgba(61,240,232,0.18)" strokeWidth="0.8"/>
+      <circle cx="60" cy="74" r="2.6" stroke="rgba(61,240,232,0.22)" strokeWidth="0.8"/>
+      <circle cx="71" cy="74" r="2.6" stroke="rgba(61,240,232,0.18)" strokeWidth="0.8"/>
+      <circle cx="82" cy="74" r="2.6" stroke="rgba(61,240,232,0.22)" strokeWidth="0.8"/>
+      <rect x="35" y="82" width="10" height="4" rx="1" stroke="rgba(245,196,83,0.18)" strokeWidth="0.7"/>
+      <rect x="55" y="82" width="10" height="4" rx="1" stroke="rgba(245,196,83,0.14)" strokeWidth="0.7"/>
+      <rect x="75" y="82" width="10" height="4" rx="1" stroke="rgba(245,196,83,0.18)" strokeWidth="0.7"/>
+      {/* Dead power stud — the one thing that should glow, and doesn't */}
+      <circle cx="60" cy="90.5" r="2.2" stroke="rgba(234,246,245,0.25)" strokeWidth="0.7"/>
+      <line x1="60" y1="88.8" x2="60" y2="90.5" stroke="rgba(234,246,245,0.25)" strokeWidth="0.7"/>
+      {/* Vitals stamp */}
+      <text x="60" y="16" textAnchor="middle" fill="rgba(234,246,245,0.18)" fontSize="6" fontFamily="JetBrains Mono, monospace">0 BPM · NO RESPONSE</text>
+    </svg>
+  )
+}
+
+function StackSVG() {
+  // THE STACK — Gate 08 elite — crushing compression.
+  // Heavy gold-edged slabs (each stamped with a shrinking breakpoint) pressing down on
+  // one thin squeezed column; magenta strain glow escaping between the slabs.
+  return (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="dtab-enemy-svg">
+      <defs>
+        <filter id="stk-glow" x="-30%" y="-300%" width="160%" height="700%">
+          <feGaussianBlur stdDeviation="1.4"/>
+        </filter>
+      </defs>
+      {/* Force chevrons — the press coming down */}
+      <path d="M52 5 L60 11 L68 5" stroke="#f5c453" strokeWidth="1.4" opacity="0.6" strokeLinecap="round"/>
+      <path d="M54 12 L60 17 L66 12" stroke="#f5c453" strokeWidth="1.1" opacity="0.35" strokeLinecap="round"/>
+      {/* Slab pile — narrowing as the pressure focuses */}
+      <rect x="14" y="21" width="92" height="12" fill="rgba(245,196,83,0.06)" stroke="#f5c453" strokeWidth="1.6" opacity="0.85"/>
+      <rect x="20" y="37" width="80" height="11" fill="rgba(245,196,83,0.05)" stroke="#f5c453" strokeWidth="1.4" opacity="0.75"/>
+      <rect x="26" y="52" width="68" height="10" fill="rgba(245,196,83,0.05)" stroke="#f5c453" strokeWidth="1.2" opacity="0.7"/>
+      <rect x="32" y="66" width="56" height="9" fill="rgba(245,196,83,0.04)" stroke="#f5c453" strokeWidth="1.1" opacity="0.65"/>
+      {/* Breakpoint stamps — the world getting narrower */}
+      <text x="60" y="29" textAnchor="middle" fill="rgba(245,196,83,0.45)" fontSize="5.5" fontFamily="JetBrains Mono, monospace">1440</text>
+      <text x="60" y="44.5" textAnchor="middle" fill="rgba(245,196,83,0.4)" fontSize="5.5" fontFamily="JetBrains Mono, monospace">1024</text>
+      <text x="60" y="59" textAnchor="middle" fill="rgba(245,196,83,0.35)" fontSize="5.5" fontFamily="JetBrains Mono, monospace">768</text>
+      <text x="60" y="72.5" textAnchor="middle" fill="rgba(245,196,83,0.3)" fontSize="5" fontFamily="JetBrains Mono, monospace">480</text>
+      {/* Hairline stress fractures across the slabs */}
+      <path d="M34 21 L37 27 L33 33" stroke="#f5c453" strokeWidth="0.5" opacity="0.4"/>
+      <path d="M86 37 L83 43 L88 48" stroke="#f5c453" strokeWidth="0.5" opacity="0.35"/>
+      <path d="M42 52 L45 57 L41 62" stroke="#f5c453" strokeWidth="0.5" opacity="0.35"/>
+      {/* Magenta strain glow squeezed out between the slabs */}
+      <line x1="22" y1="35" x2="98" y2="35" stroke="#ff3d8b" strokeWidth="2.6" opacity="0.4" filter="url(#stk-glow)"/>
+      <line x1="24" y1="35" x2="96" y2="35" stroke="#ff3d8b" strokeWidth="0.9" opacity="0.85"/>
+      <line x1="28" y1="50" x2="92" y2="50" stroke="#ff3d8b" strokeWidth="2.4" opacity="0.38" filter="url(#stk-glow)"/>
+      <line x1="30" y1="50" x2="90" y2="50" stroke="#ff3d8b" strokeWidth="0.8" opacity="0.8"/>
+      <line x1="34" y1="64" x2="86" y2="64" stroke="#ff3d8b" strokeWidth="2.2" opacity="0.36" filter="url(#stk-glow)"/>
+      <line x1="36" y1="64" x2="84" y2="64" stroke="#ff3d8b" strokeWidth="0.8" opacity="0.75"/>
+      {/* The squeezed column — pinched at the waist, taking all of it */}
+      <path d="M52 75 Q56 84 53 91 Q51 99 54 106 L66 106 Q69 99 67 91 Q64 84 68 75 Z" fill="rgba(8,8,12,0.9)" stroke="#f5c453" strokeWidth="1" opacity="0.8"/>
+      <text x="60" y="98" textAnchor="middle" fill="rgba(245,196,83,0.35)" fontSize="4.5" fontFamily="JetBrains Mono, monospace">320</text>
+      {/* Strain cracks running down the column */}
+      <path d="M57 79 L60 85 L56 91" stroke="#ff3d8b" strokeWidth="0.7" opacity="0.7"/>
+      <path d="M63 82 L61 88 L64 94" stroke="#ff3d8b" strokeWidth="0.6" opacity="0.55"/>
+      {/* Floor cracking under the load */}
+      <line x1="10" y1="106" x2="110" y2="106" stroke="#f5c453" strokeWidth="0.8" opacity="0.4"/>
+      <path d="M52 106 L44 111 L38 110 M68 106 L76 112 L83 110 M60 106 L59 113" stroke="#ff3d8b" strokeWidth="0.6" opacity="0.5"/>
+    </svg>
+  )
+}
+
+function FrozenPanelSVG() {
+  // THE FROZEN PANEL — Gate 09 — a command console iced over.
+  // Dark screens under frost polygons, limp cables, icicles — and one faint cyan
+  // cursor still blinking beneath the ice. The only living pixel in the room.
+  return (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="dtab-enemy-svg">
+      {/* Console bank — three dead screens */}
+      <rect x="16" y="24" width="88" height="44" rx="2" fill="rgba(10,13,16,0.92)" stroke="rgba(61,240,232,0.3)" strokeWidth="1.1"/>
+      <rect x="21" y="29" width="24" height="20" fill="rgba(4,7,9,0.95)" stroke="rgba(61,240,232,0.18)" strokeWidth="0.7"/>
+      <rect x="48" y="29" width="24" height="20" fill="rgba(4,7,9,0.95)" stroke="rgba(61,240,232,0.18)" strokeWidth="0.7"/>
+      <rect x="75" y="29" width="24" height="20" fill="rgba(4,7,9,0.95)" stroke="rgba(61,240,232,0.18)" strokeWidth="0.7"/>
+      {/* Dead readouts */}
+      <line x1="24" y1="34" x2="40" y2="34" stroke="#3df0e8" strokeWidth="0.5" opacity="0.1"/>
+      <line x1="24" y1="38" x2="36" y2="38" stroke="#3df0e8" strokeWidth="0.5" opacity="0.08"/>
+      <line x1="78" y1="34" x2="94" y2="34" stroke="#3df0e8" strokeWidth="0.5" opacity="0.1"/>
+      <line x1="78" y1="38" x2="90" y2="38" stroke="#3df0e8" strokeWidth="0.5" opacity="0.08"/>
+      {/* The prompt and its cursor — still blinking under the ice */}
+      <text x="51" y="44" fill="rgba(61,240,232,0.25)" fontSize="5" fontFamily="JetBrains Mono, monospace">&gt;</text>
+      <rect x="57" y="39.5" width="3.5" height="5.5" fill="#3df0e8">
+        <animate attributeName="opacity" values="0.5;0.5;0.06;0.06" keyTimes="0;0.5;0.55;1" dur="1.8s" repeatCount="indefinite"/>
+      </rect>
+      {/* Keyboard shelf */}
+      <path d="M16 68 L10 84 L110 84 L104 68 Z" fill="rgba(10,13,16,0.9)" stroke="rgba(61,240,232,0.25)" strokeWidth="1"/>
+      <line x1="22" y1="73" x2="98" y2="73" stroke="#3df0e8" strokeWidth="0.5" opacity="0.12" strokeDasharray="3 2"/>
+      <line x1="19" y1="78" x2="101" y2="78" stroke="#3df0e8" strokeWidth="0.5" opacity="0.1" strokeDasharray="3 2"/>
+      {/* Frost polygons — the ice sheet claiming the console */}
+      <polygon points="16,24 44,24 30,44 16,52" fill="rgba(234,246,245,0.12)" stroke="#eaf6f5" strokeWidth="0.6" opacity="0.5"/>
+      <polygon points="52,24 92,24 104,36 86,54 56,48" fill="rgba(234,246,245,0.09)" stroke="#eaf6f5" strokeWidth="0.6" opacity="0.45"/>
+      <polygon points="104,28 104,60 88,68 104,68" fill="rgba(234,246,245,0.1)" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.4"/>
+      <polygon points="10,84 26,68 44,72 34,84" fill="rgba(234,246,245,0.08)" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.4"/>
+      {/* Facet veins in the ice */}
+      <path d="M30 44 L38 34 M86 54 L94 40 M26 68 L34 76" stroke="#eaf6f5" strokeWidth="0.4" opacity="0.3"/>
+      {/* Icicles under the shelf lip */}
+      <path d="M30 84 L32 93 L34 84" fill="rgba(234,246,245,0.14)" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.5"/>
+      <path d="M56 84 L58 96 L60 84" fill="rgba(234,246,245,0.14)" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.55"/>
+      <path d="M80 84 L82 91 L84 84" fill="rgba(234,246,245,0.14)" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.45"/>
+      {/* Limp cables — drooping dead to the floor */}
+      <path d="M104 50 Q114 62 112 80 Q111 94 104 102" stroke="rgba(61,240,232,0.3)" strokeWidth="1.2"/>
+      <path d="M16 56 Q6 66 8 82 Q9 96 16 104" stroke="rgba(61,240,232,0.25)" strokeWidth="1.2"/>
+      <path d="M96 84 Q102 92 95 102" stroke="rgba(234,246,245,0.15)" strokeWidth="0.9"/>
+      {/* Dead connectors on the floor */}
+      <rect x="101" y="102" width="6" height="4" rx="1" stroke="rgba(61,240,232,0.3)" strokeWidth="0.7"/>
+      <rect x="13" y="104" width="6" height="4" rx="1" stroke="rgba(61,240,232,0.25)" strokeWidth="0.7"/>
+      {/* Frost sparkles in the dead air */}
+      <path d="M50 16 L50 20 M48 18 L52 18" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.4"/>
+      <path d="M86 12 L86 16 M84 14 L88 14" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.3"/>
+      <path d="M70 58 L70 62 M68 60 L72 60" stroke="#eaf6f5" strokeWidth="0.5" opacity="0.35"/>
+      {/* Temperature stamp */}
+      <text x="60" y="115" textAnchor="middle" fill="rgba(234,246,245,0.2)" fontSize="6" fontFamily="JetBrains Mono, monospace">-40° · INPUT FROZEN</text>
+    </svg>
+  )
+}
+
+function StaticCitySVG() {
+  // THE STATIC CITY — Gate 10 stratum boss — a skyline frozen mid-frame inside a
+  // noise field. Buildings read as signal bars, scan lines cut the whole frame, and
+  // one antenna heart still beats magenta. Densest silhouette of the stratum.
+  return (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="dtab-enemy-svg">
+      <defs>
+        <radialGradient id="sc-heart">
+          <stop offset="0%" stopColor="#ff3d8b" stopOpacity="0.85"/>
+          <stop offset="50%" stopColor="#ff3d8b" stopOpacity="0.25"/>
+          <stop offset="100%" stopColor="#ff3d8b" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      {/* Frozen-frame border */}
+      <rect x="6" y="6" width="108" height="108" stroke="#3df0e8" strokeWidth="0.7" opacity="0.25" strokeDasharray="10 6"/>
+      {/* Scan lines across the whole frame */}
+      <line x1="8" y1="20" x2="112" y2="20" stroke="#eaf6f5" strokeWidth="0.4" opacity="0.08"/>
+      <line x1="8" y1="32" x2="112" y2="32" stroke="#eaf6f5" strokeWidth="0.4" opacity="0.07"/>
+      <line x1="8" y1="44" x2="112" y2="44" stroke="#eaf6f5" strokeWidth="0.4" opacity="0.08"/>
+      <line x1="8" y1="56" x2="112" y2="56" stroke="#eaf6f5" strokeWidth="0.4" opacity="0.07"/>
+      <line x1="8" y1="80" x2="112" y2="80" stroke="#eaf6f5" strokeWidth="0.4" opacity="0.06"/>
+      <line x1="8" y1="92" x2="112" y2="92" stroke="#eaf6f5" strokeWidth="0.4" opacity="0.07"/>
+      {/* Noise specks — the static field */}
+      <rect x="14" y="14" width="1.5" height="1.5" fill="#eaf6f5" opacity="0.3"/>
+      <rect x="34" y="22" width="1" height="1" fill="#eaf6f5" opacity="0.2"/>
+      <rect x="82" y="16" width="2" height="1" fill="#3df0e8" opacity="0.25"/>
+      <rect x="98" y="26" width="1.5" height="1.5" fill="#eaf6f5" opacity="0.3"/>
+      <rect x="24" y="38" width="1" height="2" fill="#3df0e8" opacity="0.2"/>
+      <rect x="70" y="24" width="1" height="1" fill="#eaf6f5" opacity="0.35"/>
+      <rect x="46" y="18" width="1.5" height="1" fill="#eaf6f5" opacity="0.2"/>
+      <rect x="106" y="48" width="1" height="1.5" fill="#3df0e8" opacity="0.25"/>
+      <rect x="12" y="58" width="1.5" height="1" fill="#eaf6f5" opacity="0.25"/>
+      <rect x="90" y="40" width="1" height="1" fill="#eaf6f5" opacity="0.3"/>
+      <rect x="58" y="14" width="1" height="1.5" fill="#eaf6f5" opacity="0.2"/>
+      <rect x="18" y="88" width="1.5" height="1" fill="#3df0e8" opacity="0.2"/>
+      <rect x="108" y="72" width="1" height="1" fill="#eaf6f5" opacity="0.25"/>
+      <rect x="40" y="52" width="1" height="1" fill="#eaf6f5" opacity="0.2"/>
+      <rect x="76" y="58" width="1.5" height="1" fill="#3df0e8" opacity="0.2"/>
+      <rect x="102" y="94" width="1" height="1.5" fill="#eaf6f5" opacity="0.25"/>
+      {/* Skyline — buildings as signal bars rising toward the antenna tower */}
+      <rect x="10" y="80" width="9" height="26" fill="rgba(61,240,232,0.04)" stroke="#3df0e8" strokeWidth="1" opacity="0.45"/>
+      <rect x="21" y="70" width="9" height="36" fill="rgba(61,240,232,0.04)" stroke="#3df0e8" strokeWidth="1" opacity="0.55"/>
+      <rect x="32" y="58" width="9" height="48" fill="rgba(61,240,232,0.05)" stroke="#3df0e8" strokeWidth="1" opacity="0.65"/>
+      <rect x="43" y="46" width="9" height="60" fill="rgba(61,240,232,0.05)" stroke="#3df0e8" strokeWidth="1" opacity="0.75"/>
+      <rect x="54" y="30" width="12" height="76" fill="rgba(61,240,232,0.06)" stroke="#3df0e8" strokeWidth="1.3" opacity="0.85"/>
+      <rect x="68" y="50" width="9" height="56" fill="rgba(61,240,232,0.05)" stroke="#3df0e8" strokeWidth="1" opacity="0.7"/>
+      <rect x="79" y="62" width="9" height="44" fill="rgba(61,240,232,0.04)" stroke="#3df0e8" strokeWidth="1" opacity="0.6"/>
+      <rect x="90" y="74" width="9" height="32" fill="rgba(61,240,232,0.04)" stroke="#3df0e8" strokeWidth="1" opacity="0.5"/>
+      <rect x="101" y="84" width="9" height="22" fill="rgba(61,240,232,0.04)" stroke="#3df0e8" strokeWidth="1" opacity="0.4"/>
+      {/* Windows — mostly dark, a few still lit */}
+      <rect x="35" y="64" width="2" height="2" fill="#3df0e8" opacity="0.3"/>
+      <rect x="35" y="76" width="2" height="2" fill="#3df0e8" opacity="0.12"/>
+      <rect x="46" y="52" width="2" height="2" fill="#f5c453" opacity="0.4"/>
+      <rect x="46" y="74" width="2" height="2" fill="#3df0e8" opacity="0.15"/>
+      <rect x="57" y="38" width="2" height="2" fill="#f5c453" opacity="0.45"/>
+      <rect x="61" y="46" width="2" height="2" fill="#3df0e8" opacity="0.3"/>
+      <rect x="57" y="56" width="2" height="2" fill="#3df0e8" opacity="0.14"/>
+      <rect x="61" y="76" width="2" height="2" fill="#3df0e8" opacity="0.2"/>
+      <rect x="71" y="58" width="2" height="2" fill="#3df0e8" opacity="0.25"/>
+      <rect x="71" y="84" width="2" height="2" fill="#3df0e8" opacity="0.12"/>
+      <rect x="82" y="70" width="2" height="2" fill="#f5c453" opacity="0.3"/>
+      <rect x="93" y="82" width="2" height="2" fill="#3df0e8" opacity="0.15"/>
+      {/* Interference band — one slice of the city displaced mid-frame */}
+      <line x1="8" y1="63" x2="112" y2="63" stroke="#ff3d8b" strokeWidth="0.6" opacity="0.35"/>
+      <line x1="8" y1="70" x2="112" y2="70" stroke="#3df0e8" strokeWidth="0.6" opacity="0.3"/>
+      <rect x="58" y="63" width="12" height="7" fill="rgba(8,8,12,0.85)" stroke="#ff3d8b" strokeWidth="0.8" opacity="0.55"/>
+      <rect x="28" y="63" width="9" height="7" fill="rgba(8,8,12,0.85)" stroke="#3df0e8" strokeWidth="0.7" opacity="0.4"/>
+      <rect x="83" y="63" width="9" height="7" fill="rgba(8,8,12,0.85)" stroke="#ff3d8b" strokeWidth="0.6" opacity="0.35"/>
+      {/* The antenna heart — the one thing in the city still transmitting */}
+      <line x1="60" y1="30" x2="60" y2="15" stroke="#ff3d8b" strokeWidth="1" opacity="0.8"/>
+      <line x1="57" y1="24" x2="63" y2="24" stroke="#ff3d8b" strokeWidth="0.7" opacity="0.5"/>
+      <circle cx="60" cy="14" r="8" fill="url(#sc-heart)"/>
+      <circle cx="60" cy="14" r="2.4" fill="#ff3d8b" opacity="0.95"/>
+      <circle cx="60" cy="14" r="5" stroke="#ff3d8b" strokeWidth="0.6" opacity="0.5" strokeDasharray="3 3"/>
+      <path d="M50 10 Q48 14 50 18 M70 10 Q72 14 70 18" stroke="#ff3d8b" strokeWidth="0.7" opacity="0.4"/>
+      <path d="M46 7 Q43 14 46 21 M74 7 Q77 14 74 21" stroke="#ff3d8b" strokeWidth="0.6" opacity="0.25"/>
+      {/* Baseline */}
+      <line x1="8" y1="106" x2="112" y2="106" stroke="#3df0e8" strokeWidth="0.8" opacity="0.35"/>
+      {/* Status stamp */}
+      <text x="60" y="113" textAnchor="middle" fill="rgba(255,61,139,0.4)" fontSize="5.5" fontFamily="JetBrains Mono, monospace" letterSpacing="1">AWAITING RESPONSE</text>
+    </svg>
+  )
+}
+
 export const ENEMY_SVGS = {
   1: WraithSVG,
   2: FacelessSVG,
   3: LabelEaterSVG,
   4: ColorlessSVG,
   5: UnalignedSVG,
+  6: WhiteVoidSVG,
+  7: InertSVG,
+  8: StackSVG,
+  9: FrozenPanelSVG,
+  10: StaticCitySVG,
   examDrone: ExamDroneSVG,
   gorgoroth: GorgorothSVG,
 }
 
-export { WraithSVG, FacelessSVG, LabelEaterSVG, ColorlessSVG, UnalignedSVG, ExamDroneSVG, GorgorothSVG }
+export { WraithSVG, FacelessSVG, LabelEaterSVG, ColorlessSVG, UnalignedSVG, ExamDroneSVG, GorgorothSVG, WhiteVoidSVG, InertSVG, StackSVG, FrozenPanelSVG, StaticCitySVG }

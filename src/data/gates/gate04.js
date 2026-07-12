@@ -259,6 +259,154 @@ export function generateOverride(css) {
   return `:root {\n${overrides.join('\n')}\n}`
 }
 
+// ─── Solution (bible rule #6) ───────────────────────────────────────────────────
+// Selectors are identical across all three HTML variants, so one CSS string
+// clears every variant (the solver pins variant 0). Ward-by-ward:
+//   root_vars      — :root opens with -- declarations before any }
+//   color_tokens   — 9 one-per-line hex-valued custom properties (≥3)
+//   spacing_tokens — 6 px-valued custom properties (≥2)
+//   no_hex_rules   — the single :root block is stripped by the ward's regex;
+//                    every rule below it uses var() only, zero raw #hex
+//   header/card_styled (and therefore var_used) — the .city-header and
+//     .status-card rules literally contain var(--…) AND compute meaningful
+//     styles in the check iframe: background-color rgb(19,26,38) ≠ transparent,
+//     padding 16px/24px ≠ 0
+//   responsive     — @media (max-width: 768px) block
+
+const SOLUTION_CSS = `/* EVA City — Color Protocol — established */
+
+:root {
+  /* Colors */
+  --color-bg: #0b0e16;
+  --color-panel: #131a26;
+  --color-ink: #dbe6f4;
+  --color-muted: #8494ad;
+  --color-accent: #3df0e8;
+  --color-ok: #46d68c;
+  --color-warn: #f5c453;
+  --color-alert: #ff3d8b;
+  --color-line: #22304a;
+
+  /* Spacing */
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --radius: 6px;
+
+  /* Typography */
+  --text-sm: 12px;
+  --text-lg: 22px;
+}
+
+/* City wrapper */
+.city-wrap {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  min-height: 100vh;
+}
+
+/* Header */
+.city-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-panel);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.city-logo {
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.city-nav {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.nav-link {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* Page content */
+.city-main {
+  padding: var(--space-lg);
+}
+
+.page-title {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-sm);
+}
+
+.page-sub {
+  color: var(--color-muted);
+  margin-bottom: var(--space-lg);
+}
+
+/* Card grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+/* Status cards */
+.status-card {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+}
+
+.status-card--ok { border-left: 3px solid var(--color-ok); }
+
+.status-card--alert { border-left: 3px solid var(--color-alert); }
+
+.status-card--warning { border-left: 3px solid var(--color-warn); }
+
+.card-label {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.card-value {
+  font-weight: 700;
+  margin: var(--space-sm) 0;
+}
+
+.card-sub {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+/* Table */
+.data-table {
+  margin-top: var(--space-md);
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--color-line);
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.td-ok { color: var(--color-ok); }
+
+.td-warn { color: var(--color-warn); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .city-header { padding: var(--space-sm) var(--space-md); }
+}
+`
+
 export default {
   id: 'gate04',
   gateNum: 4,
@@ -285,6 +433,7 @@ export default {
   xpPerWard: 30,
   completionXp: 240,
   shardReward: 195,
+  solution: SOLUTION_CSS,
   aiTitle: 'Gate 04 — Paint the City',
   aiRequirements: 'Write a CSS design system using custom properties: define color and spacing variables in :root, use var() throughout all rules, no hardcoded hex values outside :root, include a @media breakpoint.',
   completion: {

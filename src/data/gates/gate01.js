@@ -99,6 +99,37 @@ const QUIZ = {
   correct: 0,
 }
 
+// ─── Solution (bible rule #6) ───────────────────────────────────────────────────
+// The corrected VARIANT 0 document (the solver harness pins variantIdx = 0;
+// the other variants share the same four bugs but different copy). No ward
+// relies on `win`, so this passes both ArenaShell's synchronous DOMParser path
+// (win = null) and the solver's EncounterShell iframe. Ward-by-ward:
+//   doctype — <!DOCTYPE html> on line 1 → doc.doctype.name === 'html' and
+//             standards mode (compatMode 'CSS1Compat')
+//   h1      — literal </h1> now present in the raw code
+//   nesting — closes inner-first (</strong></p>): /<\/p>\s*<\/strong>/ no
+//             longer matches while </strong> exists
+//   anchor  — the trailing <a> becomes </a>, so the parser yields exactly one
+//             <a> in <body> with non-empty text
+
+const SOLUTION = `<!DOCTYPE html>
+<html>
+<head>
+  <title>EVA City Emergency Broadcast</title>
+</head>
+<body>
+
+  <h1>EMERGENCY — Sector Zero</h1>
+
+  <p><strong>All seekers: report to designated shelters immediately.</strong></p>
+
+  <p>This transmission originates from EVA Command.</p>
+
+  <a href="shelter-protocol.html">→ Access Shelter Protocol</a>
+
+</body>
+</html>`
+
 export default {
   id: 'gate01',
   gateNum: 1,
@@ -122,6 +153,7 @@ export default {
   xpPerWard: 25,
   completionXp: 100,
   shardReward: 250,
+  solution: SOLUTION,
   aiTitle: 'Gate 01 — The Document Tomb',
   aiRequirements: 'Fix all HTML structural errors: valid DOCTYPE declaration, correct html/head/body nesting, all tags properly closed, no broken or unclosed tags.',
   completion: {

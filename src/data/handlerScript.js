@@ -24,6 +24,31 @@ export const HANDLER_LINES = {
     low_60: "Daemon destabilizing. The alignment checks are failing — make sure flex is on the right containers.",
     low_30: "Daemon nearly gone. Focus on the remaining float points before the district takes you with it.",
   },
+  'GRID LATTICE': {
+    entry:  "Elite hunt. The White Void doesn't fight — it erases whatever has no structure. Put the grid on the container and hold every line.",
+    low_60: "Daemon losing ground. The Void pours through gaps — the container defines the tracks, not the cards. Check where your grid actually lives.",
+    low_30: "It's taking the floor. Span the bar and footer edge to edge, let auto-fit hold the middle. One open seam and we lose the whole grid.",
+  },
+  'GHOST STEP': {
+    entry:  "The Inert has no pulse — five dead components and a gallery that never learned to breathe. Wire the motion. Named transitions only; a blanket transition dulls every strike you throw.",
+    low_60: "Daemon losing rhythm. Check your timing — every transition needs a specific property, a duration, and an easing. If a component still isn't moving, the animation isn't wired to it.",
+    low_30: "Critical. You're striking off-beat. Scrub every trace of transition: all from the file and land your keyframes — translateY in from above, one full rotation on the ring. On the beat, Hunter.",
+  },
+  'STACK BREAK': {
+    entry:  "Elite contract. THE STACK crushes anything not built mobile-first. Base styles for small screens — then grow with min-width. Give it nothing to crush.",
+    low_60: "Daemon compressing. Check your media direction — max-width queries feed it. Mobile base first, desktop as the upgrade.",
+    low_30: "Critical. One fixed width past the viewport and the column takes you. Fluid units, clamp the title, collapse the nav — now.",
+  },
+  'CONTROL WIRE': {
+    entry:  "The Frozen Panel doesn't attack — it refuses. Structure was restoration. This is your first true code: wire it, and the room obeys.",
+    low_60: "Daemon taking hits. Dead controls mean dead listeners — check that every addEventListener is on the element that actually exists.",
+    low_30: "Critical. Your state variable is the truth, the DOM is the mirror. Stop reading the display — trust the variable and wire the rest.",
+  },
+  'LIVE FEED': {
+    entry:  "Stratum boss. The Static City hoards a signal it was never built to receive. Punch through with fetch() and keep the feed alive — every failure mode you don't handle, it feeds on.",
+    low_60: "Daemon taking static. Loading state before the await, error state in the catch. A blank screen is an open wound.",
+    low_30: "Critical. The signal WILL break down here — that's the test. try/catch around the fetch, ?. on every nested field. Armor first. Then strike.",
+  },
   default: {
     entry:  "Gate active. Your Daemon is compiled. Fight well.",
     low_60: "Your Daemon is taking damage. Read the checks — what does the scanner want that you haven't given it?",

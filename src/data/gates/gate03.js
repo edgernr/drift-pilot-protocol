@@ -119,6 +119,52 @@ const QUIZ = {
   correct: 0,
 }
 
+// ─── Solution (bible rule #6) ───────────────────────────────────────────────────
+// A complete VARIANT 0 (Citizen Registration) form; replaces the comment-only
+// starter wholesale. Ward-by-ward:
+//   form/text/email/textarea/button — one of each present
+//   select   — <select> with 2 <option> children (≥1)
+//   radio    — 2 radios sharing name="access" (≥2)
+//   labels   — 4 <label for> (name/email/sector/message ≥3); the radio labels
+//              wrap their inputs instead, which is also valid labelling
+//   ids      — 4 form controls carry id (≥3)
+//   required — name + email inputs (≥2)
+
+const SOLUTION = `<!DOCTYPE html>
+<html>
+<head>
+  <title>EVA City — Citizen Registration</title>
+</head>
+<body>
+
+<form>
+  <label for="name">Full Name</label>
+  <input type="text" id="name" name="name" required>
+
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" required>
+
+  <label for="sector">Sector</label>
+  <select id="sector" name="sector">
+    <option value="zero">Sector Zero</option>
+    <option value="seven">Sector Seven</option>
+  </select>
+
+  <fieldset>
+    <legend>Access Level</legend>
+    <label><input type="radio" name="access" value="citizen" checked> Citizen</label>
+    <label><input type="radio" name="access" value="seeker"> Seeker</label>
+  </fieldset>
+
+  <label for="message">Message</label>
+  <textarea id="message" name="message"></textarea>
+
+  <button type="submit">Register</button>
+</form>
+
+</body>
+</html>`
+
 export default {
   id: 'gate03',
   gateNum: 3,
@@ -142,6 +188,7 @@ export default {
   xpPerWard: 30,
   completionXp: 300,
   shardReward: 700,
+  solution: SOLUTION,
   aiTitle: 'Gate 03 — The Form Gate',
   aiRequirements: 'Build a complete HTML form with all required elements: form wrapper, text/email inputs, select with options, radio buttons, textarea, all inputs properly labeled with matching for="" and id="" attributes, required attributes on critical fields, and a submit button.',
   completion: {

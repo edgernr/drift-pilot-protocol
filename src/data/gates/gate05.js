@@ -224,6 +224,129 @@ function buildPreview(css, variantIndex) {
   return `<!DOCTYPE html><html><head>${reset}<style>${css}</style></head><body>${html}</body></html>`
 }
 
+// ─── Solution (bible rule #6) ───────────────────────────────────────────────────
+// START_CSS with exactly the six flex additions the checks demand (selectors
+// identical across variants; solver pins variant 0). Wards read computed styles
+// + real positions in the 1100×800 check iframe:
+//   nav_flex / nav_links_flex / two_col_flex — display:flex computes on
+//     .site-nav, .nav-links, .two-col
+//   nav_push — margin-left:auto on .nav-cta: at 1100px the .layout-wrap content
+//     box is 912px; brand+links+cta occupy ~350px, so the auto margin opens a
+//     ~550px gap between .nav-links's right edge and .nav-cta's left (> 80)
+//   card_flex — .card-row flex puts the three flex:1 cards on one row, so
+//     cards[0] and cards[1] share a bounding-rect top (< 5px delta)
+//   hero_center — .hero-section computes display:flex + justify-content:center
+//     + align-items:center
+
+const SOLUTION_CSS = `/* Gate 05 — The Gravity Anchor — restored */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, sans-serif;
+  background: #0a0d18;
+  color: #e8ecff;
+  min-height: 100vh;
+}
+
+/* Layout wrapper */
+.layout-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* The one legitimate absolute element */
+.nav-brand {
+  position: relative;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+.nav-brand::after {
+  content: '●';
+  position: absolute;
+  top: -3px;
+  right: -10px;
+  color: #22d3ee;
+  font-size: 5px;
+}
+
+/* Nav — Flexbox row */
+.site-nav {
+  display: flex;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(180,200,255,0.08);
+  align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  gap: 24px;
+}
+
+.nav-link {
+  font-size: 13px;
+  color: #b8c0d9;
+  text-decoration: none;
+}
+
+/* Pushed to the far right by the auto margin */
+.nav-cta {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #22d3ee;
+  text-decoration: none;
+  padding: 6px 14px;
+  border: 1px solid #22d3ee;
+  border-radius: 4px;
+}
+
+/* Hero — centered both axes */
+.hero-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 260px;
+  padding: 60px 0;
+}
+
+.hero-content { text-align: center; }
+.hero-title { font-size: 40px; font-weight: 700; margin-bottom: 12px; }
+.hero-sub { font-size: 16px; color: #b8c0d9; margin-bottom: 24px; }
+.hero-btn { padding: 10px 24px; background: #22d3ee; color: #0a0d18; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
+
+/* Cards — equal height row */
+.card-row {
+  display: flex;
+  padding: 40px 0;
+  gap: 16px;
+}
+
+.card { flex: 1; padding: 24px; background: rgba(255,255,255,0.04); border: 1px solid rgba(180,200,255,0.1); border-radius: 8px; }
+.card-icon { font-size: 24px; margin-bottom: 12px; }
+.card-title { font-weight: 600; margin-bottom: 8px; }
+.card-body { font-size: 13px; color: #7a8199; line-height: 1.5; }
+
+/* Two-column layout */
+.two-col {
+  display: flex;
+  padding: 40px 0;
+  gap: 40px;
+  border-top: 1px solid rgba(180,200,255,0.08);
+  align-items: center;
+}
+
+.col-main { flex: 1; }
+.col-title { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+.col-body { font-size: 14px; color: #b8c0d9; line-height: 1.6; }
+
+.col-aside { flex-shrink: 0; text-align: right; }
+.stat-label { font-size: 10px; letter-spacing: 0.1em; color: #4a5070; margin-bottom: 4px; }
+.stat-value { font-size: 48px; font-weight: 700; color: #22d3ee; }
+`
+
 export default {
   id: 'gate05',
   gateNum: 5,
@@ -249,6 +372,7 @@ export default {
   xpPerWard: 40,
   completionXp: 280,
   shardReward: 225,
+  solution: SOLUTION_CSS,
   aiTitle: 'Gate 05 — The Gravity Anchor',
   aiRequirements: 'Use Flexbox to recreate a district layout: nav with display:flex, nav-links with display:flex, nav-cta with margin-left:auto to push right, card-row with display:flex, two-col with display:flex, hero-section centered with display:flex + justify-content:center + align-items:center.',
   completion: {

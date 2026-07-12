@@ -95,6 +95,34 @@ const QUIZ = {
   correct: 0,
 }
 
+// ─── Solution (bible rule #6) ───────────────────────────────────────────────────
+// VARIANT 0 rewritten with true semantic identities (the solver pins variant 0;
+// classes dropped because PREVIEW_STYLE styles the bare semantic tags too).
+// All eight wards are querySelector-only — no computed styles. Ward-by-ward:
+//   header — <header> containing an <a> · nav — <nav> with 3 links (≥2)
+//   main   — exactly one <main> with children
+//   article/section — each contains an h2/h3 heading
+//   aside  — has an element child · figure — contains <figcaption>
+//   footer — non-empty text content
+
+const SOLUTION = `<!DOCTYPE html>
+<html lang="en">
+<head><title>Sector Zero District</title></head>
+<body>
+<header>
+  <a href="#">Sector Zero</a>
+  <nav><a href="#">Status</a><a href="#">Systems</a><a href="#">Alerts</a></nav>
+</header>
+<main>
+  <article><h2>Sector Status Report</h2><p>All systems nominal as of 06:44 UTC.</p></article>
+  <section><h3>System History</h3><p>No critical events in the last 30 days.</p></section>
+  <aside><p>Uptime: 99.2%</p></aside>
+  <figure><img alt="sector diagram"/><figcaption>Sector Zero layout — last updated cycle 44.</figcaption></figure>
+</main>
+<footer><p>EVA Command &copy; Cycle 2187</p></footer>
+</body>
+</html>`
+
 export default {
   id: 'gate02',
   gateNum: 2,
@@ -118,6 +146,7 @@ export default {
   xpPerWard: 25,
   completionXp: 200,
   shardReward: 350,
+  solution: SOLUTION,
   aiTitle: 'Gate 02 — The Semantic Crypt',
   aiRequirements: 'Replace all generic divs with correct semantic HTML5 elements: header, nav, main, section, article, aside, footer, figure, figcaption. Semantic structure must be meaningful and complete.',
   completion: {

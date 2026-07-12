@@ -17,6 +17,7 @@ import Dashboard from './screens/Dashboard'
 import Prologue from './screens/Prologue'
 import Interlude1 from './screens/Interlude1'
 import Interlude2 from './screens/Interlude2'
+import SolverGate from './screens/SolverGate'
 import Quest from './screens/Quest'
 import Quest2 from './screens/Quest2'
 import Quest3 from './screens/Quest3'
@@ -121,6 +122,8 @@ function AnimatedRoutes() {
         <Route path="/quest9" element={<GateRoute requires={['act1-ch08']} unlockKey="act1-ch09"><Quest9 /></GateRoute>} />
         <Route path="/quest10" element={<GateRoute requires={['act1-ch09']} unlockKey="act1-ch10"><Quest10 /></GateRoute>} />
         <Route path="/pilot/:id" element={<PilotProfile />} />
+        {/* Dev-only solver harness route (bible §9.6) — never registered in prod builds */}
+        {import.meta.env.DEV && <Route path="/__solver/:gateNum" element={<SolverGate />} />}
         {/* Void Academy — hidden for Season 01 rework */}
         <Route path="/academy/*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -3,6 +3,7 @@ import Editor from '@monaco-editor/react'
 import { useCombat } from '../context/CombatContext'
 import { useAuth } from '../context/AuthContext'
 import { useNav } from '../context/NavigationContext'
+import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
 import { on } from '../lib/combatBus'
 import HandlerComms from './HandlerComms'
 import Daemon from './Daemon'
@@ -15,6 +16,9 @@ import './EncounterShell.css'
 export default function EncounterShell({ config }) {
   const { goto } = useNav()
   const { user, profile, completeQuest } = useAuth()
+  // Anti-cheat / analytics (paste block, timing, flagging) — same hook the
+  // legacy gate screens used; results flow into completeQuest.
+  const { onPaste, trackChange, getAnalytics, pasteBlocked } = useQuestAnalytics()
 
   const {
     playerHP, enemyHP, combo, phase,
@@ -27,8 +31,10 @@ export default function EncounterShell({ config }) {
   const [variantIdx] = useState(() =>
     Math.floor(Math.random() * (config.variants?.length || 1))
   )
+  // Starter code: getStarterCode() when the gate separates player code from
+  // variant documents (CSS + JS gates); otherwise the variant IS the code (HTML gates).
   const [code, setCode] = useState(() =>
-    config.language === 'css'
+    config.getStarterCode
       ? config.getStarterCode()
       : (config.variants?.[variantIdx] ?? '')
   )
@@ -84,10 +90,8 @@ export default function EncounterShell({ config }) {
   // ─── Preview iframe update ───────────────────────────────────────────────────
   useEffect(() => {
     if (!previewIframeRef.current) return
-    const srcdoc = config.language === 'css'
-      ? config.buildPreview(code, variantIdx, brandOverride)
-      : config.buildPreview(code)
-    previewIframeRef.current.srcdoc = srcdoc
+    // Extra args are harmless for 1-arg builders (HTML gates ignore them).
+    previewIframeRef.current.srcdoc = config.buildPreview(code, variantIdx, brandOverride)
   }, [code, variantIdx, brandOverride, config])
 
   // ─── Check runner (debounced 350ms) ──────────────────────────────────────────
@@ -260,10 +264,10 @@ export default function EncounterShell({ config }) {
   // ─── Completion ───────────────────────────────────────────────────────────────
   const handleCompletion = useCallback(async () => {
     if (user) {
-      await completeQuest(config.questId, config.completionXp)
+      await completeQuest(config.questId, config.completionXp, getAnalytics())
     }
     setShowCompletion(true)
-  }, [user, completeQuest, config.questId, config.completionXp])
+  }, [user, completeQuest, config.questId, config.completionXp, getAnalytics])
 
   // ─── Quiz handlers ────────────────────────────────────────────────────────────
   const handleQuizPass = useCallback(() => {
@@ -305,7 +309,10 @@ export default function EncounterShell({ config }) {
   const passedCount = Object.values(wardResults).filter(Boolean).length
   const failCount = config.wards.length - passedCount
   const EnemySVG = ENEMY_SVGS[config.enemy.svgVariant] ?? ENEMY_SVGS[1]
-  const filename = config.language === 'css' ? 'style.css' : 'index.html'
+  const filename = config.language === 'css' ? 'style.css'
+    : (config.language === 'javascript' || config.language === 'js') ? 'app.js'
+    : 'index.html'
+  const editorLanguage = config.language === 'js' ? 'javascript' : config.language
 
   // XP display values from profile
   const xp = profile?.totalXp ?? 0
@@ -385,15 +392,15 @@ export default function EncounterShell({ config }) {
           <div className="es-editor-header">
             <span className="es-editor-filename">{filename}</span>
             <span className={`es-editor-errors${failCount === 0 ? ' clear' : ''}`}>
-              {failCount === 0 ? '✓ all checks pass' : `${failCount} failing`}
+              {pasteBlocked ? '✕ PASTE BLOCKED — type it' : failCount === 0 ? '✓ all checks pass' : `${failCount} failing`}
             </span>
           </div>
-          <div className="es-monaco-wrap">
+          <div className="es-monaco-wrap" onPasteCapture={onPaste}>
             <Editor
               height="100%"
-              language={config.language}
+              language={editorLanguage}
               value={code}
-              onChange={val => setCode(val ?? '')}
+              onChange={val => { trackChange((val ?? '').length); setCode(val ?? '') }}
               theme="vs-dark"
               options={{
                 minimap: { enabled: false },
@@ -498,12 +505,25 @@ export default function EncounterShell({ config }) {
         <div className="es-hud-right">● HANDLER ON</div>
       </div>
 
-      {/* Offscreen check iframe */}
+      {/* Offscreen check iframe — positioned offscreen (NOT display:none) so it
+          computes real layout: getComputedStyle / getBoundingClientRect /
+          scrollWidth all resolve. Per-gate viewport (Gate 08 renders at 390px
+          to genuinely test mobile-first) and sandbox (Gate 09 needs
+          allow-same-origin to observe script-driven DOM mutations). */}
       <iframe
         ref={checkIframeRef}
         title="check"
-        style={{ display: 'none' }}
-        sandbox="allow-scripts"
+        style={{
+          position: 'absolute',
+          left: '-99999px',
+          top: 0,
+          width: `${config.checkViewport?.width ?? 1100}px`,
+          height: `${config.checkViewport?.height ?? 800}px`,
+          border: 0,
+          pointerEvents: 'none',
+          visibility: 'hidden',
+        }}
+        sandbox={config.checkSandbox ?? 'allow-scripts allow-same-origin'}
       />
 
       {/* ─── Overlays ─────────────────────────────────────────────────────────── */}
