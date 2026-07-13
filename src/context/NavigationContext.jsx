@@ -9,7 +9,7 @@ const SCREEN_NAMES = {
   '/privacy': 'PRIVACY POLICY',
   '/downloads': 'DOWNLOAD DESKTOP APP',
   '/dashboard': 'SEEKER HQ',
-  '/admin': 'ASSOCIATION COMMAND',
+  '/dashboard/admin': 'ASSOCIATION COMMAND',
   '/prologue': 'ZERO HOUR — TOWER OF HUNTERS',
   '/interlude1': 'FIRST KILL — CONTRACT PAYOUT',
   '/interlude2': 'RANK D — PROMOTION',

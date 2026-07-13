@@ -519,7 +519,7 @@ export default function Dashboard() {
           <div>
             <div className="section-label">Admin</div>
             <div className="navlist">
-              <a onClick={() => goto('admin')}><span className="ic">⬡</span> Association Command</a>
+              <a onClick={() => goto('dashboard/admin')}><span className="ic">⬡</span> Association Command</a>
             </div>
           </div>
         )}

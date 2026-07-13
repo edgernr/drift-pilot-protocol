@@ -44,6 +44,7 @@ export default function AdminCommand() {
   const [banDurations, setBanDurations] = useState({})
   const [funnel, setFunnel] = useState(null)
   const [ops, setOps] = useState(null)
+  const [armDelete, setArmDelete] = useState(null) // bug id armed for delete (two-click confirm)
 
   const isAdmin = !!profile?.is_admin
 
@@ -262,7 +263,7 @@ export default function AdminCommand() {
         ) : (
           <div className="ac-table">
             <div className="ac-row ac-row-head ac-grid-bugs">
-              <span>Description</span><span>Hunter</span><span>View</span><span>Date</span><span>Status</span>
+              <span>Description</span><span>Hunter</span><span>View</span><span>Date</span><span>Status</span><span></span>
             </div>
             {bugReports.map((b, i) => (
               <div key={b.id} className="ac-row ac-grid-bugs">
@@ -286,6 +287,29 @@ export default function AdminCommand() {
                   <option value="reviewed">Reviewed</option>
                   <option value="fixed">Fixed</option>
                 </select>
+                {armDelete === b.id ? (
+                  <button
+                    className="ac-btn ac-btn-hot"
+                    onClick={async () => {
+                      const { error } = await supabase.from('bug_reports').delete().eq('id', b.id)
+                      if (!error) setBugReports(rs => rs.filter(r => r.id !== b.id))
+                      setArmDelete(null)
+                    }}
+                  >
+                    Sure?
+                  </button>
+                ) : (
+                  <button
+                    className="ac-btn"
+                    title="Delete report"
+                    onClick={() => {
+                      setArmDelete(b.id)
+                      setTimeout(() => setArmDelete(a => (a === b.id ? null : a)), 2500)
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             ))}
           </div>

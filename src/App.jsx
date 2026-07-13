@@ -109,7 +109,7 @@ function AnimatedRoutes() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/downloads" element={<Downloads />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute><Suspense fallback={null}><AdminCommand /></Suspense></ProtectedRoute>} />
+        <Route path="/dashboard/admin" element={<ProtectedRoute><Suspense fallback={null}><AdminCommand /></Suspense></ProtectedRoute>} />
         <Route path="/prologue" element={<ProtectedRoute><Prologue /></ProtectedRoute>} />
         <Route path="/interlude1" element={<GateRoute requires={['act1-ch01']}><Interlude1 /></GateRoute>} />
         <Route path="/interlude2" element={<GateRoute requires={['act1-ch03']}><Interlude2 /></GateRoute>} />

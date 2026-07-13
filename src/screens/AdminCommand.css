@@ -196,7 +196,7 @@
 }
 .ac-grid-flags  { grid-template-columns: 1fr 190px 60px 60px 76px 70px; }
 .ac-grid-pilots { grid-template-columns: 1fr 130px 130px 200px; }
-.ac-grid-bugs   { grid-template-columns: 1fr 110px 100px 76px 100px; }
+.ac-grid-bugs   { grid-template-columns: 1fr 110px 100px 76px 100px 58px; }
 
 .ac-strong { color: var(--ac-ink); }
 .ac-dim { color: var(--ac-ink-faint); }
