@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { NavigationProvider } from './context/NavigationContext'
 import { AuthProvider } from './context/AuthContext'
@@ -18,6 +19,8 @@ import Prologue from './screens/Prologue'
 import Interlude1 from './screens/Interlude1'
 import Interlude2 from './screens/Interlude2'
 import SolverGate from './screens/SolverGate'
+// ASSOCIATION COMMAND — lazy so admin code never ships in the player chunk
+const AdminCommand = lazy(() => import('./screens/AdminCommand'))
 import Quest from './screens/Quest'
 import Quest2 from './screens/Quest2'
 import Quest3 from './screens/Quest3'
@@ -106,6 +109,7 @@ function AnimatedRoutes() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/downloads" element={<Downloads />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><Suspense fallback={null}><AdminCommand /></Suspense></ProtectedRoute>} />
         <Route path="/prologue" element={<ProtectedRoute><Prologue /></ProtectedRoute>} />
         <Route path="/interlude1" element={<GateRoute requires={['act1-ch01']}><Interlude1 /></GateRoute>} />
         <Route path="/interlude2" element={<GateRoute requires={['act1-ch03']}><Interlude2 /></GateRoute>} />

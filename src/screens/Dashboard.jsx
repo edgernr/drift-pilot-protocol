@@ -8,12 +8,11 @@ import RaidView from './RaidView'
 
 function fmt(n) { return (n ?? 0).toLocaleString() }
 function initials(name) { return (name ?? 'PL').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) }
-function fmtTime(s) { if (!s) return '—'; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
 
 
 export default function Dashboard() {
   const { goto } = useNav()
-  const { user, profile, logout, updateProfile, updateUsernameColor, refreshProfile, clearQuest, unlockGate, clearFlag, toggleSubscription, banPilot, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
+  const { user, profile, logout, updateProfile, updateUsernameColor, refreshProfile, clearQuest, unlockGate, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const [resetConfirm, setResetConfirm] = useState(null)
   const [unlockStatus, setUnlockStatus] = useState({})
@@ -24,11 +23,9 @@ export default function Dashboard() {
   const [emailStatus, setEmailStatus] = useState(null)
   const [view, setView] = useState(() => {
     const v = localStorage.getItem('dash-view') ?? 'home'
-    return v === 'challenges' ? 'home' : v
+    return (v === 'challenges' || v === 'admin') ? 'home' : v
   })
   const [cardVariant, setCardVariant] = useState(() => parseInt(localStorage.getItem('hunt-card-variant') ?? '0', 10))
-  const [flaggedRows, setFlaggedRows] = useState([])
-  const [allPilots, setAllPilots] = useState([])
   const [notifOpen, setNotifOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -36,8 +33,6 @@ export default function Dashboard() {
   const [onboardStep, setOnboardStep] = useState(1)
   const [onboardName, setOnboardName] = useState('')
   const [profileLinkCopied, setProfileLinkCopied] = useState(false)
-  const [banDurations, setBanDurations] = useState({})
-  const [bugReports, setBugReports] = useState([])
   const [bugModalOpen, setBugModalOpen] = useState(false)
   const [bugText, setBugText] = useState('')
   const [bugStatus, setBugStatus] = useState(null)
@@ -63,7 +58,7 @@ export default function Dashboard() {
   const GATE_NAMES = {
     'act1-ch01': 'The Document Tomb',
     'act1-ch02': 'The Semantic Crypt',
-    'act1-ch03': 'The Form Gate',
+    'act1-ch03': 'The Registry Hall',
     'act1-ch04': 'Paint the City',
     'act1-ch05': 'The Gravity Anchor',
     'act1-ch06': 'The Infinite Grid',
@@ -120,18 +115,7 @@ export default function Dashboard() {
     localStorage.setItem('dash-view', view)
   }, [view])
 
-  useEffect(() => {
-    if (view !== 'admin' || !isAdmin) return
-    Promise.all([
-      supabase.from('quest_completions').select('user_id, quest_id, time_taken, paste_count, completed_at').eq('flagged', true).order('completed_at', { ascending: false }),
-      supabase.from('profiles').select('id, name, is_subscribed, is_admin, banned_until').order('name'),
-      supabase.from('bug_reports').select('id, user_id, description, view, url, user_agent, status, created_at').order('created_at', { ascending: false }),
-    ]).then(([{ data: flagged }, { data: pilots }, { data: bugs }]) => {
-      setFlaggedRows(flagged ?? [])
-      setAllPilots(pilots ?? [])
-      setBugReports(bugs ?? [])
-    })
-  }, [view, isAdmin])
+  // Admin data/actions moved to the dedicated ASSOCIATION COMMAND screen (/admin).
 
   // Season 01 prologue gating: brand-new hunters play "Zero Hour" before HQ.
   // Strictly `=== false` — if the prologue_done migration hasn't run yet the
@@ -282,14 +266,6 @@ export default function Dashboard() {
   const unlocks = profile?.unlocks ?? []
   const unlockedGateIds = profile?.unlockedGateIds ?? new Set()
 
-  // Readable gate labels for the admin flagged-completions table — covers all
-  // of Act I (ch01–ch10) by reusing the GATE_NAMES titles.
-  const GATE_SHORT = Object.fromEntries(
-    Object.entries(GATE_NAMES).map(([id, name]) => {
-      const ch = id.slice(-2)
-      return [id, `Gate ${ch} — ${name}`]
-    })
-  )
 
   async function handleUnlock(chKey, huntCost) {
     setUnlockStatus(s => ({ ...s, [chKey]: 'unlocking' }))
@@ -543,7 +519,7 @@ export default function Dashboard() {
           <div>
             <div className="section-label">Admin</div>
             <div className="navlist">
-              <a className={view === 'admin' ? 'active' : ''} onClick={() => setView('admin')}><span className="ic">⚑</span> Admin Panel</a>
+              <a onClick={() => goto('admin')}><span className="ic">⬡</span> Association Command</a>
             </div>
           </div>
         )}
@@ -1185,158 +1161,6 @@ export default function Dashboard() {
                     </div>
                   ))
               }
-            </div>
-          </>
-        ) : view === 'admin' ? (
-          <>
-            <div className="st-header">
-              <div>
-                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Admin Panel</h2>
-                <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                  {flaggedRows.length} flagged · {allPilots.length} seekers
-                </p>
-              </div>
-            </div>
-
-            <div className="section-block" style={{ marginBottom: 24 }}>
-              <div className="sb-head">
-                <h3>Bug Reports</h3>
-                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)' }}>{bugReports.filter(b => b.status === 'new').length} new</span>
-              </div>
-              <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-                {bugReports.length === 0 ? (
-                  <div style={{ padding: '20px 18px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No bug reports yet.</div>
-                ) : (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                      <span>Description</span><span>Seeker</span><span>View</span><span>Date</span><span>Status</span>
-                    </div>
-                    {bugReports.map((b, i) => (
-                      <div key={b.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 80px 80px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center', gap: 8 }}>
-                        <div>
-                          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)', marginBottom: 3 }}>{b.description}</div>
-                          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)' }}>{b.user_agent?.slice(0, 60)}…</div>
-                        </div>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-2)' }}>{allPilots.find(p => p.id === b.user_id)?.name ?? 'Unknown'}</span>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{b.view ?? '—'}</span>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                        <select value={b.status} onChange={async e => {
-                          const newStatus = e.target.value
-                          await supabase.from('bug_reports').update({ status: newStatus }).eq('id', b.id)
-                          setBugReports(rs => rs.map((r, j) => j === i ? { ...r, status: newStatus } : r))
-                        }} style={{ fontFamily: 'var(--f-mono)', fontSize: 9, background: 'oklch(1 0 0 / 0.04)', border: '1px solid var(--line-2)', borderRadius: 6, padding: '3px 5px', color: b.status === 'new' ? 'var(--magenta)' : b.status === 'fixed' ? 'var(--lime)' : 'var(--amber)', cursor: 'pointer' }}>
-                          <option value="new">New</option>
-                          <option value="reviewed">Reviewed</option>
-                          <option value="fixed">Fixed</option>
-                        </select>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="section-block" style={{ marginBottom: 24 }}>
-              <div className="sb-head">
-                <h3>Flagged Completions</h3>
-                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--magenta)' }}>{flaggedRows.length} flagged</span>
-              </div>
-              <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-                {flaggedRows.length === 0 ? (
-                  <div style={{ padding: '20px 18px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No flagged completions.</div>
-                ) : (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 64px 64px 90px 72px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                      <span>Seeker</span><span>Gate</span><span>Time</span><span>Pastes</span><span>Date</span><span>Action</span>
-                    </div>
-                    {flaggedRows.map((row, i) => (
-                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 64px 64px 90px 72px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>{allPilots.find(p => p.id === row.user_id)?.name ?? 'Unknown'}</span>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-2)' }}>{GATE_SHORT[row.quest_id] ?? row.quest_id}</span>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: row.time_taken < 90 ? 'var(--magenta)' : 'var(--ink-2)' }}>{fmtTime(row.time_taken)}</span>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: row.paste_count > 0 ? 'var(--magenta)' : 'var(--ink-2)' }}>{row.paste_count ?? 0}</span>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{new Date(row.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                        <button className="btn" style={{ fontSize: 10, padding: '3px 8px' }}
-                          onClick={async () => { const ok = await clearFlag(row.user_id, row.quest_id); if (ok) setFlaggedRows(r => r.filter((_, j) => j !== i)) }}>
-                          Clear
-                        </button>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="section-block">
-              <div className="sb-head">
-                <h3>Seeker Management</h3>
-                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{allPilots.length} seekers</span>
-              </div>
-              <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 170px', padding: '8px 18px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  <span>Seeker</span><span>Season Pass</span><span>Ban Status</span><span>Actions</span>
-                </div>
-                {allPilots.map((p, i) => {
-                  const banned = p.banned_until && (p.banned_until === '2099-01-01T00:00:00Z' || new Date(p.banned_until) > new Date())
-                  const banExpiry = banned && p.banned_until !== '2099-01-01T00:00:00Z'
-                    ? new Date(p.banned_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                    : null
-                  return (
-                    <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 170px', padding: '12px 18px', borderBottom: '1px solid var(--line-popup)', alignItems: 'center' }}>
-                      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>
-                        {p.name ?? 'Unnamed'}
-                        {p.is_admin && <span className="chip" style={{ marginLeft: 8, padding: '1px 5px', fontSize: 8 }}>ADMIN</span>}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10 }}>
-                          {p.is_subscribed ? <span style={{ color: 'var(--lime)' }}>✓</span> : <span style={{ color: 'var(--ink-3)' }}>—</span>}
-                        </span>
-                        <button className="btn" style={{ fontSize: 9, padding: '2px 6px', color: p.is_subscribed ? 'var(--magenta)' : undefined }}
-                          onClick={async () => { const ok = await toggleSubscription(p.id, p.is_subscribed); if (ok) setAllPilots(ps => ps.map((pl, j) => j === i ? { ...pl, is_subscribed: !pl.is_subscribed } : pl)) }}>
-                          {p.is_subscribed ? 'Revoke' : 'Grant'}
-                        </button>
-                      </div>
-                      <div>
-                        {banned
-                          ? <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--magenta)', background: 'oklch(0.72 0.28 340 / 0.08)', border: '1px solid oklch(0.72 0.28 340 / 0.35)', borderRadius: 5, padding: '2px 7px' }}>
-                              🚫 {banExpiry ? `Until ${banExpiry}` : 'Permanent'}
-                            </span>
-                          : <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>—</span>
-                        }
-                      </div>
-                      <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                        {!banned && (
-                          <select
-                            value={banDurations[p.id] ?? '24h'}
-                            onChange={e => setBanDurations(d => ({ ...d, [p.id]: e.target.value }))}
-                            style={{ fontFamily: 'var(--f-mono)', fontSize: 9, background: 'oklch(1 0 0 / 0.04)', border: '1px solid var(--line-2)', borderRadius: 6, padding: '3px 5px', color: 'var(--ink-2)', cursor: 'pointer' }}>
-                            <option value="1h">1 hour</option>
-                            <option value="24h">24 hours</option>
-                            <option value="7d">7 days</option>
-                            <option value="30d">30 days</option>
-                            <option value="permanent">Permanent</option>
-                          </select>
-                        )}
-                        <button className="btn" style={{ fontSize: 9, padding: '2px 8px', color: banned ? 'var(--lime)' : 'var(--magenta)' }}
-                          onClick={async () => {
-                            const dur = banned ? 'unban' : (banDurations[p.id] ?? '24h')
-                            const ok = await banPilot(p.id, dur)
-                            if (ok) {
-                              let newBannedUntil = null
-                              if (dur !== 'unban') {
-                                newBannedUntil = dur === 'permanent' ? '2099-01-01T00:00:00Z'
-                                  : new Date(Date.now() + { '1h': 3600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 }[dur]).toISOString()
-                              }
-                              setAllPilots(ps => ps.map((pl, j) => j === i ? { ...pl, banned_until: newBannedUntil } : pl))
-                            }
-                          }}>
-                          {banned ? 'Unban' : 'Ban'}
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
             </div>
           </>
         ) : (
