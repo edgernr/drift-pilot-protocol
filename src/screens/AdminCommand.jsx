@@ -35,16 +35,21 @@ const GATE_SHORT = Object.fromEntries(
 function fmtTime(s) { if (!s) return '—'; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
 
 export default function AdminCommand() {
-  const { user, profile, loading, clearFlag, toggleSubscription, banPilot } = useAuth()
+  const { user, profile, loading, clearFlag, toggleSubscription, banPilot, suspendPilot, voidClear } = useAuth()
   const { goto } = useNav()
 
   const [flaggedRows, setFlaggedRows] = useState([])
   const [allPilots, setAllPilots] = useState([])
   const [bugReports, setBugReports] = useState([])
   const [banDurations, setBanDurations] = useState({})
+  const [modDur, setModDur] = useState({})  // per-row suspend/ban duration select (review queue + registry)
   const [funnel, setFunnel] = useState(null)
   const [ops, setOps] = useState(null)
   const [armDelete, setArmDelete] = useState(null) // bug id armed for delete (two-click confirm)
+  const [sharedIp, setSharedIp] = useState([])
+  const [sharedFp, setSharedFp] = useState([])
+  const [botRows, setBotRows] = useState([])
+  const [dupes, setDupes] = useState([])
 
   const isAdmin = !!profile?.is_admin
 
@@ -55,16 +60,24 @@ export default function AdminCommand() {
     const iso = midnight.toISOString()
     Promise.all([
       supabase.from('quest_completions').select('user_id, quest_id, time_taken, paste_count, completed_at').eq('flagged', true).order('completed_at', { ascending: false }),
-      supabase.from('profiles').select('id, name, is_subscribed, is_admin, banned_until, prologue_done, created_at').order('name'),
+      supabase.from('profiles').select('id, name, is_subscribed, is_admin, banned_until, suspended_until, suspend_reason, prologue_done, dupe_flag, normalized_email, created_at').order('name'),
       supabase.from('bug_reports').select('id, user_id, description, view, url, user_agent, status, created_at').order('created_at', { ascending: false }),
       // Funnel source — client aggregate; becomes a SQL view at scale.
       supabase.from('quest_completions').select('quest_id'),
       supabase.from('quest_completions').select('user_id', { count: 'exact', head: true }).gte('completed_at', iso),
-    ]).then(([flagged, pilots, bugs, allCompletions, clearsToday]) => {
+      // Anti-abuse signals (tables/views ship in supabase/anti_abuse.sql — degrade to [] pre-migration).
+      supabase.from('account_links_ip').select('*').order('account_count', { ascending: false }).limit(50),
+      supabase.from('account_links_fp').select('*').order('account_count', { ascending: false }).limit(50),
+      supabase.from('security_events').select('created_at, kind, ip, fingerprint, bot_score, signals, user_id').gt('bot_score', 40).order('created_at', { ascending: false }).limit(50),
+    ]).then(([flagged, pilots, bugs, allCompletions, clearsToday, ip, fp, bots]) => {
       const pilotRows = pilots.data ?? []
       setFlaggedRows(flagged.data ?? [])
       setAllPilots(pilotRows)
       setBugReports(bugs.data ?? [])
+      setSharedIp(ip?.data ?? [])
+      setSharedFp(fp?.data ?? [])
+      setBotRows(bots?.data ?? [])
+      setDupes(pilotRows.filter(p => p.dupe_flag))
       const counts = {}
       for (const r of allCompletions.data ?? []) counts[r.quest_id] = (counts[r.quest_id] ?? 0) + 1
       setFunnel(counts)
@@ -158,15 +171,30 @@ export default function AdminCommand() {
                 <span className={row.time_taken < 90 ? 'ac-hot' : ''}>{fmtTime(row.time_taken)}</span>
                 <span className={row.paste_count > 0 ? 'ac-hot' : ''}>{row.paste_count ?? 0}</span>
                 <span className="ac-dim">{new Date(row.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                <button
-                  className="ac-btn"
-                  onClick={async () => {
-                    const ok = await clearFlag(row.user_id, row.quest_id)
-                    if (ok) setFlaggedRows(r => r.filter((_, j) => j !== i))
-                  }}
-                >
-                  Clear
-                </button>
+                <span className="ac-inline ac-flag-actions">
+                  <button className="ac-btn" title="Legit — remove the flag"
+                    onClick={async () => {
+                      const ok = await clearFlag(row.user_id, row.quest_id)
+                      if (ok) setFlaggedRows(r => r.filter((_, j) => j !== i))
+                    }}>Clear</button>
+                  <button className="ac-btn ac-btn-hot" title="Delete this clear — reverses XP + $SHARD"
+                    onClick={async () => {
+                      const ok = await voidClear(row.user_id, row.quest_id)
+                      if (ok) setFlaggedRows(r => r.filter((_, j) => j !== i))
+                    }}>Void</button>
+                  <button className="ac-btn" title="Suspend 7 days (can log in, can't earn)"
+                    onClick={async () => {
+                      const ok = await suspendPilot(row.user_id, '7d', 'flagged gate clear')
+                      if (ok) setAllPilots(ps => ps.map(pl => pl.id === row.user_id
+                        ? { ...pl, suspended_until: new Date(Date.now() + 604800000).toISOString(), suspend_reason: 'flagged gate clear' } : pl))
+                    }}>Suspend</button>
+                  <button className="ac-btn ac-btn-hot" title="Ban 30 days"
+                    onClick={async () => {
+                      const ok = await banPilot(row.user_id, '30d', 'flagged gate clear')
+                      if (ok) setAllPilots(ps => ps.map(pl => pl.id === row.user_id
+                        ? { ...pl, banned_until: new Date(Date.now() + 2592000000).toISOString() } : pl))
+                    }}>Ban</button>
+                </span>
               </div>
             ))}
           </div>
@@ -185,6 +213,7 @@ export default function AdminCommand() {
           </div>
           {allPilots.map((p, i) => {
             const banned = p.banned_until && (p.banned_until === '2099-01-01T00:00:00Z' || new Date(p.banned_until) > new Date())
+            const suspended = p.suspended_until && (p.suspended_until === '2099-01-01T00:00:00Z' || new Date(p.suspended_until) > new Date())
             const banExpiry = banned && p.banned_until !== '2099-01-01T00:00:00Z'
               ? new Date(p.banned_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
               : null
@@ -193,6 +222,8 @@ export default function AdminCommand() {
                 <span className="ac-strong">
                   {p.name ?? 'Unnamed'}
                   {p.is_admin && <span className="ac-chip">ADMIN</span>}
+                  {suspended && <span className="ac-chip ac-chip-warn" title={p.suspend_reason ?? ''}>SUSPENDED</span>}
+                  {p.dupe_flag && <span className="ac-chip ac-chip-warn">DUPE</span>}
                   {p.prologue_done === false && <span className="ac-chip ac-chip-dim">PRE-FALL</span>}
                 </span>
                 <span className="ac-inline">
@@ -227,10 +258,30 @@ export default function AdminCommand() {
                     </select>
                   )}
                   <button
+                    className={`ac-btn${suspended ? ' ac-btn-lime' : ''}`}
+                    title={suspended ? 'Lift suspension' : 'Suspend (can log in, can\'t earn) for the selected duration'}
+                    onClick={async () => {
+                      if (suspended) {
+                        const ok = await suspendPilot(p.id, 'unsuspend')
+                        if (ok) setAllPilots(ps => ps.map((pl, j) => j === i ? { ...pl, suspended_until: null, suspend_reason: null } : pl))
+                      } else {
+                        const dur = banDurations[p.id] ?? '24h'
+                        const ok = await suspendPilot(p.id, dur, 'admin action')
+                        if (ok) {
+                          const until = dur === 'permanent' ? '2099-01-01T00:00:00Z'
+                            : new Date(Date.now() + { '1h': 3600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 }[dur]).toISOString()
+                          setAllPilots(ps => ps.map((pl, j) => j === i ? { ...pl, suspended_until: until, suspend_reason: 'admin action' } : pl))
+                        }
+                      }
+                    }}
+                  >
+                    {suspended ? 'Unsuspend' : 'Suspend'}
+                  </button>
+                  <button
                     className={`ac-btn${banned ? ' ac-btn-lime' : ' ac-btn-hot'}`}
                     onClick={async () => {
                       const dur = banned ? 'unban' : (banDurations[p.id] ?? '24h')
-                      const ok = await banPilot(p.id, dur)
+                      const ok = await banPilot(p.id, dur, 'admin action')
                       if (ok) {
                         let newBannedUntil = null
                         if (dur !== 'unban') {
@@ -248,6 +299,60 @@ export default function AdminCommand() {
             )
           })}
         </div>
+      </section>
+
+      {/* ── Multi-account: shared IP / device ── */}
+      <section className="ac-panel">
+        <div className="ac-panel-head">
+          <h2>SHARED SIGNALS — SUSPECTED MULTI-ACCOUNTS</h2>
+          <span className={`ac-panel-note${(sharedIp.length + sharedFp.length) ? ' hot' : ''}`}>
+            {sharedIp.length} IP · {sharedFp.length} device
+          </span>
+        </div>
+        {(sharedIp.length + sharedFp.length) === 0 ? (
+          <div className="ac-empty">No shared IP/device clusters. (Needs supabase/anti_abuse.sql + telemetry.)</div>
+        ) : (
+          <div className="ac-table">
+            <div className="ac-row ac-row-head ac-grid-shared">
+              <span>Signal</span><span>Accounts</span><span>Hunters</span><span>Last seen</span>
+            </div>
+            {[...sharedIp.map(r => ({ ...r, sig: 'IP', key: 'ip:' + r.ip_hash })),
+              ...sharedFp.map(r => ({ ...r, sig: 'DEVICE', key: 'fp:' + r.fingerprint }))].map(r => (
+              <div key={r.key} className="ac-row ac-grid-shared">
+                <span className="ac-hot">{r.sig}</span>
+                <span className="ac-strong">{r.account_count}</span>
+                <span className="ac-dim">{(r.user_ids ?? []).map(id => allPilots.find(p => p.id === id)?.name ?? id.slice(0, 8)).join(', ')}</span>
+                <span className="ac-dim">{r.last_seen ? new Date(r.last_seen).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Bot watch ── */}
+      <section className="ac-panel">
+        <div className="ac-panel-head">
+          <h2>BOT WATCH</h2>
+          <span className={`ac-panel-note${botRows.length ? ' hot' : ''}`}>{botRows.length} high-score events</span>
+        </div>
+        {botRows.length === 0 ? (
+          <div className="ac-empty">No high bot-score signups. (Needs supabase/anti_abuse.sql + telemetry.)</div>
+        ) : (
+          <div className="ac-table">
+            <div className="ac-row ac-row-head ac-grid-bots">
+              <span>When</span><span>Kind</span><span>Score</span><span>IP</span><span>Signals</span>
+            </div>
+            {botRows.map((b, i) => (
+              <div key={i} className="ac-row ac-grid-bots">
+                <span className="ac-dim">{new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                <span>{b.kind}</span>
+                <span className={b.bot_score >= 80 ? 'ac-hot' : ''}>{b.bot_score}</span>
+                <span className="ac-dim">{b.ip ?? '—'}</span>
+                <span className="ac-dim">{JSON.stringify(b.signals ?? {}).slice(0, 60)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── Bug triage (ported) ── */}

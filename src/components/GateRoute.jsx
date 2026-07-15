@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, isSuspendActive } from '../context/AuthContext'
 
 export default function GateRoute({ requires = [], unlockKey = null, children }) {
   const { user, profile, loading } = useAuth()
@@ -8,6 +8,8 @@ export default function GateRoute({ requires = [], unlockKey = null, children })
   if (!profile) return null
   // Admins can open any gate regardless of prerequisites.
   if (profile.is_admin) return children
+  // Suspended hunters can't run contracts (they'd earn nothing anyway).
+  if (isSuspendActive(profile.suspended_until)) return <Navigate to="/dashboard" replace />
   // Season 01: brand-new hunters cannot enter ANY gate before "Zero Hour".
   // Strict `=== false` — if the prologue_done migration hasn't run, the column
   // is undefined and this guard stays inert (old behavior preserved).

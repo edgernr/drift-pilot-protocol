@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './Dashboard.css'
 import { useNav } from '../context/NavigationContext'
-import { useAuth, HUNT_REWARDS, SEASON_PASS_XP_MULT, USERNAME_COLORS } from '../context/AuthContext'
+import { useAuth, isSuspendActive, HUNT_REWARDS, SEASON_PASS_XP_MULT, USERNAME_COLORS } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import RaidView from './RaidView'
 import HunterSigil, { SIGIL_PALETTES } from '../components/HunterSigil'
@@ -565,6 +565,19 @@ export default function Dashboard() {
       </aside>
 
       <main className="dash-main">
+        {isSuspendActive(profile?.suspended_until) && (
+          <div style={{
+            margin: '0 0 14px', padding: '12px 16px', borderRadius: 8,
+            border: '1px solid rgba(255,176,32,0.4)', background: 'rgba(255,176,32,0.08)',
+            fontFamily: 'var(--f-mono)', fontSize: 12, color: '#ffb020', lineHeight: 1.5,
+          }}>
+            ⚠ <strong>ACCOUNT SUSPENDED</strong> — you can look around, but contracts and
+            rewards are locked{profile?.suspend_reason ? ` · ${profile.suspend_reason}` : ''}
+            {profile?.suspended_until && profile.suspended_until !== '2099-01-01T00:00:00Z'
+              ? ` · until ${new Date(profile.suspended_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+              : profile?.suspended_until === '2099-01-01T00:00:00Z' ? ' · permanent' : ''}
+          </div>
+        )}
         <div className="topbar">
           <div className="hamburger" onClick={() => setSidebarOpen(o => !o)}>
             <span /><span /><span />

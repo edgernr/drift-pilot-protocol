@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './Signup.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
+import { createBotProbe, HONEYPOT_STYLE } from '../lib/securitySignals'
+import { precheckEmail, loadBlockedDomains } from '../lib/emailGuard'
 
 export default function Signup() {
   const { goto } = useNav()
@@ -11,15 +13,28 @@ export default function Signup() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [company, setCompany] = useState('') // honeypot — real users never see/fill this
   const [localError, setLocalError] = useState(null)
   const [emailSent, setEmailSent] = useState(false)
+  const probeRef = useRef(null)
+
+  useEffect(() => {
+    loadBlockedDomains()
+    probeRef.current = createBotProbe()
+    return () => probeRef.current?.dispose()
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLocalError(null)
     clearError()
+    const emailErr = precheckEmail(email)
+    if (emailErr) { setLocalError(emailErr); return }
     if (password !== confirm) { setLocalError('Passwords do not match.'); return }
-    const result = await signup(email, password, name.trim(), null)
+    // Bot heuristics: honeypot = hard stop; timing/entropy = scored signal.
+    const probe = probeRef.current?.evaluate(company) ?? { botScore: 0, signals: {}, hardBlock: false }
+    if (probe.hardBlock) { setLocalError('Something went wrong. Please try again.'); return }
+    const result = await signup(email, password, name.trim(), null, { botScore: probe.botScore, signals: probe.signals })
     if (result === 'ok') goto('dashboard')
     if (result === 'confirm') setEmailSent(true)
   }
@@ -93,6 +108,17 @@ export default function Signup() {
           {displayError && <div className="auth-error">{displayError}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
+            {/* Honeypot — hidden from humans; bots that autofill it are blocked. */}
+            <input
+              type="text"
+              name="company"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={HONEYPOT_STYLE}
+              value={company}
+              onChange={e => setCompany(e.target.value)}
+            />
             <div className="auth-field">
               <label>Seeker name</label>
               <input

@@ -3,6 +3,7 @@ import './Login.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { HONEYPOT_STYLE } from '../lib/securitySignals'
 
 export default function Login() {
   const { goto } = useNav()
@@ -10,6 +11,7 @@ export default function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [company, setCompany] = useState('') // honeypot
   const [resetMsg, setResetMsg] = useState(null)
   const [banMsg] = useState(() => {
     const v = localStorage.getItem('hp_ban_until')
@@ -24,6 +26,7 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     clearError()
+    if (company) return // honeypot tripped — silently no-op for bots
     const ok = await login(email, password)
     if (ok) goto('dashboard')
   }
@@ -73,6 +76,8 @@ export default function Login() {
           {resetMsg && <div className="auth-msg">{resetMsg}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
+            <input type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true"
+              style={HONEYPOT_STYLE} value={company} onChange={e => setCompany(e.target.value)} />
             <div className="auth-field">
               <label>Email</label>
               <input

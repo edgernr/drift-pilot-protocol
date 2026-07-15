@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { authRedirectTo, initDesktopAuth, setTrayStreak } from '../lib/desktop'
+import { logSecurityEvent } from '../lib/securitySignals'
+
+// Suspend (soft) is distinct from ban (lockout): a suspended hunter can log in
+// but earns nothing. Both use a future timestamp; permanent = the ban sentinel.
+export function isSuspendActive(until) {
+  return !!until && (until === '2099-01-01T00:00:00Z' || new Date(until) > new Date())
+}
 
 const AuthContext = createContext(null)
 
@@ -100,10 +107,12 @@ export function AuthProvider({ children }) {
   const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   const fetchProfile = useCallback(async (userId) => {
-    let [{ data: prof, error: profErr }, { data: xpRows, count }, { data: unlockRows }] = await Promise.all([
+    let [{ data: prof, error: profErr }, { data: xpRows, count }, { data: unlockRows }, { data: guildRow }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).single(),
       supabase.from('quest_completions').select('xp_earned,quest_id,completed_at', { count: 'exact' }).eq('user_id', userId),
       supabase.from('gate_unlocks').select('quest_id,drift_cost,unlocked_at').eq('user_id', userId),
+      // Guild membership (guilds.sql). maybeSingle + FK embed => null if unmigrated.
+      supabase.from('guild_members').select('guild_id, role, guilds(name, tag, emblem)').eq('user_id', userId).maybeSingle(),
     ])
     // A logged-in user with no profiles row would otherwise get a silent null
     // profile (blank, nameless, all-zeros dashboard). Defensively create a
@@ -175,6 +184,9 @@ export function AuthProvider({ children }) {
         level: ld.level, levelLabel: ld.label, levelColor: ld.color,
         levelProgress: ld.progress, xpInLevel: ld.xpInLevel, xpNeeded: ld.xpNeeded,
         nextLevelLabel: ld.nextLabel,
+        guildId: guildRow?.guild_id ?? null,
+        guildRole: guildRow?.role ?? null,
+        guild: guildRow?.guilds ?? null,   // { name, tag, emblem } or null
       })
     }
   }, [])
@@ -200,10 +212,11 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) setError(error.message)
     setLoading(false)
+    if (!error) logSecurityEvent('login', { email })
     return !error
   }
 
-  async function signup(email, password, name, wallet) {
+  async function signup(email, password, name, wallet, analytics = null) {
     setLoading(true)
     setError(null)
     const { data, error } = await supabase.auth.signUp({
@@ -214,11 +227,17 @@ export function AuthProvider({ children }) {
     if (error) setError(error.message)
     setLoading(false)
     if (error) return false
+    // Telemetry (best-effort). No session yet on the confirm path → IP+fingerprint
+    // row only; it links to the user after they confirm + sign in.
+    logSecurityEvent('signup', { email, ...(analytics || {}) })
     return data.session ? 'ok' : 'confirm'
   }
 
   async function completeQuest(questId, xpEarned, analytics = {}) {
     if (!user) return false
+    // Suspended hunters earn nothing (RLS qc_block_suspended is the real backstop;
+    // this avoids the earn-nothing-with-no-explanation UX).
+    if (isSuspendActive(profile?.suspended_until)) return false
     // Gate XP multiplier = streak bonus × Season Pass boost. Gates only — raid
     // rows ('raid:*') keep their fixed tier XP so the new/old-format detection in
     // fetchProfile stays valid. Locked in at earn time (stored in xp_earned).
@@ -299,22 +318,53 @@ export function AuthProvider({ children }) {
     return !error
   }
 
-  async function banPilot(targetUserId, duration) {
+  const DURATION_MS = { '1h': 3600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 }
+  function durationToTimestamp(duration) {
+    if (duration === 'permanent') return '2099-01-01T00:00:00Z'
+    const ms = DURATION_MS[duration]
+    return ms ? new Date(Date.now() + ms).toISOString() : undefined
+  }
+
+  async function banPilot(targetUserId, duration, reason = null) {
     if (!user || !profile?.is_admin) return false
     let banned_until = null
     if (duration !== 'unban') {
-      if (duration === 'permanent') {
-        banned_until = '2099-01-01T00:00:00Z'
-      } else {
-        const ms = { '1h': 3600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 }[duration]
-        if (!ms) return false
-        banned_until = new Date(Date.now() + ms).toISOString()
-      }
+      banned_until = durationToTimestamp(duration)
+      if (banned_until === undefined) return false
     }
     const { error } = await supabase
       .from('profiles')
-      .update({ banned_until })
+      .update({ banned_until, ban_reason: duration === 'unban' ? null : reason })
       .eq('id', targetUserId)
+    return !error
+  }
+
+  // Suspend = soft moderation (can log in, can't earn). Distinct from ban.
+  async function suspendPilot(targetUserId, duration, reason = null) {
+    if (!user || !profile?.is_admin) return false
+    if (duration === 'unsuspend') {
+      const { error } = await supabase.from('profiles')
+        .update({ suspended_until: null, suspend_reason: null, suspended_at: null })
+        .eq('id', targetUserId)
+      return !error
+    }
+    const suspended_until = durationToTimestamp(duration)
+    if (suspended_until === undefined) return false
+    const { error } = await supabase.from('profiles')
+      .update({ suspended_until, suspend_reason: reason, suspended_at: new Date().toISOString() })
+      .eq('id', targetUserId)
+    return !error
+  }
+
+  // Void a flagged clear: delete the quest_completions row. XP + $SHARD are
+  // derived from surviving rows, so this cleanly reverses the reward.
+  async function voidClear(targetUserId, questId) {
+    if (!user || !profile?.is_admin) return false
+    const { error } = await supabase
+      .from('quest_completions')
+      .delete()
+      .eq('user_id', targetUserId)
+      .eq('quest_id', questId)
     return !error
   }
 
@@ -353,6 +403,22 @@ export function AuthProvider({ children }) {
     const { error } = await supabase
       .from('profiles')
       .update({ username_color: value })
+      .eq('id', user.id)
+    if (!error) await fetchProfile(user.id)
+    return !error
+  }
+
+  // Hunter Sigil avatar: persists a { seed, palette } jsonb config on the
+  // profile (see supabase/guilds.sql). Cosmetic + free for everyone. The value
+  // is read back for free via fetchProfile's select('*'). Degrades gracefully
+  // pre-migration: if the column is absent the update no-ops with an error and
+  // the app keeps showing initials.
+  async function updateAvatar(avatarConfig) {
+    if (!user) return false
+    const value = avatarConfig && typeof avatarConfig === 'object' ? avatarConfig : {}
+    const { error } = await supabase
+      .from('profiles')
+      .update({ avatar: value })
       .eq('id', user.id)
     if (!error) await fetchProfile(user.id)
     return !error
@@ -400,7 +466,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, updateProfile, updateUsernameColor, markPrologueDone, refundRaidEntry, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, passwordRecovery, clearError, login, signup, completeQuest, clearQuest, unlockGate, burnRaidEntry, clearFlag, toggleSubscription, banPilot, suspendPilot, voidClear, updateProfile, updateUsernameColor, updateAvatar, markPrologueDone, refundRaidEntry, refreshProfile, sendPasswordReset, updatePassword, updateEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )
