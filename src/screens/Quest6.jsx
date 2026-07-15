@@ -1,6 +1,6 @@
-import EncounterShell from '../components/EncounterShell'
+import ArenaShell from '../components/ArenaShell'
 import config from '../data/gates/gate06'
 
 export default function Quest6() {
-  return <EncounterShell config={config} />
+  return <ArenaShell config={config} />
 }

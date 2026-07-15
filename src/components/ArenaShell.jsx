@@ -4,6 +4,7 @@ import Editor from '@monaco-editor/react'
 import { useCombat } from '../context/CombatContext'
 import { useAuth } from '../context/AuthContext'
 import { useNav } from '../context/NavigationContext'
+import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
 import { on } from '../lib/combatBus'
 import HandlerComms from './HandlerComms'
 import Daemon from './Daemon'
@@ -33,6 +34,8 @@ const MOTES = [
 export default function ArenaShell({ config }) {
   const { goto } = useNav()
   const { user, profile, completeQuest } = useAuth()
+  // Anti-cheat / analytics (paste block, timing, flagging) → completeQuest.
+  const { onPaste, trackChange, getAnalytics, pasteBlocked } = useQuestAnalytics()
   const {
     playerHP, enemyHP, combo, phase,
     PLAYER_HP_MAX, ENEMY_HP_MAX,
@@ -44,9 +47,11 @@ export default function ArenaShell({ config }) {
   const [variantIdx] = useState(() =>
     Math.floor(Math.random() * (config.variants?.length || 1))
   )
+  // getStarterCode() when the gate separates player code from variant docs
+  // (CSS + JS gates); otherwise the variant IS the code (HTML gates).
   const [code, setCode] = useState(() =>
-    config.language === 'css'
-      ? (config.getStarterCode?.() ?? '')
+    config.getStarterCode
+      ? config.getStarterCode()
       : (config.variants?.[variantIdx] ?? '')
   )
   const [wardResults, setWardResults] = useState(() =>
@@ -60,6 +65,7 @@ export default function ArenaShell({ config }) {
   const [handlerMsg, setHandlerMsg] = useState(null)
   const [showQuiz, setShowQuiz] = useState(false)
   const [showCompletion, setShowCompletion] = useState(false)
+  const [brandOverride, setBrandOverride] = useState(null)
   const [castKey, setCastKey] = useState(0)
   const [expandedHint, setExpandedHint] = useState(null)
   const [started, setStarted] = useState(false)
@@ -70,6 +76,7 @@ export default function ArenaShell({ config }) {
   const [projectiles, setProjectiles] = useState([])
 
   // ─── Refs ─────────────────────────────────────────────────────────────────────
+  const checkIframeRef   = useRef(null)
   const previewIframeRef = useRef(null)
   const projIdRef        = useRef(0)
   const panelRef         = useRef(null)
@@ -100,21 +107,40 @@ export default function ArenaShell({ config }) {
   useEffect(() => { wardResultsRef.current = wardResults }, [wardResults])
   useEffect(() => { struckWardsRef.current = struckWards }, [struckWards])
 
-  // ─── Synchronous ward evaluation (DOMParser — instant, no iframe async) ────────
-  const evalWards = useCallback((src) => {
-    const doc = new DOMParser().parseFromString(src, 'text/html')
-    const results = {}
-    config.wards.forEach(w => {
-      try { results[w.id] = w.test(doc, null, src) } catch { results[w.id] = false }
-    })
-    return results
-  }, [config])
+  // ─── Ward evaluation (live offscreen-rendered iframe) ──────────────────────────
+  // NOT DOMParser: gates 04–09 test real computed styles / layout geometry /
+  // script-driven DOM, which only resolve in a rendered document. The iframe is
+  // positioned offscreen (not display:none) so layout computes; per-gate
+  // checkViewport (Gate 08 at 390px) and checkSandbox (Gate 09 needs
+  // allow-same-origin) come from the config. Async: writes srcdoc, reads on
+  // load, calls back with results.
+  const runChecks = useCallback((afterResults) => {
+    const iframe = checkIframeRef.current
+    if (!iframe) return
+    iframe.srcdoc = config.buildCheckDoc(code, variantIdx)
+    iframe.onload = () => {
+      requestAnimationFrame(() => {
+        const doc = iframe.contentDocument
+        const win = iframe.contentWindow
+        if (!doc || !win) return
+        const newResults = {}
+        config.wards.forEach(w => {
+          try { newResults[w.id] = w.test(doc, win, code) } catch { newResults[w.id] = false }
+        })
+        afterResults?.(newResults)
+      })
+    }
+  }, [code, variantIdx, config])
 
+  // Debounced re-check on code change → updates ward VISUALS only (damage is
+  // dealt on STRIKE, in handleStrike).
   useEffect(() => {
-    const results = evalWards(code)
-    wardResultsRef.current = results
-    setWardResults(results)
-  }, [code, evalWards])
+    const t = setTimeout(() => runChecks((newResults) => {
+      wardResultsRef.current = newResults
+      setWardResults(newResults)
+    }), 350)
+    return () => clearTimeout(t)
+  }, [runChecks])
 
   // ─── Start encounter ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -128,11 +154,9 @@ export default function ArenaShell({ config }) {
   // ─── Preview iframe srcdoc ────────────────────────────────────────────────────
   useEffect(() => {
     if (!previewIframeRef.current) return
-    const srcdoc = config.language === 'css'
-      ? config.buildPreview(code, variantIdx)
-      : config.buildPreview(code)
-    previewIframeRef.current.srcdoc = srcdoc
-  }, [code, variantIdx, config])
+    // Extra args are harmless for 1-arg builders (HTML gates ignore them).
+    previewIframeRef.current.srcdoc = config.buildPreview(code, variantIdx, brandOverride)
+  }, [code, variantIdx, brandOverride, config])
 
   // ─── GSAP virtual camera — idle drift + breath zoom + trauma shake ─────────────
   // Writes --cx/--cy/--cz onto ar-arena; layers read them via CSS inheritance.
@@ -288,9 +312,9 @@ export default function ArenaShell({ config }) {
 
   // ─── Completion ───────────────────────────────────────────────────────────────
   const handleCompletion = useCallback(async () => {
-    if (user) await completeQuest(config.questId, config.completionXp)
+    if (user) await completeQuest(config.questId, config.completionXp, getAnalytics())
     launchKillShot()
-  }, [user, completeQuest, config.questId, config.completionXp, launchKillShot])
+  }, [user, completeQuest, config.questId, config.completionXp, getAnalytics, launchKillShot])
 
   // ─── Quiz ─────────────────────────────────────────────────────────────────────
   const handleQuizPass = useCallback(() => {
@@ -309,22 +333,26 @@ export default function ArenaShell({ config }) {
   }, [])
 
   // ─── STRIKE ───────────────────────────────────────────────────────────────────
+  // Fixing a ward turns it green (debounced visual). STRIKE is what deals damage
+  // — one hit per newly-passing ward. Quiz unlocks when every ward is struck.
   const handleStrike = useCallback(() => {
     setCastKey(k => k + 1)
     const pid = ++projIdRef.current
     setProjectiles(prev => [...prev, { id: pid }])
     setTimeout(() => setProjectiles(prev => prev.filter(p => p.id !== pid)), 500)
-    const newResults = evalWards(code)
-    const currentStruckWards = struckWardsRef.current
-    const newlyPassed = config.wards.filter(w => newResults[w.id] && !currentStruckWards.has(w.id))
-    newlyPassed.forEach(() => resolveCheckRef.current?.(true))
-    const next = new Set([...currentStruckWards, ...newlyPassed.map(w => w.id)])
-    struckWardsRef.current = next
-    setStruckWards(next)
-    wardResultsRef.current = newResults
-    setWardResults(newResults)
-    if (next.size === config.wards.length) setTimeout(() => setShowQuiz(true), 350)
-  }, [code, config, evalWards])
+    runChecks((newResults) => {
+      const currentStruckWards = struckWardsRef.current
+      const newlyPassed = config.wards.filter(w => newResults[w.id] && !currentStruckWards.has(w.id))
+      newlyPassed.forEach(() => resolveCheckRef.current?.(true))
+      const next = new Set([...currentStruckWards, ...newlyPassed.map(w => w.id)])
+      struckWardsRef.current = next
+      setStruckWards(next)
+      wardResultsRef.current = newResults
+      setWardResults(newResults)
+      if (config.generateOverride) setBrandOverride(config.generateOverride(code))
+      if (next.size === config.wards.length) setTimeout(() => setShowQuiz(true), 350)
+    })
+  }, [code, config, runChecks])
 
   // ─── Respawn / next ───────────────────────────────────────────────────────────
   const handleRespawn = useCallback(() => {
@@ -378,7 +406,10 @@ export default function ArenaShell({ config }) {
   const failCount   = config.wards.length - passedCount
   const canStrike   = phase === 'active' && config.wards.some(w => wardResults[w.id] && !struckWards.has(w.id))
   const EnemySVG    = ENEMY_SVGS[config.enemy.svgVariant] ?? ENEMY_SVGS[1]
-  const filename    = config.language === 'css' ? 'style.css' : 'index.html'
+  const filename    = config.language === 'css' ? 'style.css'
+    : (config.language === 'javascript' || config.language === 'js') ? 'app.js'
+    : 'index.html'
+  const editorLanguage = config.language === 'js' ? 'javascript' : config.language
   const level       = profile?.level ?? 1
   const displayName = profile?.name ?? user?.email ?? 'K'
   const isEnraged   = enemyHP <= ENEMY_HP_MAX * 0.5 && enemyHP > 0
@@ -555,15 +586,15 @@ export default function ArenaShell({ config }) {
             <div className="ar-panel-header" onMouseDown={onPanelDragStart}>
               <span className="ar-panel-filename">{filename}</span>
               <span className={`ar-panel-status ${failCount === 0 ? 'clear' : 'errors'}`}>
-                {failCount === 0 ? '✓ all pass' : `${failCount} failing`}
+                {pasteBlocked ? '✕ paste blocked' : failCount === 0 ? '✓ all pass' : `${failCount} failing`}
               </span>
             </div>
-            <div className="ar-monaco-wrap">
+            <div className="ar-monaco-wrap" onPasteCapture={onPaste}>
               <Editor
                 height="280px"
-                language={config.language}
+                language={editorLanguage}
                 value={code}
-                onChange={val => setCode(val ?? '')}
+                onChange={val => { trackChange((val ?? '').length); setCode(val ?? '') }}
                 theme="vs-dark"
                 options={{
                   minimap: { enabled: false },
@@ -615,6 +646,26 @@ export default function ArenaShell({ config }) {
         <div className="ar-hud-region">{config.region} · GATE {String(config.gateNum).padStart(2, '0')}</div>
         <div className="ar-hud-right">● VERA ON</div>
       </div>
+
+      {/* Offscreen check iframe — offscreen (NOT display:none) so it computes
+          real layout: getComputedStyle / getBoundingClientRect / scrollWidth all
+          resolve. Per-gate checkViewport (Gate 08 at 390px) + checkSandbox
+          (Gate 09 needs allow-same-origin for script-driven DOM). */}
+      <iframe
+        ref={checkIframeRef}
+        title="check"
+        style={{
+          position: 'absolute',
+          left: '-99999px',
+          top: 0,
+          width: `${config.checkViewport?.width ?? 1100}px`,
+          height: `${config.checkViewport?.height ?? 800}px`,
+          border: 0,
+          pointerEvents: 'none',
+          visibility: 'hidden',
+        }}
+        sandbox={config.checkSandbox ?? 'allow-scripts allow-same-origin'}
+      />
 
       {/* ── Overlays ───────────────────────────────────────────────────────────── */}
 

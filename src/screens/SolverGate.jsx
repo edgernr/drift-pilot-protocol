@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom'
-import EncounterShell from '../components/EncounterShell'
+import ArenaShell from '../components/ArenaShell'
 import gate01 from '../data/gates/gate01'
 import gate02 from '../data/gates/gate02'
 import gate03 from '../data/gates/gate03'
@@ -20,7 +20,7 @@ const GATES = {
  * SolverGate — DEV-ONLY harness screen (bible §9.6: "a gate without a
  * machine-verified solution does not exist").
  *
- * Mounts a gate through the real EncounterShell with two modifications:
+ * Mounts a gate through the real ArenaShell (the universal shell) with two mods:
  *   - variant pinned to 0 (solutions are authored against variants[0])
  *   - the editor's starter code IS the config's `solution`
  * The headless driver (scripts/solve-gates.mjs) then only has to observe the
@@ -43,5 +43,5 @@ export default function SolverGate() {
     variants: base.variants ? [base.variants[0]] : base.variants,
     getStarterCode: () => solution ?? '/* RULE #6 VIOLATION: no solution field on this config */',
   }
-  return <EncounterShell key={base.id} config={cfg} />
+  return <ArenaShell key={base.id} config={cfg} />
 }

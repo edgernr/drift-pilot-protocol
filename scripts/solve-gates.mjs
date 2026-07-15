@@ -92,15 +92,15 @@ for (const n of argGates) {
   try {
     if (!cfg.solution) throw new Error('NO SOLUTION FIELD (rule #6)')
     await send('Page.navigate', { url: `${BASE}/__solver/${n}` })
-    // 1. shell mounted
-    await waitFor(`!!document.querySelector('.es-cast-btn')`, TIMEOUT_MS, 'shell mount')
-    // 2. all wards pass (debounced checks against the solution)
+    // 1. shell mounted (ArenaShell = the universal shell)
+    await waitFor(`!!document.querySelector('.ar-strike-btn')`, TIMEOUT_MS, 'shell mount')
+    // 2. all wards pass (debounced checks against the solution → '✓ all pass')
     await waitFor(
-      `(document.querySelector('.es-editor-errors')?.textContent ?? '').includes('all checks pass')`,
+      `(document.querySelector('.ar-panel-status')?.textContent ?? '').includes('all pass')`,
       TIMEOUT_MS, `wards (last state: see below)`
     )
-    // 3. CAST
-    await evaluate(`document.querySelector('.es-cast-btn')?.click()`)
+    // 3. STRIKE (deals damage for every newly-passing ward in one press)
+    await evaluate(`document.querySelector('.ar-strike-btn')?.click()`)
     // 4. quiz: pick the correct option, check, submit
     await waitFor(`[...document.querySelectorAll('button')].some(b => b.textContent.includes('Check Answer'))`, TIMEOUT_MS, 'quiz overlay')
     const clicked = await evaluate(
@@ -110,14 +110,14 @@ for (const n of argGates) {
     await evaluate(`[...document.querySelectorAll('button')].find(b => b.textContent.includes('Check Answer'))?.click()`)
     await waitFor(`[...document.querySelectorAll('button')].some(b => b.textContent.includes('Submit Gate'))`, 8000, 'quiz pass state')
     await evaluate(`[...document.querySelectorAll('button')].find(b => b.textContent.includes('Submit Gate'))?.click()`)
-    // 5. completion overlay = completability proven
-    await waitFor(`!!document.querySelector('.es-completion-overlay')`, 10000, 'completion overlay')
+    // 5. victory overlay = completability proven (waits out the kill-shot cinematic ~2.3s)
+    await waitFor(`!!document.querySelector('.ar-victory-overlay')`, 12000, 'victory overlay')
     results.push({ gate: n, ok: true, ms: Date.now() - t0 })
     console.log(`GATE ${String(n).padStart(2, '0')}  ✅ PASS   (${Date.now() - t0}ms)`)
   } catch (e) {
-    const wardState = await evaluate(`document.querySelector('.es-editor-errors')?.textContent ?? '(no shell)'`)
+    const wardState = await evaluate(`document.querySelector('.ar-panel-status')?.textContent ?? '(no shell)'`)
     const failing = await evaluate(
-      `[...document.querySelectorAll('.es-ward-row, .es-check-row')].map(r => r.textContent.trim().slice(0, 60))`
+      `[...document.querySelectorAll('.ar-ward')].filter(r => !r.className.includes('passed')).map(r => r.textContent.trim().slice(0, 60))`
     )
     results.push({ gate: n, ok: false, why: e.message, wardState, failing })
     console.log(`GATE ${String(n).padStart(2, '0')}  ❌ FAIL   ${e.message} · wards: ${wardState}`)
