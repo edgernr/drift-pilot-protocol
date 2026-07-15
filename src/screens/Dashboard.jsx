@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react'
 import './Dashboard.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth, HUNT_REWARDS, SEASON_PASS_XP_MULT, USERNAME_COLORS } from '../context/AuthContext'
-import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../lib/supabase'
 import RaidView from './RaidView'
+import HunterSigil, { SIGIL_PALETTES } from '../components/HunterSigil'
 
 function fmt(n) { return (n ?? 0).toLocaleString() }
-function initials(name) { return (name ?? 'PL').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) }
+function randomSeed() { return Math.floor(Math.random() * 1e9) }
 
 
 export default function Dashboard() {
   const { goto } = useNav()
-  const { user, profile, logout, updateProfile, updateUsernameColor, refreshProfile, clearQuest, unlockGate, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const { user, profile, logout, updateProfile, updateUsernameColor, updateAvatar, refreshProfile, clearQuest, unlockGate, passwordRecovery, sendPasswordReset, updatePassword, updateEmail } = useAuth()
   const [resetConfirm, setResetConfirm] = useState(null)
   const [unlockStatus, setUnlockStatus] = useState({})
   const [newPassword, setNewPassword] = useState('')
@@ -84,6 +83,7 @@ export default function Dashboard() {
   const [lbData, setLbData] = useState([])
   const [settingsName, setSettingsName] = useState('')
   const [saveStatus, setSaveStatus] = useState(null)
+  const [sigilDraft, setSigilDraft] = useState(null)  // local Hunter Sigil edits, persisted on Save
 
   const LB_GRADS = [
     'oklch(0.72 0.28 340), oklch(0.55 0.26 290)',
@@ -120,7 +120,9 @@ export default function Dashboard() {
   // Season 01 prologue gating: brand-new hunters play "Zero Hour" before HQ.
   // Strictly `=== false` — if the prologue_done migration hasn't run yet the
   // column is undefined and nobody gets redirected.
-  const needsPrologue = profile?.prologue_done === false && (profile?.questsCompleted ?? 0) === 0
+  // Admins bypass the forced prologue (parity with GateRoute) so a test
+  // account lands on HQ and can launch any gate directly.
+  const needsPrologue = !isAdmin && profile?.prologue_done === false && (profile?.questsCompleted ?? 0) === 0
   useEffect(() => {
     if (needsPrologue) goto('prologue')
   }, [needsPrologue, goto])
@@ -221,24 +223,25 @@ export default function Dashboard() {
     // Use the SQL `leaderboard` view: nested quest_completions are blocked by
     // RLS cross-user (every pilot would read 0). The view aggregates total_xp
     // server-side. Degrade gracefully if the view isn't provisioned yet.
-    supabase
-      .from('leaderboard')
-      .select('id,name,total_xp')
-      .order('total_xp', { ascending: false })
-      .then(({ data, error }) => {
-        if (error || !data) {
-          if (error) console.warn('leaderboard view unavailable:', error.message)
-          setLbData([])
-          return
-        }
-        const ranked = data.map((p, i) => ({
-          id: p.id,
-          name: p.name || 'Seeker',
-          totalXp: p.total_xp ?? 0,
-          rank: i + 1,
-        }))
-        setLbData(ranked)
-      })
+    ;(async () => {
+      // avatar is added to the view by guilds.sql — retry without it pre-migration
+      let res = await supabase.from('leaderboard').select('id,name,total_xp,avatar').order('total_xp', { ascending: false })
+      if (res.error) res = await supabase.from('leaderboard').select('id,name,total_xp').order('total_xp', { ascending: false })
+      const { data, error } = res
+      if (error || !data) {
+        if (error) console.warn('leaderboard view unavailable:', error.message)
+        setLbData([])
+        return
+      }
+      const ranked = data.map((p, i) => ({
+        id: p.id,
+        name: p.name || 'Seeker',
+        totalXp: p.total_xp ?? 0,
+        avatar: p.avatar ?? null,
+        rank: i + 1,
+      }))
+      setLbData(ranked)
+    })()
   }, [profile])
 
   function openSettings() {
@@ -247,11 +250,25 @@ export default function Dashboard() {
     setView('settings')
   }
 
+  function rerollSigil() {
+    const base = sigilDraft ?? profile?.avatar ?? {}
+    setSigilDraft({ seed: randomSeed(), palette: base.palette ?? 0 })
+  }
+  function pickSigilPalette(idx) {
+    const base = sigilDraft ?? profile?.avatar ?? {}
+    setSigilDraft({ seed: base.seed ?? randomSeed(), palette: idx })
+  }
+
   async function handleSave() {
     setSaveStatus('saving')
     const ok = await updateProfile(settingsName, profile?.wallet ?? null)
-    setSaveStatus(ok ? 'saved' : 'error')
-    if (ok) setTimeout(() => setSaveStatus(null), 2500)
+    let sigilOk = true
+    if (sigilDraft) {
+      sigilOk = await updateAvatar(sigilDraft)
+      if (sigilOk) setSigilDraft(null)
+    }
+    setSaveStatus(ok && sigilOk ? 'saved' : 'error')
+    if (ok && sigilOk) setTimeout(() => setSaveStatus(null), 2500)
   }
 
   const questsDone = profile?.questsCompleted ?? 0
@@ -515,6 +532,13 @@ export default function Dashboard() {
           </div>
         </div>
 
+        <div>
+          <div className="section-label">Guild</div>
+          <div className="navlist">
+            <a onClick={() => goto('guild')}><span className="ic">⬡</span> {profile?.guild?.tag ? <>Guild <span style={{ color: 'var(--amber)', fontFamily: 'var(--f-mono)', fontSize: 11 }}>[{profile.guild.tag}]</span></> : 'Guilds'}</a>
+          </div>
+        </div>
+
         {isAdmin && (
           <div>
             <div className="section-label">Admin</div>
@@ -546,14 +570,6 @@ export default function Dashboard() {
             <span /><span /><span />
           </div>
           <div className="top-actions">
-            <button
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--line-2)', background: 'none', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', transition: 'color 0.15s, border-color 0.15s' }}
-            >
-              {theme === 'dark' ? '☀' : '◑'}
-            </button>
-
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               {notifOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setNotifOpen(false)} />}
@@ -598,7 +614,7 @@ export default function Dashboard() {
             {/* Profile */}
             <div style={{ position: 'relative' }}>
               {profileOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setProfileOpen(false)} />}
-              <div className="dash-avatar" style={{ cursor: 'pointer' }} onClick={() => { setProfileOpen(o => !o); setNotifOpen(false) }}>{initials(pilotName)}</div>
+              <div className="dash-avatar" style={{ cursor: 'pointer' }} onClick={() => { setProfileOpen(o => !o); setNotifOpen(false) }}><HunterSigil config={profile?.avatar} name={pilotName} size="100%" /></div>
               {profileOpen && (
                 <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 220, zIndex: 100, background: 'var(--bg-popup)', border: '1px solid var(--border-popup)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-popup)' }}>
                   <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line-popup)' }}>
@@ -841,10 +857,10 @@ export default function Dashboard() {
                     {lbData.length === 0
                       ? <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', padding: '8px 0' }}>Loading...</div>
                       : lbData.slice(0, 5).map(r => (
-                          <div key={r.id} className={`lb-row${r.rank <= 3 ? ' top' : ''}${r.id === user?.id ? ' me' : ''}`}>
+                          <div key={r.id} className={`lb-row${r.rank <= 3 ? ' top' : ''}${r.id === user?.id ? ' me' : ''}`} style={{ cursor: 'pointer' }} onClick={() => goto(`pilot/${r.id}`)}>
                             <div className="rank">{r.rank}</div>
                             <div className="who">
-                              <div className="av" style={{ background: `linear-gradient(135deg, ${LB_GRADS[(r.rank - 1) % LB_GRADS.length]})` }}>{initials(r.name)}</div>
+                              <div className="av" style={{ background: `linear-gradient(135deg, ${LB_GRADS[(r.rank - 1) % LB_GRADS.length]})` }}><HunterSigil config={r.avatar} name={r.name} size="100%" /></div>
                               <span>{r.name}{r.id === user?.id && <span style={{ color: 'var(--magenta)', fontSize: 10, fontFamily: 'var(--f-mono)', marginLeft: 6 }}>YOU</span>}</span>
                             </div>
                             <div className="xp">{fmt(r.totalXp)}</div>
@@ -855,10 +871,10 @@ export default function Dashboard() {
                       const me = lbData.find(r => r.id === user?.id)
                       if (!me || me.rank <= 5) return null
                       return (
-                        <div className="lb-row me">
+                        <div className="lb-row me" style={{ cursor: 'pointer' }} onClick={() => goto(`pilot/${me.id}`)}>
                           <div className="rank">{me.rank}</div>
                           <div className="who">
-                            <div className="av" style={{ background: 'linear-gradient(135deg, var(--violet), var(--magenta))' }}>{initials(pilotName)}</div>
+                            <div className="av" style={{ background: 'linear-gradient(135deg, var(--violet), var(--magenta))' }}><HunterSigil config={profile?.avatar} name={pilotName} size="100%" /></div>
                             <span>{pilotName} · <span style={{ color: 'var(--magenta)', fontSize: 10, fontFamily: 'var(--f-mono)' }}>YOU</span></span>
                           </div>
                           <div className="xp">{fmt(totalXp)}</div>
@@ -934,7 +950,7 @@ export default function Dashboard() {
             )}
 
             <div className="st-grid">
-              {quests.filter(q => q.chapter === 1).map((q) => {
+              {quests.filter(q => q.world === 1).map((q) => {
                 const chKey = `act1-ch${String(q.chapter).padStart(2, '0')}`
                 const prevChKey = `act1-ch${String(q.chapter - 1).padStart(2, '0')}`
                 const isDone = doneQuests.has(chKey) || doneQuests.has(q.id)
@@ -1148,10 +1164,10 @@ export default function Dashboard() {
               {lbData.length === 0
                 ? <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', padding: '16px 0' }}>Loading...</div>
                 : lbData.map(r => (
-                    <div key={r.id} className={`lb-row${r.rank <= 3 ? ' top' : ''}${r.id === user?.id ? ' me' : ''}`}>
+                    <div key={r.id} className={`lb-row${r.rank <= 3 ? ' top' : ''}${r.id === user?.id ? ' me' : ''}`} style={{ cursor: 'pointer' }} onClick={() => goto(`pilot/${r.id}`)}>
                       <div className="rank">{r.rank}</div>
                       <div className="who">
-                        <div className="av" style={{ background: `linear-gradient(135deg, ${LB_GRADS[(r.rank - 1) % LB_GRADS.length]})` }}>{initials(r.name)}</div>
+                        <div className="av" style={{ background: `linear-gradient(135deg, ${LB_GRADS[(r.rank - 1) % LB_GRADS.length]})` }}><HunterSigil config={r.avatar} name={r.name} size="100%" /></div>
                         <span>
                           {r.name}
                           {r.id === user?.id && <span style={{ color: 'var(--magenta)', fontSize: 10, fontFamily: 'var(--f-mono)', marginLeft: 6 }}>YOU</span>}
@@ -1166,7 +1182,7 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="set-hero">
-              <div className="set-avatar">{initials(pilotName)}</div>
+              <div className="set-avatar"><HunterSigil config={sigilDraft ?? profile?.avatar} name={pilotName} size="100%" /></div>
               <div>
                 <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 4, color: nameColor ?? undefined }}>{pilotName}</h2>
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{user?.email}</p>
@@ -1226,6 +1242,37 @@ export default function Dashboard() {
                       })}
                     </div>
                     {!isSubscribed && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', marginTop: 6, display: 'block' }}>Unlock custom name colours with a Season Pass.</span>}
+                  </div>
+                  <div className="set-field">
+                    <label className="set-label">Hunter Sigil</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                      <div className="set-avatar" style={{ width: 52, height: 52, fontSize: 18 }}>
+                        <HunterSigil config={sigilDraft ?? profile?.avatar} name={pilotName} size="100%" />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {SIGIL_PALETTES.map((p, i) => {
+                            const cur = sigilDraft ?? profile?.avatar
+                            const selected = cur?.seed != null && (cur?.palette ?? 0) === i
+                            return (
+                              <button
+                                key={p.key}
+                                type="button"
+                                title={p.key}
+                                onClick={() => pickSigilPalette(i)}
+                                style={{
+                                  width: 26, height: 26, borderRadius: '50%', padding: 0, background: p.accent,
+                                  border: selected ? '2px solid var(--ink-1)' : '2px solid transparent',
+                                  boxShadow: selected ? '0 0 0 2px var(--bg-popup)' : 'none', cursor: 'pointer',
+                                }}
+                              />
+                            )
+                          })}
+                        </div>
+                        <button type="button" className="btn" style={{ fontSize: 11, padding: '5px 12px', alignSelf: 'flex-start' }} onClick={rerollSigil}>⟳ Reroll sigil</button>
+                      </div>
+                    </div>
+                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', marginTop: 6, display: 'block' }}>Procedural mark — reroll or pick an accent, then Save Changes.</span>
                   </div>
                   <div className="set-actions">
                     <button className="btn btn-primary" onClick={handleSave} disabled={saveStatus === 'saving'}>
