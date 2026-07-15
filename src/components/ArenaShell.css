@@ -274,6 +274,13 @@
 }
 .ar-panel-status.clear  { color: #3df0e8; border-color: #3df0e828; }
 .ar-panel-status.errors { color: #ff3d8b; border-color: #ff3d8b30; }
+.ar-panel-status.flagged {
+  color: #ffb020;
+  border-color: #ffb02055;
+  background: #ffb0200f;
+  animation: ar-flag-pulse 0.5s steps(2) 3;
+}
+@keyframes ar-flag-pulse { 50% { opacity: 0.4; } }
 .ar-monaco-wrap { overflow: hidden; }
 .ar-panel-footer {
   display: flex;
@@ -941,6 +948,43 @@
   background: radial-gradient(ellipse at 50% 55%, #0e0010 0%, #08080c 62%);
   animation: victory-fade-in 0.8s cubic-bezier(0.22,1,0.36,1) both;
 }
+.ar-victory-overlay.flagged {
+  background: radial-gradient(ellipse at 50% 55%, #1a1200 0%, #08080c 62%);
+}
+
+/* Association integrity review — shown atop the victory card on a flagged run */
+.ar-integrity-notice {
+  max-width: 460px;
+  margin-bottom: 6px;
+  padding: 14px 18px;
+  border: 1px solid #ffb02055;
+  border-radius: 8px;
+  background: #ffb0200d;
+  text-align: left;
+}
+.ar-integrity-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #ffb020;
+  margin-bottom: 8px;
+}
+.ar-integrity-body {
+  font-family: 'Saira', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #eaded0;
+  margin: 0 0 8px;
+}
+.ar-integrity-body strong { color: #ffb020; }
+.ar-integrity-reasons {
+  margin: 0;
+  padding-left: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #c9a97e;
+}
+.ar-integrity-reasons li { margin: 2px 0; }
 @keyframes victory-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }

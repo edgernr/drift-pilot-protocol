@@ -34,8 +34,9 @@ const MOTES = [
 export default function ArenaShell({ config }) {
   const { goto } = useNav()
   const { user, profile, completeQuest } = useAuth()
-  // Anti-cheat / analytics (paste block, timing, flagging) → completeQuest.
-  const { onPaste, trackChange, getAnalytics, pasteBlocked } = useQuestAnalytics()
+  // Anti-cheat: hard Monaco paste block + bulk-insert/timing detection.
+  const { onPaste, bindEditor, onCodeChange, getAnalytics, getReasons, pasteBlocked, suspicious } =
+    useQuestAnalytics({ minSeconds: config.minSeconds })
   const {
     playerHP, enemyHP, combo, phase,
     PLAYER_HP_MAX, ENEMY_HP_MAX,
@@ -65,6 +66,7 @@ export default function ArenaShell({ config }) {
   const [handlerMsg, setHandlerMsg] = useState(null)
   const [showQuiz, setShowQuiz] = useState(false)
   const [showCompletion, setShowCompletion] = useState(false)
+  const [integrityReasons, setIntegrityReasons] = useState(null) // set at completion if the run was flagged
   const [brandOverride, setBrandOverride] = useState(null)
   const [castKey, setCastKey] = useState(0)
   const [expandedHint, setExpandedHint] = useState(null)
@@ -312,9 +314,11 @@ export default function ArenaShell({ config }) {
 
   // ─── Completion ───────────────────────────────────────────────────────────────
   const handleCompletion = useCallback(async () => {
+    const reasons = getReasons()
+    setIntegrityReasons(reasons.length ? reasons : null)
     if (user) await completeQuest(config.questId, config.completionXp, getAnalytics())
     launchKillShot()
-  }, [user, completeQuest, config.questId, config.completionXp, getAnalytics, launchKillShot])
+  }, [user, completeQuest, config.questId, config.completionXp, getAnalytics, getReasons, launchKillShot])
 
   // ─── Quiz ─────────────────────────────────────────────────────────────────────
   const handleQuizPass = useCallback(() => {
@@ -585,8 +589,10 @@ export default function ArenaShell({ config }) {
           <div className="ar-code-panel" ref={panelRef}>
             <div className="ar-panel-header" onMouseDown={onPanelDragStart}>
               <span className="ar-panel-filename">{filename}</span>
-              <span className={`ar-panel-status ${failCount === 0 ? 'clear' : 'errors'}`}>
-                {pasteBlocked ? '✕ paste blocked' : failCount === 0 ? '✓ all pass' : `${failCount} failing`}
+              <span className={`ar-panel-status ${pasteBlocked || suspicious ? 'flagged' : failCount === 0 ? 'clear' : 'errors'}`}>
+                {pasteBlocked ? '✕ PASTE BLOCKED — type it, Hunter'
+                  : suspicious ? '⚠ INTEGRITY FLAG'
+                  : failCount === 0 ? '✓ all pass' : `${failCount} failing`}
               </span>
             </div>
             <div className="ar-monaco-wrap" onPasteCapture={onPaste}>
@@ -594,7 +600,8 @@ export default function ArenaShell({ config }) {
                 height="280px"
                 language={editorLanguage}
                 value={code}
-                onChange={val => { trackChange((val ?? '').length); setCode(val ?? '') }}
+                onChange={(val, ev) => { onCodeChange(val ?? '', ev); setCode(val ?? '') }}
+                onMount={bindEditor}
                 theme="vs-dark"
                 options={{
                   minimap: { enabled: false },
@@ -692,8 +699,20 @@ export default function ArenaShell({ config }) {
       {showKillFlash && <div className="ar-kill-flash" aria-hidden="true" />}
 
       {showCompletion && (
-        <div className="ar-victory-overlay">
+        <div className={`ar-victory-overlay${integrityReasons ? ' flagged' : ''}`}>
           <div className="ar-victory-inner">
+            {integrityReasons && (
+              <div className="ar-integrity-notice">
+                <div className="ar-integrity-title">⚠ ASSOCIATION INTEGRITY REVIEW</div>
+                <p className="ar-integrity-body">
+                  VERA // AUDIT: this compile shows external-source markers. The kill counts — but it&rsquo;s
+                  <strong> logged and flagged for Association review.</strong> Hunters climb by writing code, not importing it.
+                </p>
+                <ul className="ar-integrity-reasons">
+                  {integrityReasons.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+            )}
             <div className="ar-victory-boss-tag">ENEMY SLAIN</div>
             <div className="ar-victory-boss-name">{config.enemy.name}</div>
             <div className="ar-victory-defeated">DEFEATED</div>
