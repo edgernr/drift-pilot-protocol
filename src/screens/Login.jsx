@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import './Login.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { HONEYPOT_STYLE } from '../lib/securitySignals'
+import Turnstile, { TURNSTILE_ENABLED } from '../components/Turnstile'
 
 export default function Login() {
   const { goto } = useNav()
@@ -12,6 +13,9 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [company, setCompany] = useState('') // honeypot
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaErr, setCaptchaErr] = useState(null)
+  const captchaRef = useRef(null)
   const [resetMsg, setResetMsg] = useState(null)
   const [banMsg] = useState(() => {
     const v = localStorage.getItem('hp_ban_until')
@@ -26,8 +30,11 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     clearError()
+    setCaptchaErr(null)
     if (company) return // honeypot tripped — silently no-op for bots
-    const ok = await login(email, password)
+    if (TURNSTILE_ENABLED && !captchaToken) { setCaptchaErr('Please complete the verification challenge.'); return }
+    const ok = await login(email, password, captchaToken || undefined)
+    captchaRef.current?.reset(); setCaptchaToken('') // token is single-use
     if (ok) goto('dashboard')
   }
 
@@ -103,6 +110,8 @@ export default function Login() {
                 required
               />
             </div>
+            <Turnstile ref={captchaRef} onVerify={setCaptchaToken} />
+            {captchaErr && <div className="auth-error">{captchaErr}</div>}
             <button type="submit" className="auth-btn-gold" disabled={loading}>
               {loading ? 'Logging in…' : 'Enter the void →'}
             </button>

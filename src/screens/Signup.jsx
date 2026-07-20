@@ -4,6 +4,7 @@ import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { createBotProbe, HONEYPOT_STYLE } from '../lib/securitySignals'
 import { precheckEmail, loadBlockedDomains } from '../lib/emailGuard'
+import Turnstile, { TURNSTILE_ENABLED } from '../components/Turnstile'
 
 export default function Signup() {
   const { goto } = useNav()
@@ -16,7 +17,9 @@ export default function Signup() {
   const [company, setCompany] = useState('') // honeypot — real users never see/fill this
   const [localError, setLocalError] = useState(null)
   const [emailSent, setEmailSent] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
   const probeRef = useRef(null)
+  const captchaRef = useRef(null)
 
   useEffect(() => {
     loadBlockedDomains()
@@ -31,10 +34,12 @@ export default function Signup() {
     const emailErr = precheckEmail(email)
     if (emailErr) { setLocalError(emailErr); return }
     if (password !== confirm) { setLocalError('Passwords do not match.'); return }
+    if (TURNSTILE_ENABLED && !captchaToken) { setLocalError('Please complete the verification challenge.'); return }
     // Bot heuristics: honeypot = hard stop; timing/entropy = scored signal.
     const probe = probeRef.current?.evaluate(company) ?? { botScore: 0, signals: {}, hardBlock: false }
     if (probe.hardBlock) { setLocalError('Something went wrong. Please try again.'); return }
-    const result = await signup(email, password, name.trim(), null, { botScore: probe.botScore, signals: probe.signals })
+    const result = await signup(email, password, name.trim(), null, { botScore: probe.botScore, signals: probe.signals }, captchaToken || undefined)
+    captchaRef.current?.reset(); setCaptchaToken('') // token is single-use
     if (result === 'ok') goto('dashboard')
     if (result === 'confirm') setEmailSent(true)
   }
@@ -163,6 +168,7 @@ export default function Signup() {
                 required
               />
             </div>
+            <Turnstile ref={captchaRef} onVerify={setCaptchaToken} />
             <button type="submit" className="auth-btn-gold" disabled={loading}>
               {loading ? 'Creating account…' : 'Awaken →'}
             </button>

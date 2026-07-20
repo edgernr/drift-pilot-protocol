@@ -206,23 +206,30 @@ export function AuthProvider({ children }) {
 
   function clearError() { setError(null) }
 
-  async function login(email, password) {
+  async function login(email, password, captchaToken) {
     setLoading(true)
     setError(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email, password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    })
     if (error) setError(error.message)
     setLoading(false)
     if (!error) logSecurityEvent('login', { email })
     return !error
   }
 
-  async function signup(email, password, name, wallet, analytics = null) {
+  async function signup(email, password, name, wallet, analytics = null, captchaToken) {
     setLoading(true)
     setError(null)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, wallet: wallet || null }, emailRedirectTo: authRedirectTo() },
+      options: {
+        data: { name, wallet: wallet || null },
+        emailRedirectTo: authRedirectTo(),
+        ...(captchaToken ? { captchaToken } : {}),
+      },
     })
     if (error) setError(error.message)
     setLoading(false)
