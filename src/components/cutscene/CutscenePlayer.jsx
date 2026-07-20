@@ -1,5 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './CutscenePlayer.css'
+import { speak, stopTts, prefetchTts, isTtsMuted, setTtsMuted } from '../../lib/tts'
+
+// Flatten a line (string OR JSX like <>a <strong>b</strong></>) to plain text.
+function nodeToText(node) {
+  if (node == null || node === false || node === true) return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(nodeToText).join('')
+  if (node.props && node.props.children != null) return nodeToText(node.props.children)
+  return ''
+}
+
+// Map a card's speaker/tone to a character voice preset.
+function voiceForCard(card) {
+  const sp = (card.speaker || '').toUpperCase()
+  const tone = card.tone || ''
+  if (tone === 'gorgoroth' || sp.includes('GORGOROTH')) return 'gorgoroth'
+  if (sp.includes('VERA')) return 'vera'
+  if (sp.includes('PROCTOR') || tone === 'assoc') return 'proctor'
+  return 'narrator'
+}
 
 /*
  * CutscenePlayer — the card-based cutscene system (Season 01 prologue).
@@ -30,6 +50,7 @@ export default function CutscenePlayer({ scene, onComplete, skippable = false })
   const [idx, setIdx] = useState(0)
   const [lineCount, setLineCount] = useState(1)
   const [locked, setLocked] = useState(false)
+  const [muted, setMuted] = useState(isTtsMuted())
   const holdTimerRef = useRef(null)
   const doneRef = useRef(false)
 
@@ -81,6 +102,29 @@ export default function CutscenePlayer({ scene, onComplete, skippable = false })
     return () => window.removeEventListener('keydown', onKey)
   }, [advance])
 
+  // Narrate the newest revealed line; prefetch the next. Silent if TTS off/undeployed.
+  useEffect(() => {
+    const c = scene.cards[idx]
+    if (!c) return
+    const voice = voiceForCard(c)
+    speak(nodeToText(c.lines?.[lineCount - 1]), voice)
+    const nextSame = c.lines?.[lineCount]
+    if (nextSame) prefetchTts(nodeToText(nextSame), voice)
+    else {
+      const nc = scene.cards[idx + 1]
+      if (nc) prefetchTts(nodeToText(nc.lines?.[0]), voiceForCard(nc))
+    }
+  }, [idx, lineCount, scene])
+
+  useEffect(() => () => stopTts(), [])
+
+  const toggleMute = useCallback((e) => {
+    e.stopPropagation()
+    const m = !muted
+    setMuted(m)
+    setTtsMuted(m)
+  }, [muted])
+
   if (!card) return null
 
   return (
@@ -94,6 +138,9 @@ export default function CutscenePlayer({ scene, onComplete, skippable = false })
             <span key={c.id ?? i} className={`cs-dot ${i === idx ? 'on' : ''} ${i < idx ? 'done' : ''}`} />
           ))}
         </span>
+        <button className="cs-mute" onClick={toggleMute} aria-label={muted ? 'Unmute narration' : 'Mute narration'}>
+          {muted ? '🔇' : '🔊'}
+        </button>
         {skippable && (
           <button className="cs-skip" onClick={(e) => { e.stopPropagation(); skip() }}>
             SKIP ▸▸

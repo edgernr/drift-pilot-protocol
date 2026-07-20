@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './FallScene.css'
+import { speak, stopTts, prefetchTts } from '../../lib/tts'
 
 /*
  * FallScene — CS-3 "THE FALL" (the signature cutscene).
@@ -557,6 +558,15 @@ export default function FallScene({ onComplete }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [advance])
+
+  // Narrate each revealed line (narrator voice); silent if TTS off/undeployed.
+  useEffect(() => {
+    const line = STOPS[stop]?.lines?.[lineCount - 1]
+    speak(typeof line === 'string' ? line : String(line ?? ''), 'narrator')
+    const next = STOPS[stop]?.lines?.[lineCount] ?? STOPS[stop + 1]?.lines?.[0]
+    if (typeof next === 'string') prefetchTts(next, 'narrator')
+  }, [stop, lineCount])
+  useEffect(() => () => stopTts(), [])
 
   /* parallax: each layer translated by its own rate from the stop index */
   const shift = (rate) => ({ transform: `translateY(${-(stop * rate * 100)}vh)` })
