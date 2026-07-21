@@ -7,6 +7,7 @@ import { CombatProvider } from './context/CombatContext'
 import RouteTransition from './components/RouteTransition'
 import ProtectedRoute from './components/ProtectedRoute'
 import GateRoute from './components/GateRoute'
+import HunterLayout from './components/HunterLayout'
 import GameHUD from './components/GameHUD'
 import Landing from './screens/Landing'
 import Login from './screens/Login'
@@ -21,6 +22,9 @@ import Interlude2 from './screens/Interlude2'
 import SolverGate from './screens/SolverGate'
 // ASSOCIATION COMMAND — lazy so admin code never ships in the player chunk
 const AdminCommand = lazy(() => import('./screens/AdminCommand'))
+// GUILDS — lazy (own chunk)
+const Guild = lazy(() => import('./screens/Guild'))
+const GuildProfile = lazy(() => import('./screens/GuildProfile'))
 import Quest from './screens/Quest'
 import Quest2 from './screens/Quest2'
 import Quest3 from './screens/Quest3'
@@ -125,7 +129,9 @@ function AnimatedRoutes() {
         <Route path="/quest8" element={<GateRoute requires={['act1-ch07']} unlockKey="act1-ch08"><Quest8 /></GateRoute>} />
         <Route path="/quest9" element={<GateRoute requires={['act1-ch08']} unlockKey="act1-ch09"><Quest9 /></GateRoute>} />
         <Route path="/quest10" element={<GateRoute requires={['act1-ch09']} unlockKey="act1-ch10"><Quest10 /></GateRoute>} />
-        <Route path="/pilot/:id" element={<PilotProfile />} />
+        <Route path="/pilot/:id" element={<HunterLayout><PilotProfile /></HunterLayout>} />
+        <Route path="/guild" element={<ProtectedRoute><Suspense fallback={null}><HunterLayout active="guild"><Guild /></HunterLayout></Suspense></ProtectedRoute>} />
+        <Route path="/guild/:id" element={<Suspense fallback={null}><HunterLayout active="guild"><GuildProfile /></HunterLayout></Suspense>} />
         {/* Dev-only solver harness route (bible §9.6) — never registered in prod builds */}
         {import.meta.env.DEV && <Route path="/__solver/:gateNum" element={<SolverGate />} />}
         {/* Void Academy — hidden for Season 01 rework */}
