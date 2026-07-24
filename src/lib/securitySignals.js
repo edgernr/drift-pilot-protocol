@@ -5,10 +5,18 @@
 import { supabase } from './supabase'
 import { getFingerprint, shortUA } from './fingerprint'
 
+// Opt-in: telemetry only fires when the backend is ready. Off by default so a
+// project without the log_security_event RPC never logs a 404 on login/session.
+// Enable: run the RPC in supabase/anti_abuse.sql, then set
+// VITE_SECURITY_TELEMETRY=true in the build env and redeploy.
+const TELEMETRY_ENABLED = import.meta.env.VITE_SECURITY_TELEMETRY === 'true'
+let disabled = false // circuit-breaker: stop after a hard failure (e.g. RPC missing)
+
 // kind: 'signup' | 'login' | 'session' | 'bot'
 export async function logSecurityEvent(kind, { email = null, botScore = 0, signals = {} } = {}) {
+  if (!TELEMETRY_ENABLED || disabled) return
   try {
-    await supabase.rpc('log_security_event', {
+    const { error } = await supabase.rpc('log_security_event', {
       p_kind: kind,
       p_fingerprint: getFingerprint(),
       p_email: email,
@@ -16,7 +24,8 @@ export async function logSecurityEvent(kind, { email = null, botScore = 0, signa
       p_signals: signals,
       p_user_agent: shortUA(),
     })
-  } catch { /* telemetry must never break auth */ }
+    if (error) disabled = true // missing RPC / not set up → don't retry this session
+  } catch { disabled = true } // telemetry must never break auth
 }
 
 // Lightweight behavioral bot-signal collector for an auth form. Tracks: time to
