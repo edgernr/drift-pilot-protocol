@@ -113,13 +113,19 @@ export default function Signup() {
           {displayError && <div className="auth-error">{displayError}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
-            {/* Honeypot — hidden from humans; bots that autofill it are blocked. */}
+            {/* Honeypot — hidden from humans; bots that autofill it are blocked.
+                Named + attributed so real password managers / Chrome autofill do
+                NOT fill it (that would false-positive a legit signup). */}
             <input
               type="text"
-              name="company"
+              name="hp_ref"
               tabIndex={-1}
               autoComplete="off"
               aria-hidden="true"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-bwignore="true"
+              data-form-type="other"
               style={HONEYPOT_STYLE}
               value={company}
               onChange={e => setCompany(e.target.value)}

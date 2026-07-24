@@ -3,7 +3,6 @@ import './Login.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { HONEYPOT_STYLE } from '../lib/securitySignals'
 import Turnstile, { TURNSTILE_ENABLED } from '../components/Turnstile'
 
 export default function Login() {
@@ -12,7 +11,6 @@ export default function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [company, setCompany] = useState('') // honeypot
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaErr, setCaptchaErr] = useState(null)
   const captchaRef = useRef(null)
@@ -31,7 +29,6 @@ export default function Login() {
     e.preventDefault()
     clearError()
     setCaptchaErr(null)
-    if (company) return // honeypot tripped — silently no-op for bots
     if (TURNSTILE_ENABLED && !captchaToken) { setCaptchaErr('Please complete the verification challenge.'); return }
     const ok = await login(email, password, captchaToken || undefined)
     captchaRef.current?.reset(); setCaptchaToken('') // token is single-use
@@ -83,8 +80,6 @@ export default function Login() {
           {resetMsg && <div className="auth-msg">{resetMsg}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
-            <input type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true"
-              style={HONEYPOT_STYLE} value={company} onChange={e => setCompany(e.target.value)} />
             <div className="auth-field">
               <label>Email</label>
               <input
