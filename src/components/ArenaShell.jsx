@@ -8,9 +8,11 @@ import { useQuestAnalytics } from '../hooks/useQuestAnalytics'
 import { on } from '../lib/combatBus'
 import HandlerComms from './HandlerComms'
 import Daemon from './Daemon'
+import HunterBrowser from './HunterBrowser'
 import QuestQuiz from '../screens/QuestQuiz'
 import { ENEMY_SVGS } from './EnemySVGs'
 import { getHandlerLine } from '../data/handlerScript'
+import { CONSOLE_HOOK } from '../lib/consoleHook'
 import './ArenaShell.css'
 
 // Deterministic ambient dust motes — seeded so no hydration flicker
@@ -76,6 +78,12 @@ export default function ArenaShell({ config }) {
   const [showKillFlash, setShowKillFlash] = useState(false)
   const [struckWards, setStruckWards] = useState(new Set())
   const [projectiles, setProjectiles] = useState([])
+  // Hunter Browser (floating diegetic browser) + IDE console panel
+  const [browserOpen, setBrowserOpen] = useState(false)
+  const [browserTab, setBrowserTab] = useState('instance')
+  const [browserReloadKey, setBrowserReloadKey] = useState(0)
+  const [consoleOpen, setConsoleOpen] = useState(false)
+  const [consoleEntries, setConsoleEntries] = useState([])
 
   // ─── Refs ─────────────────────────────────────────────────────────────────────
   const checkIframeRef   = useRef(null)
@@ -101,6 +109,12 @@ export default function ArenaShell({ config }) {
   const camRef           = useRef({ trauma: 0, punchZoom: 0 })
   const killShotFiredRef = useRef(false)
   const levelAtStartRef  = useRef(profile?.level ?? 1)
+  const browserFrameRef  = useRef(null)   // Hunter Browser INSTANCE iframe — console-capture source
+  const consoleBufRef    = useRef([])     // burst buffer between flushes
+  const consoleFlushRef  = useRef(null)
+  const consoleIdRef     = useRef(0)
+  const consoleBodyRef   = useRef(null)
+  const guideOpenRef     = useRef(false)  // Field Manual open ⇒ idle bleed freezes
 
   // ─── Keep fn refs fresh ───────────────────────────────────────────────────────
   useEffect(() => { resolveCheckRef.current = resolveCheck }, [resolveCheck])
@@ -159,6 +173,77 @@ export default function ArenaShell({ config }) {
     // Extra args are harmless for 1-arg builders (HTML gates ignore them).
     previewIframeRef.current.srcdoc = config.buildPreview(code, variantIdx, brandOverride)
   }, [code, variantIdx, brandOverride, config])
+
+  // ─── Hunter Browser INSTANCE srcdoc ──────────────────────────────────────────
+  // Same preview doc with the console hook prepended — console.* and runtime
+  // errors inside the sandbox stream to the IDE console panel. A new document
+  // means the old output is stale, so the console clears on every rebuild.
+  useEffect(() => {
+    if (!browserFrameRef.current) return
+    consoleBufRef.current.length = 0
+    setConsoleEntries(prev => (prev.length ? [] : prev))
+    browserFrameRef.current.srcdoc = CONSOLE_HOOK + config.buildPreview(code, variantIdx, brandOverride)
+  }, [code, variantIdx, brandOverride, config, browserReloadKey])
+
+  // ─── Console capture — postMessage stream from the INSTANCE iframe ───────────
+  // Buffered and flushed on a short timer so a log flood (while(true)
+  // console.log) can't render-thrash React; hard cap of 200 entries per doc.
+  // An error auto-opens the panel — damage never arrives without its reason.
+  useEffect(() => {
+    const onMsg = (e) => {
+      const d = e.data
+      if (!d || d.__vsConsole !== true) return
+      if (e.source !== browserFrameRef.current?.contentWindow) return
+      consoleBufRef.current.push({ level: d.level, text: String(d.text).slice(0, 500) })
+      if (consoleFlushRef.current) return
+      consoleFlushRef.current = setTimeout(() => {
+        consoleFlushRef.current = null
+        const batch = consoleBufRef.current.splice(0)
+        if (!batch.length) return
+        if (batch.some(b => b.level === 'error')) setConsoleOpen(true)
+        setConsoleEntries(prev => {
+          if (prev.length > 200) return prev
+          const merged = [...prev, ...batch.map(b => ({ ...b, id: ++consoleIdRef.current }))]
+          return merged.length > 200
+            ? [...merged.slice(0, 200), { id: ++consoleIdRef.current, level: 'warn', text: '— output truncated at 200 entries —' }]
+            : merged
+        })
+      }, 60)
+    }
+    window.addEventListener('message', onMsg)
+    return () => {
+      window.removeEventListener('message', onMsg)
+      clearTimeout(consoleFlushRef.current)
+      consoleFlushRef.current = null
+    }
+  }, [])
+
+  // ─── IDE hotkeys — Ctrl+` console, Ctrl+B browser (capture beats Monaco) ─────
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return
+      if (e.key === '`' || e.code === 'Backquote') {
+        e.preventDefault()
+        setConsoleOpen(o => !o)
+      } else if (e.key === 'b' || e.key === 'B') {
+        e.preventDefault()
+        setBrowserOpen(o => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [])
+
+  // Reading the Field Manual is studying, not idling — the bleed timer checks this.
+  useEffect(() => {
+    guideOpenRef.current = browserOpen && browserTab === 'guide'
+  }, [browserOpen, browserTab])
+
+  // Console autoscroll — newest line stays visible
+  useEffect(() => {
+    const el = consoleBodyRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [consoleEntries, consoleOpen])
 
   // ─── GSAP virtual camera — idle drift + breath zoom + trauma shake ─────────────
   // Writes --cx/--cy/--cz onto ar-arena; layers read them via CSS inheritance.
@@ -246,6 +331,7 @@ export default function ArenaShell({ config }) {
     }
     bleedCountRef.current = 0
     bleedTimerRef.current = setInterval(() => {
+      if (guideOpenRef.current) return // Field Manual open — studying, not idle
       bleedCountRef.current += 1
       if (bleedCountRef.current > 90) bleedDamageRef.current?.()
     }, 1000)
@@ -417,6 +503,8 @@ export default function ArenaShell({ config }) {
   const level       = profile?.level ?? 1
   const displayName = profile?.name ?? user?.email ?? 'K'
   const isEnraged   = enemyHP <= ENEMY_HP_MAX * 0.5 && enemyHP > 0
+  const consoleErrs  = consoleEntries.filter(en => en.level === 'error').length
+  const consoleWarns = consoleEntries.filter(en => en.level === 'warn').length
 
   // Boss stays enraged while quiz is in progress; death animation only fires during kill-shot cinematic
   const bossCls = (enemyHP <= 0 && bossDeathActive) ? 'dead'
@@ -483,12 +571,19 @@ export default function ArenaShell({ config }) {
 
           <div className="ar-preview-wrap">
             <div className="ar-section-head">DOCUMENT SCAN</div>
-            <iframe
-              ref={previewIframeRef}
-              title="live preview"
-              className="ar-preview-frame"
-              sandbox="allow-scripts"
-            />
+            <div
+              className="ar-preview-click"
+              onClick={() => { setBrowserOpen(true); setBrowserTab('instance') }}
+              title="Open in Hunter Browser (Ctrl+B)"
+            >
+              <iframe
+                ref={previewIframeRef}
+                title="live preview"
+                className="ar-preview-frame"
+                sandbox="allow-scripts"
+              />
+              <span className="ar-preview-expand">⧉ OPEN IN HUNTER BROWSER</span>
+            </div>
           </div>
 
         </aside>
@@ -617,6 +712,42 @@ export default function ArenaShell({ config }) {
                 }}
               />
             </div>
+
+            {/* IDE console — output from the Hunter Browser instance (VS Code idiom) */}
+            <div className="ar-console">
+              <div className="ar-console-strip" onClick={() => setConsoleOpen(o => !o)}>
+                <span className="ar-console-caret">{consoleOpen ? '▾' : '▸'}</span>
+                <span>CONSOLE</span>
+                {consoleErrs > 0 && <span className="ar-console-badge err">{consoleErrs} ✕</span>}
+                {consoleWarns > 0 && <span className="ar-console-badge warn">{consoleWarns} ⚠</span>}
+                <span className="ar-console-hotkey">CTRL+`</span>
+                {consoleOpen && consoleEntries.length > 0 && (
+                  <button
+                    className="ar-console-clear"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      consoleBufRef.current.length = 0
+                      setConsoleEntries([])
+                    }}
+                  >CLEAR</button>
+                )}
+              </div>
+              {consoleOpen && (
+                <div className="ar-console-body" ref={consoleBodyRef}>
+                  {consoleEntries.length === 0 ? (
+                    <div className="ar-console-empty">— no output. console.log() from your code lands here —</div>
+                  ) : consoleEntries.map(en => (
+                    <div key={en.id} className={`ar-console-line ${en.level}`}>
+                      <span className="ar-console-glyph">
+                        {en.level === 'error' ? '✕' : en.level === 'warn' ? '⚠' : '›'}
+                      </span>
+                      <span>{en.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="ar-panel-footer">
               <button
                 className={`ar-strike-btn${canStrike ? ' ready' : ''}`}
@@ -625,6 +756,11 @@ export default function ArenaShell({ config }) {
               >
                 ▶ STRIKE
               </button>
+              <button
+                className={`ar-browser-btn${browserOpen ? ' open' : ''}`}
+                onClick={() => setBrowserOpen(o => !o)}
+                title="Hunter Browser (Ctrl+B)"
+              >⧉</button>
               <div className="ar-cast-bar-wrap">
                 {castKey > 0 && <div key={castKey} className="ar-cast-bar-fill" />}
               </div>
@@ -633,6 +769,18 @@ export default function ArenaShell({ config }) {
               </span>
             </div>
           </div>
+
+          {/* Hunter Browser — floating diegetic browser. Stays mounted while
+              closed: its INSTANCE iframe is the console-capture source. */}
+          <HunterBrowser
+            config={config}
+            open={browserOpen}
+            tab={browserTab}
+            onTab={setBrowserTab}
+            onClose={() => setBrowserOpen(false)}
+            onReload={() => setBrowserReloadKey(k => k + 1)}
+            frameRef={browserFrameRef}
+          />
 
         </div>{/* end ar-arena */}
       </div>

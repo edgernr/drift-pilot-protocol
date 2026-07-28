@@ -1,0 +1,297 @@
+/* ── Hunter Browser — diegetic in-game browser window ─────────────────────── */
+/* Floats inside .ar-arena (position:relative parent). z-index sits above the
+   code panel (20) — both are draggable, so the player arranges their desk. */
+
+.hb-window {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 440px;
+  height: min(72%, 540px);
+  display: flex;
+  flex-direction: column;
+  background: #0a0a12f2;
+  border: 1px solid #1e1e32;
+  border-radius: 4px;
+  z-index: 22;
+  box-shadow: 0 16px 56px #000000aa, 0 0 0 1px #3df0e812;
+  backdrop-filter: blur(8px);
+}
+/* visibility (not display): the INSTANCE iframe must keep computing layout
+   while the window is closed — it's the console-capture source. */
+.hb-hidden { visibility: hidden; pointer-events: none; }
+
+/* ── Title bar ── */
+.hb-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  border-bottom: 1px solid #131320;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+.hb-titlebar:active { cursor: grabbing; }
+.hb-title-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3df0e8;
+  box-shadow: 0 0 6px #3df0e880;
+  flex-shrink: 0;
+}
+.hb-title-text {
+  flex: 1;
+  min-width: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: #eaf6f538;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hb-close {
+  background: none;
+  border: none;
+  color: #eaf6f540;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.hb-close:hover { color: #ff3d8b; background: #ff3d8b10; }
+
+/* ── Tab strip ── */
+.hb-tabstrip {
+  display: flex;
+  gap: 2px;
+  padding: 5px 8px 0;
+  border-bottom: 1px solid #131320;
+  flex-shrink: 0;
+}
+.hb-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #08080e;
+  border: 1px solid #131320;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  color: #eaf6f540;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 6px 14px 5px;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.hb-tab:hover { color: #eaf6f570; }
+.hb-tab.active {
+  background: #0d0d16;
+  color: #3df0e8;
+  border-color: #1e1e32;
+  border-bottom: 1px solid #0d0d16;
+}
+.hb-tab-glyph { font-size: 9px; color: #3df0e860; }
+.hb-tab.active .hb-tab-glyph { color: #3df0e8; }
+.hb-tab-glyph.gold { color: #f5c45360; }
+.hb-tab.active .hb-tab-glyph.gold { color: #f5c453; }
+
+/* ── Address bar ── */
+.hb-addressbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 8px;
+  background: #0d0d16;
+  border-bottom: 1px solid #131320;
+  flex-shrink: 0;
+}
+.hb-reload {
+  background: none;
+  border: none;
+  color: #eaf6f545;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.hb-reload:hover { color: #3df0e8; }
+.hb-url {
+  flex: 1;
+  min-width: 0;
+  background: #06060c;
+  border: 1px solid #131320;
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: #3df0e890;
+  padding: 4px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hb-warded {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #3df0e845;
+  flex-shrink: 0;
+}
+
+/* ── Body ── */
+.hb-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: #04040a;
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+}
+.hb-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #04040a;
+}
+/* Manual tab open: hide the iframe without unmounting (console keeps flowing) */
+.hb-frame-hidden {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+/* ── Field Manual (GUIDE tab) ── */
+.hb-guide {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 18px 20px 24px;
+  background: #0a0a12;
+  scrollbar-width: thin;
+  scrollbar-color: #1e1e30 transparent;
+}
+.hb-guide-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: #f5c45370;
+  margin-bottom: 8px;
+}
+.hb-guide-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #eaf6f5;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+.hb-guide-intro {
+  font-size: 12px;
+  color: #eaf6f570;
+  line-height: 1.65;
+  font-style: italic;
+  border-left: 2px solid #3df0e830;
+  padding-left: 12px;
+  margin: 0 0 18px;
+}
+.hb-guide-section { margin-bottom: 18px; }
+.hb-guide-heading {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3df0e8;
+  margin: 0 0 6px;
+}
+.hb-guide-body {
+  font-size: 12px;
+  color: #eaf6f580;
+  line-height: 1.7;
+  margin: 0 0 8px;
+}
+.hb-guide-body strong { color: #eaf6f5; }
+.hb-guide-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #f5c453;
+  background: #f5c4530c;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+.hb-guide-code {
+  background: #06060c;
+  border: 1px solid #131320;
+  border-left: 2px solid #3df0e840;
+  border-radius: 3px;
+  padding: 10px 12px;
+  margin: 0;
+  overflow-x: auto;
+}
+.hb-guide-code code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #b8e8e4;
+}
+.hb-guide-links {
+  margin-top: 22px;
+  border-top: 1px solid #131320;
+  padding-top: 12px;
+}
+.hb-guide-links-head {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: #eaf6f530;
+  margin-bottom: 10px;
+}
+.hb-guide-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #131320;
+  border-radius: 3px;
+  margin-bottom: 6px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.hb-guide-link:hover { border-color: #3df0e835; background: #3df0e806; }
+.hb-guide-link-arrow { color: #3df0e8; font-size: 12px; flex-shrink: 0; }
+.hb-guide-link-label {
+  display: block;
+  font-family: 'Saira', sans-serif;
+  font-size: 12px;
+  color: #eaf6f5;
+}
+.hb-guide-link-note {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f538;
+  margin-top: 2px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hb-window {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    height: 62%;
+  }
+}

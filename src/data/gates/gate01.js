@@ -88,6 +88,60 @@ const WARDS = [
   },
 ]
 
+// ─── Field Manual (Hunter Browser GUIDE tab) ───────────────────────────────────
+// Authoring template for all gates: slug/tag/title/intro + sections (heading,
+// body = trusted HTML string, optional code block) + external links that open
+// in a real browser tab. Hierarchy: ward hint = nudge for one check, Field
+// Manual = the whole lesson, external link = go deep.
+const GUIDE = {
+  slug: 'document-anatomy',
+  tag: 'FM-01',
+  title: 'Document Anatomy',
+  intro: 'VERA // FIELD MANUAL: every page on the old net was a body — a skeleton of tags holding flesh of text. Broken-markup wraiths are what’s left when that skeleton shatters. Learn the bones and you can snap them back into place.',
+  sections: [
+    {
+      heading: 'The skeleton — how a page is built',
+      body: 'An HTML document is a <strong>tree of elements</strong>. The browser reads it top to bottom and builds the page from what it finds: <code>&lt;html&gt;</code> is the root, <code>&lt;head&gt;</code> holds information <em>about</em> the page, <code>&lt;body&gt;</code> holds everything you actually see.',
+      code: '<!DOCTYPE html>\n<html>\n  <head>\n    <title>Page name</title>\n  </head>\n  <body>\n    ...visible content...\n  </body>\n</html>',
+    },
+    {
+      heading: 'The DOCTYPE rune',
+      body: 'Line 1, before anything else: <code>&lt;!DOCTYPE html&gt;</code>. It tells the browser to render in <strong>modern standards mode</strong>. Without it the browser falls back to “quirks mode” — ancient, unpredictable layout rules kept alive for pages from the 90s net. One line, never optional.',
+    },
+    {
+      heading: 'Every tag seals shut',
+      body: 'Most elements are a pair: an opening tag and a closing tag with a slash — <code>&lt;h1&gt;</code> opens, <code>&lt;/h1&gt;</code> seals. Content lives between them. Leave a tag unsealed and the browser <em>guesses</em> where it ends — usually wrong. (A few “void” elements like <code>&lt;br&gt;</code> and <code>&lt;img&gt;</code> stand alone and never close.)',
+      code: '<h1>A sealed heading</h1>\n<p>A sealed paragraph.</p>\n<a href="page.html">A sealed link</a>',
+    },
+    {
+      heading: 'Nesting law — last opened, first closed',
+      body: 'Tags close in <strong>reverse order</strong> of how they opened. If <code>&lt;p&gt;</code> opens and then <code>&lt;strong&gt;</code> opens inside it, <code>&lt;/strong&gt;</code> must seal before <code>&lt;/p&gt;</code>. Crossed closings are a nesting violation — a structural wound.',
+      code: '✓ <p><strong>correct</strong></p>\n✕ <p><strong>crossed</p></strong>',
+    },
+    {
+      heading: 'Why the browser never screams',
+      body: 'Broken HTML shows no error message — browsers have <strong>built-in error correction</strong> and silently repair what they can. That mercy is the trap: the page “works” while the structure underneath is wrong, and every layer you build on top — CSS, JavaScript — inherits the damage. Hunters validate; civilians hope.',
+    },
+  ],
+  links: [
+    {
+      label: 'MDN — HTML: HyperText Markup Language',
+      note: 'developer.mozilla.org · the reference every working dev keeps open',
+      url: 'https://developer.mozilla.org/en-US/docs/Web/HTML',
+    },
+    {
+      label: 'W3Schools — HTML Introduction',
+      note: 'w3schools.com · gentler on-ramp with live try-it editors',
+      url: 'https://www.w3schools.com/html/html_intro.asp',
+    },
+    {
+      label: 'roadmap.sh — Frontend path',
+      note: 'roadmap.sh · the full climb, region by region',
+      url: 'https://roadmap.sh/frontend',
+    },
+  ],
+}
+
 const QUIZ = {
   question: 'Why does the browser display broken HTML without showing any errors?',
   options: [
@@ -149,6 +203,7 @@ export default {
   wardFailIcon: '⚠',
   scannerLabel: 'SCANNER REPORT',
   scannerUnit: 'ERRORS',
+  guide: GUIDE,
   quiz: QUIZ,
   xpPerWard: 25,
   completionXp: 100,
