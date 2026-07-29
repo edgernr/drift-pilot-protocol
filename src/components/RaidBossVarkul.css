@@ -1,0 +1,153 @@
+/* ── VARKUL, THE NULLHEART HYDRA — boss visuals ───────────────────────────── */
+
+.vk-boss {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* Breach glow */
+.vk-breach {
+  fill: #ff3d8b;
+  opacity: 0.05;
+  animation: vk-breach-pulse 4s ease-in-out infinite;
+}
+@keyframes vk-breach-pulse {
+  0%, 100% { opacity: 0.04; }
+  50%      { opacity: 0.09; }
+}
+
+/* Necks */
+.vk-neck {
+  fill: none;
+  stroke: #181826;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke 0.6s, opacity 0.6s;
+}
+.vk-unit.live .vk-neck { stroke: #232338; }
+.vk-unit.severed .vk-neck {
+  stroke: #101018;
+  opacity: 0.35;
+  stroke-dasharray: 5 7;
+}
+
+/* Heads */
+.vk-head {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.6s;
+}
+.vk-skull {
+  fill: #1c1c2e;
+  stroke: #2c2c44;
+  stroke-width: 1;
+  transition: fill 0.5s, stroke 0.5s;
+}
+.vk-jaw {
+  fill: #14141f;
+  stroke: #2c2c44;
+  stroke-width: 0.8;
+}
+.vk-unit.live .vk-skull { stroke: #3a3a58; }
+
+.vk-head.alive { animation: vk-sway 3.4s ease-in-out infinite; }
+.vk-head.claimed { animation: vk-sway 1.7s ease-in-out infinite; }
+@keyframes vk-sway {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -3px; }
+}
+
+/* Eyes */
+.vk-eye {
+  fill: #3df0e8;
+  animation: vk-eye-glow 2.6s ease-in-out infinite;
+}
+.vk-head.claimed .vk-eye { fill: #f5c453; }
+.vk-enraged .vk-head.alive .vk-eye,
+.vk-enraged .vk-head.claimed .vk-eye { fill: #ff3d8b; }
+@keyframes vk-eye-glow {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+.vk-eye-x line {
+  stroke: #3a3a50;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+/* Severed heads hang limp */
+.vk-head.severed {
+  animation: none;
+  opacity: 0.45;
+  rotate: 24deg;
+}
+.vk-head.severed .vk-skull { fill: #101018; stroke: #1c1c2c; }
+
+/* Rings */
+.vk-ring {
+  fill: none;
+  stroke-width: 1.2;
+}
+.vk-ring.target {
+  stroke: #ff3d8b;
+  stroke-dasharray: 5 4;
+  animation: vk-ring-spin 3s linear infinite;
+}
+.vk-ring.claimed {
+  stroke: #f5c453;
+  opacity: 0.6;
+  stroke-dasharray: 2 4;
+}
+@keyframes vk-ring-spin {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: 36; }
+}
+
+/* Body + the Nullheart */
+.vk-mass {
+  fill: #14141f;
+  stroke: #24243a;
+  stroke-width: 1;
+}
+.vk-mass-hi { fill: #1a1a2a; }
+.vk-heart {
+  fill: #ff3d8b;
+  transition: r 0.8s ease;
+  animation: vk-heart-beat 1.4s ease-in-out infinite;
+}
+.vk-heart-glow {
+  fill: #ff3d8b;
+  opacity: 0.12;
+  transition: r 0.8s ease;
+  animation: vk-heart-beat 1.4s ease-in-out infinite;
+}
+@keyframes vk-heart-beat {
+  0%, 100% { opacity: 0.85; }
+  45%      { opacity: 1; }
+  55%      { opacity: 0.6; }
+}
+.vk-heart-glow { animation-name: vk-heart-glow-beat; }
+@keyframes vk-heart-glow-beat {
+  0%, 100% { opacity: 0.10; }
+  50%      { opacity: 0.2; }
+}
+.vk-enraged .vk-heart { animation-duration: 0.7s; }
+.vk-enraged .vk-heart-glow { animation-duration: 0.7s; }
+
+/* Death — the crown falls */
+.vk-dead .vk-head { animation: none; opacity: 0.3; rotate: 24deg; }
+.vk-dead .vk-neck { opacity: 0.25; }
+.vk-dead .vk-eye { display: none; }
+.vk-dead .vk-heart,
+.vk-dead .vk-heart-glow {
+  fill: #3df0e8;
+  animation: vk-heart-die 2.2s ease-out forwards;
+}
+@keyframes vk-heart-die {
+  0%   { opacity: 1; }
+  30%  { opacity: 0.9; }
+  100% { opacity: 0.08; }
+}
+.vk-dead .vk-breach { animation: none; opacity: 0.02; }

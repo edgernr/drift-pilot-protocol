@@ -24,6 +24,7 @@ const SCREEN_NAMES = {
   '/quest8': 'GATE 08 — THE COLLAPSE',
   '/quest9': 'GATE 09 — THE CONTROL ROOM',
   '/quest10': 'GATE 10 — THE STATIC CITY',
+  '/raid01': 'RAID 01 — THE BROODGATE',
   // Void Academy
   '/academy': 'VOID ACADEMY',
   '/academy/onboarding': 'BUILDER SETUP',

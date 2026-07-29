@@ -20,6 +20,8 @@ import Prologue from './screens/Prologue'
 import Interlude1 from './screens/Interlude1'
 import Interlude2 from './screens/Interlude2'
 import SolverGate from './screens/SolverGate'
+import RaidSolver from './screens/RaidSolver'
+import Raid01 from './screens/Raid01'
 // ASSOCIATION COMMAND — lazy so admin code never ships in the player chunk
 const AdminCommand = lazy(() => import('./screens/AdminCommand'))
 // GUILDS — lazy (own chunk)
@@ -134,6 +136,8 @@ function AnimatedRoutes() {
         <Route path="/guild/:id" element={<Suspense fallback={null}><HunterLayout active="guild"><GuildProfile /></HunterLayout></Suspense>} />
         {/* Dev-only solver harness route (bible §9.6) — never registered in prod builds */}
         {import.meta.env.DEV && <Route path="/__solver/:gateNum" element={<SolverGate />} />}
+        {import.meta.env.DEV && <Route path="/__raidsolver" element={<RaidSolver />} />}
+        <Route path="/raid01" element={<ProtectedRoute><Raid01 /></ProtectedRoute>} />
         {/* Void Academy — hidden for Season 01 rework */}
         <Route path="/academy/*" element={<Navigate to="/" replace />} />
       </Routes>

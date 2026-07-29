@@ -1,0 +1,361 @@
+/* ── RAID 01 — war room / lobby ───────────────────────────────────────────── */
+
+.r1w-loading {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #08080c;
+  color: #3df0e870;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+}
+
+.r1w-shell {
+  min-height: 100vh;
+  background: #08080c;
+  color: #eaf6f5;
+  font-family: 'Saira', sans-serif;
+}
+
+.r1w-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  padding: 0 16px;
+  background: #08080cf2;
+  border-bottom: 1px solid #101018;
+  backdrop-filter: blur(6px);
+}
+.r1w-back {
+  background: none;
+  border: 1px solid #1e1e30;
+  color: #eaf6f540;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 5px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.r1w-back:hover { color: #eaf6f5; border-color: #3df0e840; }
+.r1w-topbar-center { flex: 1; text-align: center; min-width: 0; }
+.r1w-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: #ff3d8b60;
+  text-transform: uppercase;
+  display: block;
+}
+.r1w-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.r1w-shard {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #f5c453;
+  white-space: nowrap;
+}
+
+.r1w-body {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── Dossier ── */
+.r1w-dossier {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 22px;
+  border: 1px solid #1a1024;
+  border-radius: 6px;
+  background:
+    radial-gradient(ellipse at 20% 100%, #ff3d8b08 0%, transparent 55%),
+    #0a0a10;
+  padding: 20px;
+  align-items: center;
+}
+.r1w-boss-stage { height: 230px; }
+.r1w-boss-tier {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: #ff3d8b70;
+  display: block;
+  margin-bottom: 6px;
+}
+.r1w-boss-name {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ff3d8b;
+  text-shadow: 0 0 40px #ff3d8b40;
+  margin: 0 0 10px;
+  line-height: 1;
+}
+.r1w-boss-lore {
+  font-size: 13px;
+  color: #eaf6f570;
+  line-height: 1.65;
+  margin: 0 0 14px;
+}
+.r1w-vera {
+  font-size: 12px;
+  color: #b8e8e4cc;
+  line-height: 1.65;
+  border-left: 2px solid #3df0e840;
+  padding-left: 12px;
+  margin: 0;
+  font-style: italic;
+}
+.r1w-vera span {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: #3df0e870;
+  font-style: normal;
+  margin-bottom: 4px;
+}
+
+/* ── Sealed (migration missing) ── */
+.r1w-sealed {
+  border: 1px solid #f5c45330;
+  border-radius: 6px;
+  background: #f5c45308;
+  padding: 18px 20px;
+}
+.r1w-sealed-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #f5c453;
+  margin-bottom: 6px;
+}
+.r1w-sealed p { margin: 0; font-size: 12px; color: #eaf6f570; line-height: 1.6; }
+.r1w-sealed code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #f5c453;
+  background: #f5c4530c;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ── Sections ── */
+.r1w-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: #eaf6f535;
+  text-transform: uppercase;
+  border-bottom: 1px solid #10101a;
+  padding-bottom: 7px;
+  margin-bottom: 12px;
+}
+.r1w-party-count { color: #3df0e8; letter-spacing: 0.1em; }
+
+/* ── My lobby ── */
+.r1w-mylobby,
+.r1w-lobbies,
+.r1w-rules,
+.r1w-heads {
+  border: 1px solid #10101a;
+  border-radius: 6px;
+  background: #0a0a10;
+  padding: 16px 18px;
+}
+.r1w-roster { margin-bottom: 14px; }
+.r1w-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 4px;
+  border-bottom: 1px solid #0c0c14;
+}
+.r1w-roster-row.empty { opacity: 0.4; }
+.r1w-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3df0e8;
+  box-shadow: 0 0 6px #3df0e860;
+  flex-shrink: 0;
+}
+.r1w-dot.leader { background: #f5c453; box-shadow: 0 0 6px #f5c45380; }
+.r1w-dot.empty { background: #1e1e30; box-shadow: none; }
+.r1w-roster-name { font-size: 12px; color: #eaf6f590; }
+.r1w-lobby-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── Buttons / inputs ── */
+.r1w-btn {
+  background: none;
+  border: 1px solid #1e1e30;
+  color: #eaf6f560;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  cursor: pointer;
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.r1w-btn:hover:not(:disabled) { color: #eaf6f5; border-color: #3df0e840; }
+.r1w-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.r1w-btn.primary { border-color: #ff3d8b60; color: #ff3d8b; }
+.r1w-btn.primary:hover:not(:disabled) {
+  background: #ff3d8b10;
+  border-color: #ff3d8b;
+  box-shadow: 0 0 18px #ff3d8b28;
+  color: #ff3d8b;
+}
+.r1w-input {
+  flex: 1;
+  min-width: 180px;
+  background: #06060c;
+  border: 1px solid #1e1e30;
+  border-radius: 3px;
+  color: #eaf6f5;
+  font-family: 'Saira', sans-serif;
+  font-size: 13px;
+  padding: 9px 12px;
+  outline: none;
+}
+.r1w-input:focus { border-color: #3df0e850; }
+
+/* ── Lobbies ── */
+.r1w-empty {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-style: italic;
+  color: #eaf6f530;
+  padding: 4px 0 12px;
+}
+.r1w-lobby-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid #12121e;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background: #08080e;
+}
+.r1w-lobby-info { flex: 1; min-width: 0; }
+.r1w-lobby-name {
+  display: block;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.r1w-lobby-mems {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f540;
+}
+.r1w-create {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Rules ── */
+.r1w-rules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 18px;
+}
+.r1w-rule {
+  display: flex;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid #0c0c14;
+}
+.r1w-rule-k {
+  flex-shrink: 0;
+  width: 78px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #f5c453;
+  padding-top: 2px;
+}
+.r1w-rule-v { font-size: 12px; color: #eaf6f575; line-height: 1.55; }
+
+/* ── Heads preview ── */
+.r1w-heads-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.r1w-phase-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.r1w-phase-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  color: #eaf6f535;
+  margin: 3px 0 10px;
+  line-height: 1.5;
+}
+.r1w-head-card {
+  border: 1px solid #12121e;
+  border-radius: 4px;
+  background: #08080e;
+  padding: 8px 10px;
+  margin-bottom: 7px;
+}
+.r1w-head-card-name {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+.r1w-head-card-skill {
+  font-size: 10.5px;
+  color: #eaf6f555;
+  line-height: 1.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .r1w-dossier { grid-template-columns: 1fr; }
+  .r1w-boss-stage { height: 190px; }
+  .r1w-rules-grid { grid-template-columns: 1fr; }
+  .r1w-heads-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .r1w-body { padding: 16px 12px 60px; }
+  .r1w-boss-name { font-size: 26px; }
+}

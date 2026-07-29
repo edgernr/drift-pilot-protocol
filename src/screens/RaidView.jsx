@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useNav } from '../context/NavigationContext'
 import RaidIDE, { SYNC_CODE_CHECKS } from './RaidIDE'
 import './RaidView.css'
 
@@ -462,6 +463,7 @@ function healthColor(h) {
 }
 
 export default function RaidView() {
+  const { goto } = useNav()
   const { user, profile, completeQuest, burnRaidEntry, refundRaidEntry } = useAuth()
   const isAdmin = profile?.is_admin ?? false
   const spendableDrift = (profile?.totalHunt ?? 0) - (profile?.totalHuntSpent ?? 0)
@@ -1141,6 +1143,33 @@ export default function RaidView() {
   if (!activeRaid) {
     return (
       <div className="raid-lobby">
+        {/* RAID 01 — THE BROODGATE (playable boss raid, own screen) */}
+        <button
+          onClick={() => goto('raid01')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 16, width: '100%', textAlign: 'left',
+            background: 'linear-gradient(90deg, rgba(255,61,139,0.09), rgba(8,8,12,0))',
+            border: '1px solid rgba(255,61,139,0.35)', borderRadius: 8,
+            padding: '14px 18px', marginBottom: 18, cursor: 'pointer',
+          }}
+        >
+          <span style={{ fontSize: 26 }}>⚔</span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.22em', color: '#ff3d8b', marginBottom: 3 }}>
+              RAID 01 · NOW OPEN · 2–5 HUNTERS
+            </span>
+            <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: 'var(--ink-1, #eaf6f5)', letterSpacing: '0.04em' }}>
+              THE BROODGATE — VARKUL, THE NULLHEART HYDRA
+            </span>
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--ink-3, #8a9a98)', marginTop: 2 }}>
+              A real boss with nine heads of real code. Sever them all. Live party, live HP, per-neck payouts.
+            </span>
+          </span>
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: '#ff3d8b', whiteSpace: 'nowrap' }}>
+            ENTER THE WAR ROOM →
+          </span>
+        </button>
+
         <div className="raid-lore-banner">
           <div className="raid-lore-glyph">※</div>
           <div>
