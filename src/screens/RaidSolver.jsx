@@ -42,7 +42,7 @@ export default function RaidSolver() {
   return (
     <Raid01Combat
       heads={heads}
-      members={[{ user_id: 'solver', name: 'SOLVER' }]}
+      members={[{ user_id: 'solver', name: 'SOLVER', role: 'slayer' }]}
       myId="solver"
       events={events}
       onClaim={onClaim}

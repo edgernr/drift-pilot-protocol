@@ -702,6 +702,51 @@ export const HEADS_BY_ID = Object.fromEntries(HEADS.map(h => [h.id, h]))
 export const PHASE_HEADS = (n) => HEADS.filter(h => h.phase === n)
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// HUNTER SPECIALIZATIONS — chosen in the War Room, stored in raid_members.role.
+// Soft guidance ONLY: a specialization tells the party which neck you came to
+// cut. Any hunter can still claim and sever any unlocked head — the Gate does
+// not check your license class, only your code.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const ROLES = {
+  bonesaw: {
+    id: 'bonesaw', label: 'BONESAW', glyph: '◐', color: '#3df0e8', neck: 1,
+    owns: 'THE STRUCTURE NECK — HTML',
+    duty: 'Opens the raid. Nothing on Varkul unlocks until your neck falls.',
+    heads: PHASE_HEADS(1).map(h => h.name),
+    skills: PHASE_HEADS(1).map(h => h.brief.skill),
+    flavor: 'Bones first, hunter. A beast framed wrong falls under its own weight.',
+  },
+  flayer: {
+    id: 'flayer', label: 'FLAYER', glyph: '◓', color: '#f5c453', neck: 2,
+    owns: 'THE SKIN NECK — CSS',
+    duty: 'Second cut. Your heads unlock the moment the bones are down — be ready.',
+    heads: PHASE_HEADS(2).map(h => h.name),
+    skills: PHASE_HEADS(2).map(h => h.brief.skill),
+    flavor: 'The hide remembers every bad cut ever made on it. Yours will be clean.',
+  },
+  nervecutter: {
+    id: 'nervecutter', label: 'NERVECUTTER', glyph: '◖', color: '#ff3d8b', neck: 3,
+    owns: 'THE NERVES NECK — JS',
+    duty: 'The closer. The last neck is live wire — your STRIKE ends Varkul.',
+    heads: PHASE_HEADS(3).map(h => h.name),
+    skills: PHASE_HEADS(3).map(h => h.brief.skill),
+    flavor: 'Kill the signal and all that is left is meat. Finish it.',
+  },
+  slayer: {
+    id: 'slayer', label: 'SLAYER', glyph: '⚔', color: '#eaf6f5', neck: null,
+    owns: 'EVERY NECK — generalist',
+    duty: 'The floater. No fixed neck — backfill whichever head is starving.',
+    heads: null, // floats — expected to claim whatever head is open
+    skills: ['The full kit — HTML structure, CSS layout, JS behavior, at raid tempo.'],
+    flavor: 'No neck is yours, so every neck is yours. Go where the party bleeds.',
+  },
+}
+
+export const ROLE_LIST = Object.values(ROLES)
+export const ROLE_IDS = Object.keys(ROLES)
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // RAID DOSSIER — everything shown to hunters BEFORE they enter (the War Room)
 // ═══════════════════════════════════════════════════════════════════════════════
 

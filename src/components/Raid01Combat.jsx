@@ -6,7 +6,7 @@ import HunterBrowser from './HunterBrowser'
 import RaidBossVarkul from './RaidBossVarkul'
 import { CONSOLE_HOOK } from '../lib/consoleHook'
 import {
-  RAID01, HEADS, HEADS_BY_ID, PHASES,
+  RAID01, HEADS, HEADS_BY_ID, PHASES, ROLES,
   BOSS_HP_MAX, HEAD_DAMAGE, PLAYER_HP_MAX, STRIKE_FAIL_DMG, IDLE_BLEED_AFTER,
 } from '../data/raids/raid01'
 import './Raid01Combat.css'
@@ -16,6 +16,13 @@ import './Raid01Combat.css'
 // (claim / sever / code persistence) come through props, so the live Supabase
 // session (Raid01.jsx) and the offline solver harness (/__raidsolver) drive the
 // exact same component. Personal combat (HP / combo / bleed) is local.
+//
+// Layout: EDITOR-FIRST. The editor owns the main area; heads / boss / party
+// live in a docked drawer opened from a vertical icon strip (IDE idiom).
+// All three panels stay MOUNTED at all times (drawer visibility is pure CSS)
+// so the headless solver's selectors (.r1-head-row etc.) always exist in the
+// DOM. Wards ride a permanent chip strip under the editor; CLAIM / STRIKE
+// live in the always-visible strike strip.
 //
 // Rules (CLAUDE.md combat defaults):
 //   sever a head        → shared −111 boss HP (the only real boss damage)
@@ -29,7 +36,7 @@ import './Raid01Combat.css'
 
 export default function Raid01Combat({
   heads,          // { h1: { status, claimed_by, severed_by }, ... }
-  members,        // [{ user_id, name }]
+  members,        // [{ user_id, name, role }]
   myId,
   events,         // [{ id, type, label, created_at }] newest first
   onClaim,        // (headId) => void
@@ -57,6 +64,10 @@ export default function Raid01Combat({
     [members]
   )
 
+  // My specialization — soft guidance only. Slayer / legacy roles → no domain.
+  const myRole = ROLES[members.find(m => m.user_id === myId)?.role] ?? null
+  const myNeck = myRole?.neck ?? null
+
   // ─── Local state ─────────────────────────────────────────────────────────────
   const firstOpen = HEADS.find(h => h.phase === currentPhase && heads[h.id]?.status !== 'severed')?.id ?? 'h1'
   const [currentHeadId, setCurrentHeadId] = useState(firstOpen)
@@ -75,6 +86,10 @@ export default function Raid01Combat({
   const [browserReloadKey, setBrowserReloadKey] = useState(0)
   const [consoleOpen, setConsoleOpen] = useState(false)
   const [consoleEntries, setConsoleEntries] = useState([])
+  const [panel, setPanel] = useState('heads')          // heads | boss | party
+  const [drawerOpen, setDrawerOpen] = useState(true)   // HEADS open on entry — pick a target
+  const [severToast, setSeverToast] = useState(null)   // {id, glyph, name, by, byMe}
+  const [bossFlash, setBossFlash] = useState(false)
 
   // ─── Refs ────────────────────────────────────────────────────────────────────
   const checkIframeRef   = useRef(null)
@@ -93,6 +108,9 @@ export default function Raid01Combat({
   const fellRef          = useRef(false)
   const victoryFiredRef  = useRef(false)
   const prevPhaseDoneRef = useRef({ 1: phaseDone(1), 2: phaseDone(2) })
+  const prevSeveredRef   = useRef(null)   // null until first heads pass — no toast for history
+  const toastIdRef       = useRef(0)
+  const bossFlashRef     = useRef(null)
 
   const head = HEADS_BY_ID[currentHeadId]
   const headShared = heads[currentHeadId] ?? { status: 'open' }
@@ -230,6 +248,10 @@ export default function Raid01Combat({
   // ─── Hotkeys ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e) => {
+      if (e.key === 'Escape' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        setDrawerOpen(false)
+        return
+      }
       if (!e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return
       if (e.key === '`' || e.code === 'Backquote') { e.preventDefault(); setConsoleOpen(o => !o) }
       else if (e.key === 'b' || e.key === 'B') { e.preventDefault(); setBrowserOpen(o => !o) }
@@ -253,8 +275,43 @@ export default function Raid01Combat({
     return () => clearInterval(bleedTimerRef.current)
   }, [allDead, fell, takeDamage])
 
-  // ─── Phase transitions + victory ─────────────────────────────────────────────
+  // ─── Panel toggling (IDE dock idiom) ─────────────────────────────────────────
+  const togglePanel = useCallback((p) => {
+    if (drawerOpen && panel === p) { setDrawerOpen(false); return }
+    setPanel(p)
+    setDrawerOpen(true)
+  }, [drawerOpen, panel])
+
+  // Claim locks the target — clear the field so the editor owns the screen.
+  const handleClaimClick = useCallback(() => {
+    onClaim?.(currentHeadId)
+    setDrawerOpen(false)
+  }, [onClaim, currentHeadId])
+
+  // ─── Sever toast + phase transitions + victory ───────────────────────────────
   useEffect(() => {
+    // Sever moment — felt even with every panel closed: toast + boss bar flash.
+    const severedIds = HEADS.filter(h => heads[h.id]?.status === 'severed').map(h => h.id)
+    if (prevSeveredRef.current) {
+      const fresh = severedIds.filter(hid => !prevSeveredRef.current.has(hid))
+      if (fresh.length) {
+        const h = HEADS_BY_ID[fresh[fresh.length - 1]]
+        const by = heads[h.id]?.severed_by
+        const tid = ++toastIdRef.current
+        setSeverToast({ id: tid, glyph: h.glyph, name: h.name, by, byMe: by === myId })
+        setTimeout(() => setSeverToast(t => (t?.id === tid ? null : t)), 2600)
+        setBossFlash(true)
+        clearTimeout(bossFlashRef.current)
+        bossFlashRef.current = setTimeout(() => setBossFlash(false), 900)
+        // My kill and heads remain → reopen HEADS to pick the next target.
+        if (fresh.some(hid => heads[hid]?.severed_by === myId) && severedIds.length < HEADS.length) {
+          setPanel('heads')
+          setDrawerOpen(true)
+        }
+      }
+    }
+    prevSeveredRef.current = new Set(severedIds)
+
     const p1 = phaseDone(1); const p2 = phaseDone(2)
     if (p1 && !prevPhaseDoneRef.current[1]) {
       setPhaseBanner({ label: 'STRUCTURE NECK FALLS', sub: 'THE SKIN IS EXPOSED — PHASE II', color: '#f5c453' })
@@ -335,107 +392,51 @@ export default function Raid01Combat({
     region: RAID01.region,
     guide: RAID01.guide,
   }), [head.id])
+  const phaseColor = PHASES[head.phase - 1].color
+  const expandedWard = expandedHint ? head.wards.find(w => w.id === expandedHint) : null
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="r1-shell">
 
-      {/* Top bar — boss HP is the headline */}
+      {/* Top bar — boss HP is the headline, permanently visible */}
       <header className="r1-topbar">
         <button className="r1-back" onClick={onExit}>← WAR ROOM</button>
         <div className="r1-topbar-center">
-          <span className="r1-raid-tag">{RAID01.code} · {RAID01.title} · {PHASES[currentPhase - 1].label}</span>
+          <span className="r1-raid-tag">{RAID01.code} · {RAID01.title}</span>
           <div className="r1-boss-hp-row">
             <span className="r1-boss-name">{RAID01.boss.name}</span>
-            <div className="r1-boss-hp-track">
+            <div className={`r1-boss-hp-track${bossFlash ? ' hit' : ''}`}>
               <div className="r1-boss-hp-fill" style={{ width: `${bossPct}%` }} />
             </div>
             <span className="r1-boss-hp-val">{bossHP} / {BOSS_HP_MAX}</span>
           </div>
         </div>
-        <span className="r1-party-count">{members.length} IN PARTY</span>
+        <div className="r1-topbar-right">
+          <span className="r1-phase-chip" style={{ color: PHASES[currentPhase - 1].color, borderColor: `${PHASES[currentPhase - 1].color}40` }}>
+            {PHASES[currentPhase - 1].label}
+          </span>
+          <span className="r1-party-count">{members.length} IN PARTY</span>
+        </div>
       </header>
 
       <div className="r1-body">
 
-        {/* ── Heads rail ── */}
-        <aside className="r1-rail">
-          {PHASES.map(p => {
-            const locked = p.n > currentPhase
-            return (
-              <div key={p.n} className={`r1-phase-group${locked ? ' locked' : ''}`}>
-                <div className="r1-phase-head" style={{ color: p.color }}>
-                  {p.label}{locked && <span className="r1-lock">SEALED</span>}
-                </div>
-                {HEADS.filter(h => h.phase === p.n).map(h => {
-                  const s = heads[h.id] ?? { status: 'open' }
-                  const sev = s.status === 'severed'
-                  const mine = s.claimed_by === myId && !sev
-                  return (
-                    <button
-                      key={h.id}
-                      className={`r1-head-row${currentHeadId === h.id ? ' active' : ''}${sev ? ' severed' : ''}`}
-                      disabled={locked}
-                      onClick={() => setCurrentHeadId(h.id)}
-                    >
-                      <span className="r1-head-glyph">{h.glyph}</span>
-                      <span className="r1-head-name">{h.name}</span>
-                      <span className={`r1-head-state${sev ? ' sev' : mine ? ' mine' : s.status === 'claimed' ? ' other' : ''}`}>
-                        {sev ? 'SEVERED' : mine ? 'YOURS' : s.status === 'claimed' ? memberName(s.claimed_by) : 'OPEN'}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            )
-          })}
-
-          {/* Selected head briefing */}
-          <div className="r1-brief">
-            <div className="r1-brief-label">▶ {head.name}</div>
-            <p className="r1-brief-what">{head.brief.what}</p>
-            <div className="r1-brief-line"><span>SKILL</span>{head.brief.skill}</div>
-            <div className="r1-brief-line"><span>OBJECTIVE</span>{head.brief.objective}</div>
-          </div>
-
-          {/* Ward scanner for selected head */}
-          <div className="r1-scanner">
-            <div className="r1-scanner-head">
-              WARDS
-              <span className={`r1-scanner-count${failCount === 0 ? ' clear' : ''}`}>
-                {isSevered ? 'SEVERED' : failCount === 0 ? 'ALL GREEN — STRIKE' : `${failCount} HOLDING`}
-              </span>
-            </div>
-            {head.wards.map(w => (
-              <div
-                key={w.id}
-                className={`r1-ward${wardResults[w.id] ? ' passed' : ''}`}
-                onClick={() => setExpandedHint(expandedHint === w.id ? null : w.id)}
-              >
-                <div className="r1-ward-row">
-                  <span className={`r1-ward-icon${wardResults[w.id] ? ' pass' : ' fail'}`}>
-                    {wardResults[w.id] ? '✓' : '⚠'}
-                  </span>
-                  <span className="r1-ward-label">{w.label}</span>
-                </div>
-                {expandedHint === w.id && !wardResults[w.id] && (
-                  <div className="r1-ward-hint">{w.hint}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* ── Editor column ── */}
-        <div className="r1-editor-col">
+        {/* ── Main column — the editor owns the field ── */}
+        <div className="r1-main">
           <div className="r1-editor-header">
+            <span className="r1-head-mark" style={{ color: phaseColor }}>{head.glyph}</span>
+            <span className="r1-head-title">{head.name}</span>
             <span className="r1-filename">{head.filename}</span>
+            {myNeck === head.phase && !isSevered && (
+              <span className="r1-domain-tag" style={{ color: myRole.color, borderColor: `${myRole.color}45` }}>YOUR DOMAIN</span>
+            )}
             {!canEdit && !isSevered && (
               <span className="r1-edit-lock">
                 {claimedByOther ? `⛨ CLAIMED BY ${memberName(headShared.claimed_by)}` : 'CLAIM THIS HEAD TO ENGAGE'}
               </span>
             )}
-            {isSevered && <span className="r1-edit-lock sev">☠ HEAD SEVERED{headShared.severed_by ? ` — BY ${memberName(headShared.severed_by)}` : ''}</span>}
+            {isSevered && <span className="r1-edit-lock sev">☠ SEVERED{headShared.severed_by ? ` — BY ${memberName(headShared.severed_by)}` : ''}</span>}
             <span className={`r1-editor-status ${pasteBlocked ? 'flagged' : failCount === 0 ? 'clear' : 'errors'}`}>
               {pasteBlocked ? '✕ PASTE BLOCKED — type it, Hunter' : failCount === 0 ? '✓ all wards down' : `${failCount} wards holding`}
             </span>
@@ -463,7 +464,47 @@ export default function Raid01Combat({
                 readOnly: !canEdit,
               }}
             />
+            {dmgFlash && (
+              <span key={dmgFlash.id} className={`r1-dmg ${dmgFlash.cls}`}>{dmgFlash.text}</span>
+            )}
           </div>
+
+          {/* ── Ward strip — always visible, never eats editor width ── */}
+          <div className="r1-wardbar">
+            <span className="r1-wardbar-label">WARDS</span>
+            <span className={`r1-scanner-count${failCount === 0 ? ' clear' : ''}`}>
+              {isSevered ? 'SEVERED' : failCount === 0 ? 'ALL GREEN — STRIKE' : `${failCount} HOLDING`}
+            </span>
+            <div className="r1-chip-row">
+              {head.wards.map(w => (
+                <button
+                  key={w.id}
+                  className={`r1-chip${wardResults[w.id] ? ' pass' : ' fail'}${expandedHint === w.id ? ' expanded' : ''}`}
+                  onClick={() => setExpandedHint(expandedHint === w.id ? null : w.id)}
+                  title={w.label}
+                >
+                  <span className="r1-chip-icon">{wardResults[w.id] ? '✓' : '⚠'}</span>
+                  <span className="r1-chip-text">{w.label.split(' — ')[0]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {expandedWard && (
+            <div className="r1-ward-pop">
+              <div className="r1-ward-pop-head">
+                <span className={`r1-ward-icon${wardResults[expandedWard.id] ? ' pass' : ' fail'}`}>
+                  {wardResults[expandedWard.id] ? '✓' : '⚠'}
+                </span>
+                <span className="r1-ward-pop-label">{expandedWard.label}</span>
+                <button className="r1-ward-pop-close" onClick={() => setExpandedHint(null)}>✕</button>
+              </div>
+              <div className={`r1-ward-hint${wardResults[expandedWard.id] ? ' pass' : ''}`}>
+                {wardResults[expandedWard.id]
+                  ? 'Ward down. It stays down as long as your code holds — STRIKE when the strip is all green.'
+                  : expandedWard.hint}
+              </div>
+            </div>
+          )}
 
           {/* IDE console — same idiom as the gates */}
           <div className="r1-console">
@@ -494,12 +535,13 @@ export default function Raid01Combat({
             )}
           </div>
 
+          {/* Strike strip — CLAIM / STRIKE always reachable, panels or not */}
           <div className="r1-strike-strip">
             {!claimedByMe && !isSevered ? (
               <button
                 className="r1-claim-btn"
                 disabled={claimedByOther || fell}
-                onClick={() => onClaim?.(currentHeadId)}
+                onClick={handleClaimClick}
               >
                 {claimedByOther ? '⛨ CONTESTED' : '⚑ CLAIM HEAD'}
               </button>
@@ -524,46 +566,175 @@ export default function Raid01Combat({
           </div>
         </div>
 
-        {/* ── Boss stage ── */}
-        <aside className="r1-stage">
-          <div className="r1-boss-scene">
-            <RaidBossVarkul
-              headStates={headStates}
-              targetId={currentHeadId}
-              phase={currentPhase}
-              dead={allDead}
-            />
-            {dmgFlash && (
-              <span key={dmgFlash.id} className={`r1-dmg ${dmgFlash.cls}`}>{dmgFlash.text}</span>
-            )}
-          </div>
+        {/* ── Docked drawer — all panels stay mounted; CSS controls visibility ── */}
+        <aside className={`r1-drawer${drawerOpen ? ' open' : ''}`}>
 
-          <div className="r1-party">
-            <div className="r1-panel-head">PARTY</div>
-            {members.map(m => (
-              <div key={m.user_id} className="r1-party-row">
-                <span className={`r1-party-dot${m.user_id === myId ? ' me' : ''}`} />
-                <span className="r1-party-name">{m.user_id === myId ? `${m.name} (YOU)` : m.name}</span>
-                <span className="r1-party-severs">{severCounts[m.user_id] ?? 0} ✂</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="r1-feed">
-            <div className="r1-panel-head">GATE FEED</div>
-            <div className="r1-feed-body">
-              {events.length === 0 && <div className="r1-feed-empty">— the Gate is quiet —</div>}
-              {events.slice(0, 40).map((e, i) => (
-                <div key={e.id ?? i} className={`r1-feed-line t-${e.type}`}>{e.label}</div>
-              ))}
+          {/* ⌖ HEADS */}
+          <section className={`r1-panel${panel === 'heads' ? ' active' : ''}`} aria-label="Heads">
+            <div className="r1-panel-title">
+              <span>⌖ THE NINE HEADS</span>
+              <button className="r1-panel-close" onClick={() => setDrawerOpen(false)} title="Close (Esc)">✕</button>
             </div>
-          </div>
+            <div className="r1-panel-scroll">
+              {PHASES.map(p => {
+                const locked = p.n > currentPhase
+                const isDomain = myNeck === p.n
+                return (
+                  <div key={p.n} className={`r1-phase-group${locked ? ' locked' : ''}`}>
+                    <div className="r1-phase-head" style={{ color: p.color }}>
+                      <span>{p.label}</span>
+                      <span className="r1-phase-head-tags">
+                        {isDomain && (
+                          <span className="r1-domain-mini" style={{ color: myRole.color, borderColor: `${myRole.color}45` }}>
+                            YOUR DOMAIN
+                          </span>
+                        )}
+                        {locked && <span className="r1-lock">SEALED</span>}
+                      </span>
+                    </div>
+                    {HEADS.filter(h => h.phase === p.n).map(h => {
+                      const s = heads[h.id] ?? { status: 'open' }
+                      const sev = s.status === 'severed'
+                      const mine = s.claimed_by === myId && !sev
+                      return (
+                        <button
+                          key={h.id}
+                          className={`r1-head-row${currentHeadId === h.id ? ' active' : ''}${sev ? ' severed' : ''}${isDomain && !sev ? ' domain' : ''}`}
+                          style={isDomain && !sev ? { '--domain-c': myRole.color } : undefined}
+                          disabled={locked}
+                          onClick={() => setCurrentHeadId(h.id)}
+                        >
+                          <span className="r1-head-glyph">{h.glyph}</span>
+                          <span className="r1-head-name">{h.name}</span>
+                          <span className={`r1-head-state${sev ? ' sev' : mine ? ' mine' : s.status === 'claimed' ? ' other' : ''}`}>
+                            {sev ? 'SEVERED' : mine ? 'YOURS' : s.status === 'claimed' ? memberName(s.claimed_by) : 'OPEN'}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+
+              {/* Selected head briefing */}
+              <div className="r1-brief">
+                <div className="r1-brief-label">▶ {head.name}</div>
+                <p className="r1-brief-what">{head.brief.what}</p>
+                <div className="r1-brief-line"><span>SKILL</span>{head.brief.skill}</div>
+                <div className="r1-brief-line"><span>OBJECTIVE</span>{head.brief.objective}</div>
+              </div>
+            </div>
+          </section>
+
+          {/* ◎ BOSS */}
+          <section className={`r1-panel${panel === 'boss' ? ' active' : ''}`} aria-label="Boss">
+            <div className="r1-panel-title">
+              <span>◎ VARKUL — LIVE READOUT</span>
+              <button className="r1-panel-close" onClick={() => setDrawerOpen(false)} title="Close (Esc)">✕</button>
+            </div>
+            <div className="r1-panel-scroll">
+              <div className="r1-boss-scene">
+                <RaidBossVarkul
+                  headStates={headStates}
+                  targetId={currentHeadId}
+                  phase={currentPhase}
+                  dead={allDead}
+                />
+              </div>
+              <div className="r1-boss-readout">
+                <div className="r1-readout-hp">
+                  <span className="r1-readout-hp-num">{bossHP}</span>
+                  <span className="r1-readout-hp-max">/ {BOSS_HP_MAX} HP</span>
+                </div>
+                <div className="r1-readout-pips">
+                  {HEADS.map(h => (
+                    <span
+                      key={h.id}
+                      className={`r1-pip${heads[h.id]?.status === 'severed' ? ' cut' : ''}`}
+                      style={{ '--pip-c': PHASES[h.phase - 1].color }}
+                      title={h.name}
+                    />
+                  ))}
+                </div>
+                {PHASES.map(p => {
+                  const cut = HEADS.filter(h => h.phase === p.n && heads[h.id]?.status === 'severed').length
+                  return (
+                    <div key={p.n} className="r1-readout-row">
+                      <span className="r1-readout-neck" style={{ color: p.color }}>{p.label}</span>
+                      <span className={`r1-readout-state${cut === 3 ? ' done' : p.n > currentPhase ? ' sealed' : ''}`}>
+                        {cut === 3 ? 'SEVERED' : p.n > currentPhase ? 'SEALED' : `${cut} / 3`}
+                      </span>
+                    </div>
+                  )
+                })}
+                <div className="r1-readout-note">
+                  Boss HP is shared — every sever lands −{HEAD_DAMAGE} for the whole warband.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ⚑ PARTY */}
+          <section className={`r1-panel${panel === 'party' ? ' active' : ''}`} aria-label="Party">
+            <div className="r1-panel-title">
+              <span>⚑ WARBAND — {members.length} HUNTER{members.length === 1 ? '' : 'S'}</span>
+              <button className="r1-panel-close" onClick={() => setDrawerOpen(false)} title="Close (Esc)">✕</button>
+            </div>
+            <div className="r1-panel-scroll party">
+              <div className="r1-party">
+                {members.map(m => {
+                  const r = ROLES[m.role]
+                  return (
+                    <div key={m.user_id} className={`r1-party-row${m.user_id === myId ? ' me' : ''}`}>
+                      <span className="r1-party-glyph" style={{ color: r?.color ?? '#3df0e8' }}>{r?.glyph ?? '·'}</span>
+                      <span className="r1-party-name">{m.user_id === myId ? `${m.name} (YOU)` : m.name}</span>
+                      <span className="r1-party-role" style={{ color: r ? `${r.color}b0` : undefined }}>{r?.label ?? 'HUNTER'}</span>
+                      <span className="r1-party-severs">{severCounts[m.user_id] ?? 0} ✂</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="r1-feed">
+                <div className="r1-panel-head">GATE FEED</div>
+                <div className="r1-feed-body">
+                  {events.length === 0 && <div className="r1-feed-empty">— the Gate is quiet —</div>}
+                  {events.slice(0, 40).map((e, i) => (
+                    <div key={e.id ?? i} className={`r1-feed-line t-${e.type}`}>{e.label}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
         </aside>
+
+        {/* ── Dock — slim vertical icon strip ── */}
+        <nav className="r1-dock" aria-label="Combat panels">
+          {[
+            { id: 'heads', icon: '⌖', label: 'HEADS' },
+            { id: 'boss',  icon: '◎', label: 'BOSS' },
+            { id: 'party', icon: '⚑', label: 'PARTY' },
+          ].map(t => (
+            <button
+              key={t.id}
+              className={`r1-dock-btn${drawerOpen && panel === t.id ? ' active' : ''}`}
+              onClick={() => togglePanel(t.id)}
+              title={`${t.label} panel`}
+            >
+              <span className="r1-dock-icon">{t.icon}</span>
+              <span className="r1-dock-label">{t.label}</span>
+            </button>
+          ))}
+        </nav>
       </div>
 
       {/* Bottom HUD — personal HP */}
       <div className="r1-hud">
-        <span className="r1-hud-identity">{displayName}</span>
+        <span className="r1-hud-identity">
+          {displayName}
+          {myRole && (
+            <span className="r1-hud-role" style={{ color: myRole.color }}> · {myRole.glyph} {myRole.label}</span>
+          )}
+        </span>
         <div className="r1-hud-hp-wrap">
           <span className={`r1-hud-hp-label${playerLow ? ' low' : ''}`}>HUNTER HP</span>
           <div className="r1-hud-hp-track">
@@ -600,6 +771,17 @@ export default function Raid01Combat({
         }}
         sandbox="allow-scripts allow-same-origin"
       />
+
+      {/* Sever toast — the kill is felt even with every panel closed */}
+      {severToast && (
+        <div key={severToast.id} className="r1-sever-toast">
+          <span className="r1-sever-toast-glyph">{severToast.glyph}</span>
+          <span className="r1-sever-toast-name">{severToast.name} — SEVERED</span>
+          <span className="r1-sever-toast-by">
+            VARKUL −{HEAD_DAMAGE}{severToast.byMe ? ' · YOUR CUT' : ` · ${memberName(severToast.by)}`}
+          </span>
+        </div>
+      )}
 
       {/* Phase banner */}
       {phaseBanner && (

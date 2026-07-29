@@ -5,7 +5,7 @@ import { useNav } from '../context/NavigationContext'
 import Raid01Combat from '../components/Raid01Combat'
 import RaidBossVarkul from '../components/RaidBossVarkul'
 import {
-  RAID01, HEADS, PHASES, PAYOUTS,
+  RAID01, HEADS, PHASES, PAYOUTS, ROLES, ROLE_LIST,
   BOSS_HP_MAX, PARTY_MIN, PARTY_MAX, ENTRY_COST,
 } from '../data/raids/raid01'
 import './Raid01.css'
@@ -34,6 +34,7 @@ export default function Raid01() {
   const [openRaids, setOpenRaids] = useState([])
   const [openRaidMembers, setOpenRaidMembers] = useState({})
   const [warbandName, setWarbandName] = useState('')
+  const [pickedRole, setPickedRole] = useState(null)   // specialization — required before create/join
   const [busy, setBusy] = useState(false)
   const channelRef = useRef(null)
   const lobbyChannelRef = useRef(null)
@@ -219,7 +220,7 @@ export default function Raid01() {
 
   // ─── Lobby actions ───────────────────────────────────────────────────────────
   async function handleCreate() {
-    if (!warbandName.trim() || busy) return
+    if (!warbandName.trim() || busy || !pickedRole) return
     if (spendable < ENTRY_COST && !isAdmin) return
     setBusy(true)
     try {
@@ -228,7 +229,7 @@ export default function Raid01() {
         .insert({ name: warbandName.trim(), created_by: myId, status: 'bg_lobby', health: BOSS_HP_MAX })
         .select().single()
       if (error || !r) return
-      await supabase.from('raid_members').insert({ raid_id: r.id, user_id: myId, role: 'hunter' })
+      await supabase.from('raid_members').insert({ raid_id: r.id, user_id: myId, role: pickedRole })
       if (!isAdmin) await burnRaidEntry(r.id)
       setWarbandName('')
       await loadRun(r.id)
@@ -239,13 +240,13 @@ export default function Raid01() {
   }
 
   async function handleJoin(raidId) {
-    if (busy) return
+    if (busy || !pickedRole) return
     if (spendable < ENTRY_COST && !isAdmin) return
     if ((openRaidMembers[raidId]?.length ?? 0) >= PARTY_MAX) return
     setBusy(true)
     try {
       const { error } = await supabase
-        .from('raid_members').insert({ raid_id: raidId, user_id: myId, role: 'hunter' })
+        .from('raid_members').insert({ raid_id: raidId, user_id: myId, role: pickedRole })
       if (error) return
       if (!isAdmin) await burnRaidEntry(raidId)
       await loadRun(raidId)
@@ -330,6 +331,16 @@ export default function Raid01() {
   }
 
   // War room / lobby
+  const myLobbyRole = ROLES[members.find(m => m.user_id === myId)?.role]
+  const inLobby = raid && raid.status === 'bg_lobby'
+  const canAfford = spendable >= ENTRY_COST || isAdmin
+
+  const joinLabel = !pickedRole
+    ? 'PICK A SPECIALIZATION'
+    : !canAfford
+      ? `NEED ${ENTRY_COST} $SHARD`
+      : `JOIN — ${ENTRY_COST} $SHARD`
+
   return (
     <div className="r1w-shell">
       <header className="r1w-topbar">
@@ -362,95 +373,200 @@ export default function Raid01() {
             <p>The Broodgate is not yet authorized on this shard. Association engineering must run the
             <code> supabase/raid01.sql</code> migration before hunters can enter.</p>
           </section>
-        ) : (
+        ) : inLobby ? (
           <>
-            {/* My lobby */}
-            {raid && raid.status === 'bg_lobby' && (
-              <section className="r1w-mylobby">
-                <div className="r1w-section-head">
-                  YOUR WARBAND — {raid.name}
-                  <span className="r1w-party-count">{members.length} / {PARTY_MAX}</span>
+            {/* In a warband — steps 1+2 are locked in; step 3 is live */}
+            <section className="r1w-step">
+              <div className="r1w-step-head">
+                <span className="r1w-step-num done">✓</span>
+                <span className="r1w-step-title">YOUR SPECIALIZATION</span>
+              </div>
+              {myLobbyRole ? (
+                <div className="r1w-myrole" style={{ '--role-c': myLobbyRole.color }}>
+                  <span className="r1w-myrole-glyph">{myLobbyRole.glyph}</span>
+                  <span className="r1w-myrole-label">{myLobbyRole.label}</span>
+                  <span className="r1w-myrole-owns">{myLobbyRole.owns}</span>
                 </div>
-                <div className="r1w-roster">
-                  {members.map(m => (
-                    <div key={m.user_id} className="r1w-roster-row">
-                      <span className={`r1w-dot${m.user_id === raid.created_by ? ' leader' : ''}`} />
-                      <span className="r1w-roster-name">
-                        {m.name}{m.user_id === raid.created_by ? ' — LEADER' : ''}{m.user_id === myId ? ' (YOU)' : ''}
-                      </span>
-                    </div>
-                  ))}
-                  {Array.from({ length: Math.max(0, PARTY_MIN - members.length) }).map((_, i) => (
-                    <div key={`empty-${i}`} className="r1w-roster-row empty">
-                      <span className="r1w-dot empty" />
-                      <span className="r1w-roster-name">AWAITING HUNTER — the Gate stays sealed below {PARTY_MIN}</span>
-                    </div>
-                  ))}
+              ) : (
+                <div className="r1w-myrole">
+                  <span className="r1w-myrole-glyph">·</span>
+                  <span className="r1w-myrole-label">UNSPECIALIZED</span>
+                  <span className="r1w-myrole-owns">licensed before specializations existed — fight where you like</span>
                 </div>
-                <div className="r1w-lobby-actions">
-                  {isLeader && (
-                    <button
-                      className="r1w-btn primary"
-                      disabled={busy || (members.length < PARTY_MIN && !isAdmin)}
-                      onClick={handleStart}
-                    >
-                      {members.length < PARTY_MIN && !isAdmin
-                        ? `NEED ${PARTY_MIN - members.length} MORE`
-                        : '⚔ BREACH THE GATE'}
-                    </button>
-                  )}
-                  <button className="r1w-btn" disabled={busy} onClick={handleLeave}>
-                    {isLeader ? 'DISBAND (refunds all)' : 'LEAVE (refund entry)'}
-                  </button>
-                </div>
-              </section>
-            )}
+              )}
+            </section>
 
-            {/* Open warbands + create */}
-            {!raid && (
-              <section className="r1w-lobbies">
-                <div className="r1w-section-head">OPEN WARBANDS</div>
-                {openRaids.length === 0 && (
-                  <div className="r1w-empty">No warbands forming. Raise your own.</div>
-                )}
-                {openRaids.map(r => {
-                  const mems = openRaidMembers[r.id] ?? []
+            <section className="r1w-step live">
+              <div className="r1w-step-head">
+                <span className="r1w-step-num">03</span>
+                <span className="r1w-step-title">BREACH THE GATE — {raid.name}</span>
+                <span className="r1w-party-count">{members.length} / {PARTY_MAX}</span>
+              </div>
+              <div className="r1w-roster">
+                {members.map(m => {
+                  const r = ROLES[m.role]
                   return (
-                    <div key={r.id} className="r1w-lobby-card">
-                      <div className="r1w-lobby-info">
-                        <span className="r1w-lobby-name">{r.name}</span>
-                        <span className="r1w-lobby-mems">
-                          {mems.map(m => m.name).join(' · ') || '—'} ({mems.length}/{PARTY_MAX})
-                        </span>
-                      </div>
-                      <button
-                        className="r1w-btn primary"
-                        disabled={busy || mems.length >= PARTY_MAX || (spendable < ENTRY_COST && !isAdmin)}
-                        onClick={() => handleJoin(r.id)}
-                      >
-                        {spendable < ENTRY_COST && !isAdmin ? 'NEED 1000 $SHARD' : `JOIN — ${ENTRY_COST} $SHARD`}
-                      </button>
+                    <div key={m.user_id} className="r1w-roster-row">
+                      <span className="r1w-roster-glyph" style={{ color: r?.color ?? '#3df0e8' }}>{r?.glyph ?? '·'}</span>
+                      <span className="r1w-roster-name">
+                        {m.name}
+                        {m.user_id === raid.created_by ? ' — LEADER' : ''}
+                        {m.user_id === myId ? ' (YOU)' : ''}
+                      </span>
+                      <span className="r1w-roster-role" style={{ color: r ? `${r.color}c0` : undefined }}>
+                        {r?.label ?? 'HUNTER'}
+                      </span>
                     </div>
                   )
                 })}
-                <div className="r1w-create">
-                  <input
-                    className="r1w-input"
-                    placeholder="Warband name…"
-                    maxLength={40}
-                    value={warbandName}
-                    onChange={e => setWarbandName(e.target.value)}
-                  />
+                {Array.from({ length: Math.max(0, PARTY_MIN - members.length) }).map((_, i) => (
+                  <div key={`empty-${i}`} className="r1w-roster-row empty">
+                    <span className="r1w-roster-glyph">·</span>
+                    <span className="r1w-roster-name">AWAITING HUNTER — the Gate stays sealed below {PARTY_MIN}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Neck coverage — soft warnings only, never blocks the breach */}
+              {PHASES.map(p => {
+                const covered = members.some(m => ROLES[m.role]?.neck === p.n || m.role === 'slayer')
+                return covered ? null : (
+                  <div key={p.n} className="r1w-coverage-warn">
+                    ⚠ No hunter owns the {p.key.toUpperCase()} neck — someone will be fighting off-spec.
+                  </div>
+                )
+              })}
+
+              <div className="r1w-lobby-actions">
+                {isLeader && (
                   <button
                     className="r1w-btn primary"
-                    disabled={busy || !warbandName.trim() || (spendable < ENTRY_COST && !isAdmin)}
-                    onClick={handleCreate}
+                    disabled={busy || (members.length < PARTY_MIN && !isAdmin)}
+                    onClick={handleStart}
                   >
-                    {spendable < ENTRY_COST && !isAdmin ? 'NEED 1000 $SHARD' : `RAISE WARBAND — ${ENTRY_COST} $SHARD`}
+                    {members.length < PARTY_MIN && !isAdmin
+                      ? `NEED ${PARTY_MIN - members.length} MORE HUNTER${PARTY_MIN - members.length === 1 ? '' : 'S'}`
+                      : '⚔ BREACH THE GATE'}
                   </button>
-                </div>
-              </section>
-            )}
+                )}
+                {!isLeader && (
+                  <span className="r1w-waiting">Waiting on the warband leader to breach…</span>
+                )}
+                <button className="r1w-btn" disabled={busy} onClick={handleLeave}>
+                  {isLeader ? 'DISBAND (refunds all)' : 'LEAVE (refund entry)'}
+                </button>
+              </div>
+            </section>
+          </>
+        ) : (
+          <>
+            {/* STEP 1 — pick a specialization */}
+            <section className="r1w-step">
+              <div className="r1w-step-head">
+                <span className={`r1w-step-num${pickedRole ? ' done' : ''}`}>{pickedRole ? '✓' : '01'}</span>
+                <span className="r1w-step-title">CHOOSE YOUR SPECIALIZATION</span>
+                <span className="r1w-step-note">soft guidance — any hunter can cut any head</span>
+              </div>
+              <div className="r1w-roles-grid">
+                {ROLE_LIST.map(r => (
+                  <button
+                    key={r.id}
+                    className={`r1w-role-card${pickedRole === r.id ? ' picked' : ''}`}
+                    style={{ '--role-c': r.color }}
+                    onClick={() => setPickedRole(pickedRole === r.id ? null : r.id)}
+                  >
+                    <div className="r1w-role-top">
+                      <span className="r1w-role-glyph">{r.glyph}</span>
+                      <span className="r1w-role-label">{r.label}</span>
+                      {pickedRole === r.id && <span className="r1w-role-picked">SELECTED</span>}
+                    </div>
+                    <div className="r1w-role-owns">{r.owns}</div>
+                    <div className="r1w-role-duty">{r.duty}</div>
+                    <div className="r1w-role-sec">
+                      <span className="r1w-role-sec-k">EXPECTED CLAIMS</span>
+                      {r.heads
+                        ? r.heads.map(h => <span key={h} className="r1w-role-line">{h}</span>)
+                        : <span className="r1w-role-line">ANY OPEN HEAD — all nine, wherever the cut is needed</span>}
+                    </div>
+                    <div className="r1w-role-sec">
+                      <span className="r1w-role-sec-k">SKILLS TESTED</span>
+                      {r.skills.map(s => <span key={s} className="r1w-role-line dim">{s}</span>)}
+                    </div>
+                    <div className="r1w-role-flavor"><span>VERA //</span> {r.flavor}</div>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* STEP 2 — raise or join a warband */}
+            <section className="r1w-step">
+              <div className="r1w-step-head">
+                <span className="r1w-step-num">02</span>
+                <span className="r1w-step-title">RAISE OR JOIN A WARBAND</span>
+                <span className="r1w-step-note">entry {ENTRY_COST} $SHARD — refunded if you leave before the breach</span>
+              </div>
+              {openRaids.length === 0 && (
+                <div className="r1w-empty">No warbands forming. Raise your own below.</div>
+              )}
+              {openRaids.map(r => {
+                const mems = openRaidMembers[r.id] ?? []
+                const full = mems.length >= PARTY_MAX
+                return (
+                  <div key={r.id} className="r1w-lobby-card">
+                    <div className="r1w-lobby-info">
+                      <span className="r1w-lobby-name">{r.name}</span>
+                      <span className="r1w-lobby-mems">
+                        {mems.length ? mems.map(m => (
+                          <span key={m.user_id} className="r1w-lobby-mem">
+                            <span style={{ color: ROLES[m.role]?.color ?? '#3df0e8' }}>{ROLES[m.role]?.glyph ?? '·'}</span> {m.name}
+                          </span>
+                        )) : '—'}
+                      </span>
+                    </div>
+                    <span className={`r1w-lobby-count${full ? ' full' : ''}`}>{mems.length}/{PARTY_MAX}</span>
+                    <button
+                      className="r1w-btn primary"
+                      disabled={busy || full || !pickedRole || !canAfford}
+                      onClick={() => handleJoin(r.id)}
+                    >
+                      {full ? 'WARBAND FULL' : joinLabel}
+                    </button>
+                  </div>
+                )
+              })}
+              <div className="r1w-create">
+                <input
+                  className="r1w-input"
+                  placeholder="Warband name…"
+                  maxLength={40}
+                  value={warbandName}
+                  onChange={e => setWarbandName(e.target.value)}
+                />
+                <button
+                  className="r1w-btn primary"
+                  disabled={busy || !warbandName.trim() || !pickedRole || !canAfford}
+                  onClick={handleCreate}
+                >
+                  {!pickedRole
+                    ? 'PICK A SPECIALIZATION'
+                    : !canAfford
+                      ? `NEED ${ENTRY_COST} $SHARD`
+                      : `RAISE WARBAND — ${ENTRY_COST} $SHARD`}
+                </button>
+              </div>
+            </section>
+
+            {/* STEP 3 — the breach itself (opens from the lobby) */}
+            <section className="r1w-step inert">
+              <div className="r1w-step-head">
+                <span className="r1w-step-num">03</span>
+                <span className="r1w-step-title">BREACH THE GATE</span>
+              </div>
+              <p className="r1w-step-inert-text">
+                The Gate opens from your warband lobby once {PARTY_MIN}+ hunters stand ready.
+                Nine heads, three necks, one confirmed kill on Association record — yours.
+              </p>
+            </section>
           </>
         )}
 
@@ -471,20 +587,30 @@ export default function Raid01() {
         <section className="r1w-heads">
           <div className="r1w-section-head">THE NINE HEADS — WHAT EACH ONE TESTS</div>
           <div className="r1w-heads-grid">
-            {PHASES.map(p => (
-              <div key={p.n} className="r1w-phase-col">
-                <div className="r1w-phase-title" style={{ color: p.color }}>{p.label}</div>
-                <div className="r1w-phase-sub">{p.sub}</div>
-                {HEADS.filter(h => h.phase === p.n).map(h => (
-                  <div key={h.id} className="r1w-head-card">
-                    <div className="r1w-head-card-name">
-                      <span style={{ color: p.color }}>{h.glyph}</span> {h.name}
-                    </div>
-                    <div className="r1w-head-card-skill">{h.brief.skill}</div>
+            {PHASES.map(p => {
+              const owner = ROLE_LIST.find(r => r.neck === p.n)
+              return (
+                <div key={p.n} className="r1w-phase-col">
+                  <div className="r1w-phase-title" style={{ color: p.color }}>
+                    {p.label}
+                    {owner && (
+                      <span className="r1w-phase-owner" style={{ color: owner.color, borderColor: `${owner.color}40` }}>
+                        {owner.glyph} {owner.label}
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
-            ))}
+                  <div className="r1w-phase-sub">{p.sub}</div>
+                  {HEADS.filter(h => h.phase === p.n).map(h => (
+                    <div key={h.id} className="r1w-head-card">
+                      <div className="r1w-head-card-name">
+                        <span style={{ color: p.color }}>{h.glyph}</span> {h.name}
+                      </div>
+                      <div className="r1w-head-card-skill">{h.brief.skill}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
           </div>
         </section>
       </div>
