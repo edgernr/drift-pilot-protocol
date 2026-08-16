@@ -94,7 +94,6 @@ create table if not exists public.raid_members (
   raid_id uuid references public.raids(id) on delete cascade,
   user_id uuid references auth.users(id) on delete cascade,
   role    text,
-  unique (raid_id, user_id),
   unique (raid_id, role)
 );
 

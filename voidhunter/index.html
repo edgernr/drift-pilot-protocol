@@ -1,0 +1,3769 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EVA-01 — Learn. Build. Earn.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ============= Screen router ============= */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ============= NAV ============= */
+    .nav {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      padding: 10px 14px 10px 22px;
+      background: rgba(10, 13, 24, 0.6);
+      border: 1px solid var(--line-2);
+      border-radius: 999px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .nav .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--f-display);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+    }
+    .nav .logo-mark {
+      width: 22px; height: 22px;
+      background: linear-gradient(135deg, var(--teal), var(--violet));
+      border-radius: 6px;
+      position: relative;
+      box-shadow: var(--glow-teal);
+    }
+    .nav .logo-mark::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border: 1.5px solid #05070d;
+      border-radius: 3px;
+    }
+    .nav ul {
+      display: flex; gap: 4px; list-style: none;
+    }
+    .nav ul a {
+      display: block;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: var(--ink-1);
+      border-radius: 999px;
+      transition: all 0.15s;
+    }
+    .nav ul a:hover { color: var(--ink-0); background: rgba(255,255,255,0.04); }
+
+    /* ============= HERO ============= */
+    .hero {
+      padding: 160px 0 80px;
+      position: relative;
+    }
+    .hero-inner {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .hero h1 {
+      font-size: clamp(56px, 7vw, 96px);
+      font-weight: 500;
+      margin: 24px 0;
+    }
+    .hero h1 .line { display: block; }
+    .hero p.lede {
+      font-size: 19px;
+      color: var(--ink-1);
+      max-width: 520px;
+      margin-bottom: 36px;
+    }
+    .hero-ctas { display: flex; gap: 12px; }
+
+    .hero-meta {
+      margin-top: 56px;
+      display: flex;
+      gap: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--line);
+    }
+    .hero-meta div .num {
+      font-family: var(--f-display);
+      font-size: 36px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .hero-meta div .num .unit { color: var(--teal); font-size: 24px; }
+    .hero-meta div .lbl {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-2);
+      margin-top: 4px;
+    }
+
+    /* ============= HERO CARD (Quest preview) ============= */
+    .hero-card {
+      padding: 0;
+      overflow: hidden;
+      transform: rotate(0.8deg);
+      position: relative;
+    }
+    .hero-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+    }
+    .hc-dots { display: flex; gap: 6px; }
+    .hc-dots span {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+    }
+    .hc-dots span:nth-child(1) { background: var(--magenta); box-shadow: 0 0 6px var(--magenta); }
+    .hc-dots span:nth-child(2) { background: var(--amber); }
+    .hc-dots span:nth-child(3) { background: var(--lime); }
+
+    .hc-title { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); }
+
+    .hero-card-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .quest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .quest-title {
+      font-family: var(--f-display);
+      font-size: 22px;
+      font-weight: 500;
+    }
+    .quest-sub {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--ink-2);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .reward-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px 6px 8px;
+      border-radius: 999px;
+      background: oklch(0.72 0.28 340 / 0.12);
+      border: 1px solid oklch(0.72 0.28 340 / 0.35);
+      font-family: var(--f-mono);
+      font-size: 12px;
+      color: var(--magenta);
+    }
+    .reward-pill .coin {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, oklch(0.9 0.25 340), oklch(0.55 0.3 340));
+      box-shadow: 0 0 10px var(--magenta);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #fff; font-weight: 700;
+    }
+
+    .code-block {
+      background: #050711;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 18px;
+      font-family: var(--f-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      overflow: hidden;
+      position: relative;
+    }
+    .code-block .ln { color: var(--ink-3); margin-right: 14px; user-select: none; display: inline-block; width: 16px; text-align: right; }
+    .tk-kw { color: var(--violet); }
+    .tk-fn { color: var(--teal); }
+    .tk-str { color: var(--lime); }
+    .tk-com { color: var(--ink-3); font-style: italic; }
+    .tk-num { color: var(--amber); }
+    .tk-prop { color: var(--magenta); }
+
+    .test-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-family: var(--f-mono);
+      font-size: 12px;
+      color: var(--ink-1);
+    }
+    .test-row .check {
+      width: 16px; height: 16px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+    }
+    .test-row.pass .check { background: oklch(0.9 0.22 135 / 0.15); color: var(--lime); border: 1px solid oklch(0.9 0.22 135 / 0.3); }
+    .test-row.pending .check { background: rgba(255,255,255,0.04); color: var(--ink-2); border: 1px dashed var(--line-2); }
+
+    .hero-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-top: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+    }
+    .xp-bar {
+      flex: 1;
+      max-width: 160px;
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0 16px;
+    }
+    .xp-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--violet));
+      width: 60%;
+      box-shadow: var(--glow-teal);
+    }
+
+    /* ============= SKILL TREE ============= */
+    .tree-wrap {
+      position: relative;
+      padding: 40px;
+      min-height: 620px;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 50%, oklch(0.4 0.2 295 / 0.1), transparent 70%);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .tree-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(180, 200, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(180, 200, 255, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+    .tree-svg { position: absolute; inset: 40px; width: calc(100% - 80px); height: calc(100% - 80px); pointer-events: none; }
+    .tree-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .tree-node:hover { transform: translate(-50%, -50%) scale(1.05); }
+    .tree-node .node {
+      width: 68px; height: 68px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+      border: 1px solid var(--line-2);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      font-family: var(--f-mono);
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .tree-node.unlocked .node {
+      border-color: var(--teal);
+      box-shadow: var(--glow-teal), inset 0 0 20px oklch(0.86 0.18 185 / 0.1);
+      color: var(--teal);
+    }
+    .tree-node.current .node {
+      border-color: var(--magenta);
+      box-shadow: var(--glow-magenta), inset 0 0 20px oklch(0.72 0.28 340 / 0.15);
+      color: var(--magenta);
+      animation: currentPulse 2s ease-in-out infinite;
+    }
+    @keyframes currentPulse {
+      0%, 100% { box-shadow: var(--glow-magenta), inset 0 0 20px oklch(0.72 0.28 340 / 0.15); }
+      50% { box-shadow: 0 0 60px oklch(0.72 0.28 340 / 0.6), inset 0 0 20px oklch(0.72 0.28 340 / 0.25); }
+    }
+    .tree-node.locked .node { color: var(--ink-3); }
+    .tree-node.locked .node::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(5,7,13,0.6);
+      border-radius: inherit;
+      backdrop-filter: blur(2px);
+    }
+    .tree-node.locked .node::after {
+      content: "🔒";
+      position: absolute;
+      font-size: 14px;
+    }
+    .tree-node .lbl {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-1);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .tree-node .xp {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--ink-2);
+    }
+    .tree-node.current .lbl { color: var(--magenta); }
+
+    /* ============= QUESTS ============= */
+    .quest-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .q-card {
+      padding: 0;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .q-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 30px 60px -20px oklch(0.68 0.25 295 / 0.4);
+    }
+    .q-banner {
+      height: 120px;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .q-banner-1 { background: linear-gradient(135deg, oklch(0.4 0.2 295 / 0.8), oklch(0.6 0.18 185 / 0.5)); }
+    .q-banner-2 { background: linear-gradient(135deg, oklch(0.55 0.22 340 / 0.7), oklch(0.45 0.22 310 / 0.6)); }
+    .q-banner-3 { background: linear-gradient(135deg, oklch(0.55 0.18 185 / 0.7), oklch(0.45 0.18 200 / 0.5)); }
+    .q-banner-4 { background: linear-gradient(135deg, oklch(0.5 0.22 310 / 0.7), oklch(0.55 0.22 340 / 0.5)); }
+    .q-banner-5 { background: linear-gradient(135deg, oklch(0.55 0.2 75 / 0.6), oklch(0.45 0.22 310 / 0.5)); }
+    .q-banner-6 { background: linear-gradient(135deg, oklch(0.45 0.2 295 / 0.7), oklch(0.55 0.18 185 / 0.5)); }
+    .q-banner::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size: 20px 20px;
+      mask-image: radial-gradient(ellipse at center, black, transparent 70%);
+    }
+    .q-banner-icon {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--f-mono);
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+    .q-banner .top-chip {
+      position: absolute;
+      top: 14px; left: 14px;
+    }
+    .q-banner .reward-chip {
+      position: absolute;
+      top: 14px; right: 14px;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      padding: 4px 10px 4px 6px;
+      background: rgba(5,7,13,0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid oklch(0.72 0.28 340 / 0.5);
+      color: var(--magenta);
+      border-radius: 999px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .q-banner .reward-chip .coin {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, oklch(0.9 0.25 340), oklch(0.55 0.3 340));
+      box-shadow: 0 0 6px var(--magenta);
+    }
+    .q-body { padding: 20px; }
+    .q-body h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .q-body p {
+      color: var(--ink-1);
+      font-size: 14px;
+      margin-bottom: 16px;
+      min-height: 42px;
+    }
+    .q-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--ink-2);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .q-meta .progress {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .q-meta .progress .bar {
+      width: 60px; height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .q-meta .progress .bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--violet));
+    }
+
+    /* ============= TOKENOMICS ============= */
+    .token-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .token-visual {
+      position: relative;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .token-coin {
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, oklch(0.95 0.2 340), oklch(0.6 0.28 320) 45%, oklch(0.4 0.25 300) 100%);
+      box-shadow:
+        0 0 80px oklch(0.72 0.28 340 / 0.5),
+        0 0 120px oklch(0.68 0.25 295 / 0.4),
+        inset -20px -20px 40px rgba(0,0,0,0.3),
+        inset 10px 10px 20px rgba(255,255,255,0.2);
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .token-coin::before {
+      content: "EVA";
+      font-family: var(--f-display);
+      font-size: 56px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+      letter-spacing: 0.04em;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .token-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed var(--line-2);
+      animation: spin 40s linear infinite;
+    }
+    .token-ring-1 { width: 360px; height: 360px; border-color: oklch(0.86 0.18 185 / 0.2); }
+    .token-ring-2 { width: 440px; height: 440px; border-color: oklch(0.68 0.25 295 / 0.2); animation-direction: reverse; animation-duration: 60s; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .token-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .token-stat {
+      padding: 20px;
+      background: rgba(180, 200, 255, 0.02);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .token-stat .label {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-2);
+      margin-bottom: 10px;
+    }
+    .token-stat .value {
+      font-family: var(--f-display);
+      font-size: 32px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .token-stat .value .unit {
+      font-size: 16px;
+      color: var(--teal);
+      margin-left: 4px;
+    }
+    .token-stat .sub {
+      font-family: var(--f-mono);
+      font-size: 12px;
+      color: var(--ink-2);
+      margin-top: 4px;
+    }
+
+    /* ============= PARTNERS ============= */
+    .partners {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .partner {
+      padding: 32px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      transition: background 0.2s;
+    }
+    .partner:hover { background: rgba(180, 200, 255, 0.03); }
+    .partner:nth-child(6n) { border-right: none; }
+    .partner:nth-last-child(-n+6) { border-bottom: none; }
+    .partner-mark {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--f-display);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--ink-0);
+    }
+    .partner-name {
+      font-family: var(--f-mono);
+      font-size: 12px;
+      color: var(--ink-1);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ============= PRICING ============= */
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .price-card {
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .price-card.featured {
+      background: linear-gradient(180deg, oklch(0.2 0.15 295 / 0.4), oklch(0.15 0.1 220 / 0.5));
+      border-color: transparent;
+      position: relative;
+    }
+    .price-card.featured::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: 14px;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--magenta), var(--violet), var(--teal));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+    .price-card .tier {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--teal);
+    }
+    .price-card.featured .tier { color: var(--magenta); }
+    .price-card .amount {
+      font-family: var(--f-display);
+      font-size: 56px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .price-card .amount .period {
+      font-size: 16px;
+      color: var(--ink-2);
+      font-weight: 400;
+    }
+    .price-card h3 { font-size: 20px; }
+    .price-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .price-card ul li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 14px;
+      color: var(--ink-1);
+    }
+    .price-card ul li::before {
+      content: "";
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: oklch(0.9 0.22 135 / 0.15);
+      border: 1px solid oklch(0.9 0.22 135 / 0.4);
+      flex-shrink: 0;
+      margin-top: 3px;
+      position: relative;
+    }
+    .price-card ul li::after {
+      content: "✓";
+      position: absolute;
+      margin-left: 3px;
+      margin-top: 1px;
+      color: var(--lime);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* ============= FOOTER / CTA ============= */
+    .final-cta {
+      padding: 100px 0 140px;
+      text-align: center;
+    }
+    .final-cta h2 {
+      font-size: clamp(48px, 6vw, 88px);
+      max-width: 900px;
+      margin: 0 auto 32px;
+    }
+    .final-cta p {
+      color: var(--ink-1);
+      font-size: 18px;
+      max-width: 520px;
+      margin: 0 auto 40px;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 40px 0;
+      position: relative;
+      z-index: 2;
+    }
+    footer .inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--f-mono);
+      font-size: 12px;
+      color: var(--ink-2);
+    }
+    footer .inner .right { display: flex; gap: 24px; }
+
+    @media (max-width: 960px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .quest-grid { grid-template-columns: 1fr; }
+      .pricing { grid-template-columns: 1fr; }
+      .token-wrap { grid-template-columns: 1fr; }
+      .partners { grid-template-columns: repeat(3, 1fr); }
+      .partner:nth-child(6n) { border-right: 1px solid var(--line); }
+      .partner:nth-child(3n) { border-right: none; }
+      .nav ul { display: none; }
+    }
+  </style>
+</head>
+<body data-screen-label="00 Landing">
+  <div class="grid-bg"></div>
+  <div class="noise"></div>
+
+  <!-- =========================== LANDING =========================== -->
+  <div id="screen-landing" class="screen active">
+    <nav class="nav">
+      <div class="logo">
+        <div class="logo-mark"></div>
+        <span>EVA-01</span>
+        <span class="chip chip-teal" style="font-size: 9px; padding: 2px 8px;">BETA</span>
+      </div>
+      <ul>
+        <li><a href="#quests">Quests</a></li>
+        <li><a href="#tree">Skill Tree</a></li>
+        <li><a href="#token">Token</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+      </ul>
+      <button class="btn btn-ghost btn-sm" data-goto="signup">Connect Wallet →</button>
+    </nav>
+
+    <section class="hero">
+      <div class="container">
+        <div class="hero-inner">
+          <div class="reveal">
+            <span class="chip chip-violet"><span class="dot dot-pulse"></span> SEASON 01 · NOW LIVE</span>
+            <h1>
+              <span class="line">Level up</span>
+              <span class="line gradient-text">your frontend.</span>
+              <span class="line">Get paid in $EVA.</span>
+            </h1>
+            <p class="lede">A gamified coding academy where every quest you ship earns real on-chain rewards. Learn React, TypeScript & modern frontend — mission by mission, XP by XP.</p>
+            <div class="hero-ctas">
+              <button class="btn btn-primary" data-goto="signup">Start Season 01 →</button>
+              <button class="btn btn-ghost" data-goto="quest">Try a Quest</button>
+            </div>
+
+            <div class="hero-meta">
+              <div>
+                <div class="num">142<span class="unit">k</span></div>
+                <div class="lbl">Pilots enrolled</div>
+              </div>
+              <div>
+                <div class="num">2.4<span class="unit">M</span></div>
+                <div class="lbl">$EVA distributed</div>
+              </div>
+              <div>
+                <div class="num">3,280</div>
+                <div class="lbl">NFT badges minted</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="reveal">
+            <div class="panel panel-glow hero-card">
+              <div class="hero-card-header">
+                <div class="hc-dots"><span></span><span></span><span></span></div>
+                <div class="hc-title">quest_042 / flex-row-puzzle.tsx</div>
+                <div class="hc-title teal-text">● LIVE</div>
+              </div>
+              <div class="hero-card-body">
+                <div class="quest-header">
+                  <div>
+                    <div class="quest-title">The Flexbox Vault</div>
+                    <div class="quest-sub">ACT II · Chapter 04</div>
+                  </div>
+                  <div class="reward-pill">
+                    <div class="coin">E</div>
+                    +240 $EVA
+                  </div>
+                </div>
+
+                <div class="code-block">
+                  <div><span class="ln">1</span><span class="tk-com">// Align the cards horizontally, spaced evenly.</span></div>
+                  <div><span class="ln">2</span><span class="tk-kw">const</span> Vault = () =&gt; (</div>
+                  <div><span class="ln">3</span>&nbsp;&nbsp;&lt;<span class="tk-fn">div</span> <span class="tk-prop">className</span>=<span class="tk-str">"flex ___-___"</span>&gt;</div>
+                  <div><span class="ln">4</span>&nbsp;&nbsp;&nbsp;&nbsp;{cards.<span class="tk-fn">map</span>(c =&gt; &lt;<span class="tk-fn">Card</span> /&gt;)}</div>
+                  <div><span class="ln">5</span>&nbsp;&nbsp;&lt;/<span class="tk-fn">div</span>&gt;</div>
+                  <div><span class="ln">6</span>);</div>
+                </div>
+
+                <div>
+                  <div class="test-row pass">
+                    <div class="check">✓</div>
+                    <span>cards render in a horizontal row</span>
+                  </div>
+                  <div class="test-row pass">
+                    <div class="check">✓</div>
+                    <span>spacing uses justify-between</span>
+                  </div>
+                  <div class="test-row pending">
+                    <div class="check">○</div>
+                    <span>vertical alignment set to center</span>
+                  </div>
+                </div>
+              </div>
+              <div class="hero-card-footer">
+                <span class="chip chip-teal">XP 1,840 / 3,000</span>
+                <div class="xp-bar"><div class="fill"></div></div>
+                <span class="mono" style="font-size: 11px; color: var(--ink-2);">LVL 12 →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SKILL TREE -->
+    <section id="tree">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">THE SKILL TREE</span>
+          <h2>A constellation of quests. Every node you clear unlocks the next.</h2>
+          <p>60+ hand-crafted missions across HTML, CSS, JavaScript, React and TypeScript. Clear a branch → mint a soulbound badge → unlock bounty missions.</p>
+        </div>
+
+        <div class="tree-wrap reveal">
+          <svg class="tree-svg" viewBox="0 0 1200 540" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="gLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="oklch(0.86 0.18 185)" stop-opacity="0.6"/>
+                <stop offset="100%" stop-color="oklch(0.68 0.25 295)" stop-opacity="0.3"/>
+              </linearGradient>
+              <linearGradient id="gLineCurrent" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="oklch(0.86 0.18 185)" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="oklch(0.72 0.28 340)" stop-opacity="0.9"/>
+              </linearGradient>
+            </defs>
+            <!-- connections -->
+            <path d="M 140 270 L 340 140" stroke="url(#gLine)" stroke-width="1.5" fill="none"/>
+            <path d="M 140 270 L 340 270" stroke="url(#gLine)" stroke-width="1.5" fill="none"/>
+            <path d="M 140 270 L 340 400" stroke="url(#gLine)" stroke-width="1.5" fill="none"/>
+            <path d="M 340 140 L 560 140" stroke="url(#gLine)" stroke-width="1.5" fill="none"/>
+            <path d="M 340 270 L 560 270" stroke="url(#gLineCurrent)" stroke-width="2" fill="none"/>
+            <path d="M 340 400 L 560 400" stroke="url(#gLine)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5" fill="none"/>
+            <path d="M 560 140 L 800 200" stroke="url(#gLine)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.4" fill="none"/>
+            <path d="M 560 270 L 800 200" stroke="url(#gLine)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.4" fill="none"/>
+            <path d="M 560 270 L 800 340" stroke="url(#gLine)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.4" fill="none"/>
+            <path d="M 560 400 L 800 340" stroke="url(#gLine)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.4" fill="none"/>
+            <path d="M 800 200 L 1040 270" stroke="url(#gLine)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.3" fill="none"/>
+            <path d="M 800 340 L 1040 270" stroke="url(#gLine)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.3" fill="none"/>
+          </svg>
+
+          <!-- nodes (positions in %) -->
+          <div class="tree-node unlocked" style="left: 12%; top: 50%;">
+            <div class="node">H</div>
+            <div class="lbl">HTML Basics</div>
+            <div class="xp">✓ 1,200 XP</div>
+          </div>
+          <div class="tree-node unlocked" style="left: 28%; top: 26%;">
+            <div class="node">B</div>
+            <div class="lbl">Box Model</div>
+            <div class="xp">✓ 800 XP</div>
+          </div>
+          <div class="tree-node unlocked" style="left: 28%; top: 50%;">
+            <div class="node">F</div>
+            <div class="lbl">Flexbox</div>
+            <div class="xp">✓ 1,500 XP</div>
+          </div>
+          <div class="tree-node unlocked" style="left: 28%; top: 74%;">
+            <div class="node">G</div>
+            <div class="lbl">CSS Grid</div>
+            <div class="xp">✓ 1,500 XP</div>
+          </div>
+          <div class="tree-node unlocked" style="left: 47%; top: 26%;">
+            <div class="node">A</div>
+            <div class="lbl">Animations</div>
+            <div class="xp">✓ 900 XP</div>
+          </div>
+          <div class="tree-node current" style="left: 47%; top: 50%;">
+            <div class="node">JS</div>
+            <div class="lbl">JavaScript</div>
+            <div class="xp">in progress</div>
+          </div>
+          <div class="tree-node locked" style="left: 47%; top: 74%;">
+            <div class="node">TS</div>
+            <div class="lbl">TypeScript</div>
+            <div class="xp">6,000 XP req.</div>
+          </div>
+          <div class="tree-node locked" style="left: 67%; top: 37%;">
+            <div class="node">R</div>
+            <div class="lbl">React</div>
+            <div class="xp">9,000 XP req.</div>
+          </div>
+          <div class="tree-node locked" style="left: 67%; top: 63%;">
+            <div class="node">N</div>
+            <div class="lbl">Next.js</div>
+            <div class="xp">12,000 XP req.</div>
+          </div>
+          <div class="tree-node locked" style="left: 87%; top: 50%;">
+            <div class="node">★</div>
+            <div class="lbl">Ship a dApp</div>
+            <div class="xp">BOSS QUEST</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURED QUESTS -->
+    <section id="quests">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">FEATURED QUESTS</span>
+          <h2>Missions dropping this week.</h2>
+          <p>New quests land every Monday. Early completers get bonus $EVA and limited-edition badges.</p>
+        </div>
+
+        <div class="quest-grid">
+          <!-- Quest 1 -->
+          <div class="panel q-card reveal">
+            <div class="q-banner q-banner-1">
+              <span class="chip chip-violet top-chip">INTERMEDIATE</span>
+              <div class="reward-chip"><div class="coin"></div>+480</div>
+              <div class="q-banner-icon">{ }</div>
+            </div>
+            <div class="q-body">
+              <h3>The State Machine</h3>
+              <p>Model a form's lifecycle using useReducer. No useState allowed.</p>
+              <div class="q-meta">
+                <span>~35 min</span>
+                <div class="progress">
+                  <div class="bar"><div class="fill" style="width: 0"></div></div>
+                  <span>NEW</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quest 2 -->
+          <div class="panel q-card reveal">
+            <div class="q-banner q-banner-2">
+              <span class="chip chip-magenta top-chip">BOSS</span>
+              <div class="reward-chip"><div class="coin"></div>+1,200</div>
+              <div class="q-banner-icon">⟨/⟩</div>
+            </div>
+            <div class="q-body">
+              <h3>Ship the Landing</h3>
+              <p>Build a pixel-perfect hero section. 12 responsive breakpoints, zero layout shift.</p>
+              <div class="q-meta">
+                <span>~2 hours</span>
+                <div class="progress">
+                  <div class="bar"><div class="fill" style="width: 40%"></div></div>
+                  <span>40%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quest 3 -->
+          <div class="panel q-card reveal">
+            <div class="q-banner q-banner-3">
+              <span class="chip chip-teal top-chip">BEGINNER</span>
+              <div class="reward-chip"><div class="coin"></div>+180</div>
+              <div class="q-banner-icon">⇌</div>
+            </div>
+            <div class="q-body">
+              <h3>Flexbox Frogger</h3>
+              <p>Guide each frog to its lily pad. One property per level.</p>
+              <div class="q-meta">
+                <span>~15 min</span>
+                <div class="progress">
+                  <div class="bar"><div class="fill" style="width: 100%"></div></div>
+                  <span class="teal-text">CLEARED</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quest 4 -->
+          <div class="panel q-card reveal">
+            <div class="q-banner q-banner-4">
+              <span class="chip chip-amber top-chip">TIMED · 24H</span>
+              <div class="reward-chip"><div class="coin"></div>+650</div>
+              <div class="q-banner-icon">⏱</div>
+            </div>
+            <div class="q-body">
+              <h3>Debounce Drill</h3>
+              <p>Three broken search bars. One working debounce. Don't call the API too many times.</p>
+              <div class="q-meta">
+                <span>~45 min</span>
+                <div class="progress">
+                  <div class="bar"><div class="fill" style="width: 0"></div></div>
+                  <span>NEW</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quest 5 -->
+          <div class="panel q-card reveal">
+            <div class="q-banner q-banner-5">
+              <span class="chip chip-violet top-chip">INTERMEDIATE</span>
+              <div class="reward-chip"><div class="coin"></div>+320</div>
+              <div class="q-banner-icon">◐</div>
+            </div>
+            <div class="q-body">
+              <h3>Theme Switcher</h3>
+              <p>Dark mode, light mode, and one you invent — all persisted across reloads.</p>
+              <div class="q-meta">
+                <span>~30 min</span>
+                <div class="progress">
+                  <div class="bar"><div class="fill" style="width: 0"></div></div>
+                  <span>NEW</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quest 6 -->
+          <div class="panel q-card reveal">
+            <div class="q-banner q-banner-6">
+              <span class="chip chip-magenta top-chip">RAID · 5 PLAYERS</span>
+              <div class="reward-chip"><div class="coin"></div>+2,400</div>
+              <div class="q-banner-icon">※</div>
+            </div>
+            <div class="q-body">
+              <h3>The Component Raid</h3>
+              <p>Collaborate to build a full design system. Each player owns a primitive.</p>
+              <div class="q-meta">
+                <span>~4 hours</span>
+                <div class="progress">
+                  <div class="bar"><div class="fill" style="width: 0"></div></div>
+                  <span>LIVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOKENOMICS -->
+    <section id="token">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">$EVA TOKEN</span>
+          <h2>Earn by learning. Spend to level faster.</h2>
+          <p>Every quest cleared pays out $EVA. Stake it for XP multipliers, unlock premium quests, or trade it for NFT badges at the vault.</p>
+        </div>
+
+        <div class="token-wrap">
+          <div class="token-visual reveal">
+            <div class="token-ring token-ring-1"></div>
+            <div class="token-ring token-ring-2"></div>
+            <div class="token-coin"></div>
+          </div>
+
+          <div class="reveal">
+            <div class="token-stats">
+              <div class="token-stat">
+                <div class="label">Total Supply</div>
+                <div class="value">100<span class="unit">M</span></div>
+                <div class="sub">fixed · no mint</div>
+              </div>
+              <div class="token-stat">
+                <div class="label">Learn-to-Earn Pool</div>
+                <div class="value">60<span class="unit">%</span></div>
+                <div class="sub">60M reserved</div>
+              </div>
+              <div class="token-stat">
+                <div class="label">Current Price</div>
+                <div class="value">$0.48</div>
+                <div class="sub teal-text">↑ 12.4% 24h</div>
+              </div>
+              <div class="token-stat">
+                <div class="label">Staking APR</div>
+                <div class="value">18<span class="unit">%</span></div>
+                <div class="sub">+2x XP multiplier</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+              <button class="btn btn-primary">View Tokenomics →</button>
+              <button class="btn btn-ghost">Read Whitepaper</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTNERS -->
+    <section>
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">NETWORKS &amp; PARTNERS</span>
+          <h2>Built on chains. Backed by builders.</h2>
+        </div>
+        <div class="partners reveal">
+          <div class="partner">
+            <div class="partner-mark" style="background: linear-gradient(135deg, oklch(0.7 0.25 295), oklch(0.5 0.2 200));">◎</div>
+            <div class="partner-name">SOLANA</div>
+          </div>
+          <div class="partner">
+            <div class="partner-mark" style="background: linear-gradient(135deg, oklch(0.6 0.2 260), oklch(0.4 0.15 240));">◆</div>
+            <div class="partner-name">ETHEREUM</div>
+          </div>
+          <div class="partner">
+            <div class="partner-mark" style="background: linear-gradient(135deg, oklch(0.75 0.15 200), oklch(0.55 0.2 220));">◈</div>
+            <div class="partner-name">BASE</div>
+          </div>
+          <div class="partner">
+            <div class="partner-mark" style="background: linear-gradient(135deg, oklch(0.65 0.22 320), oklch(0.45 0.2 290));">✦</div>
+            <div class="partner-name">POLYGON</div>
+          </div>
+          <div class="partner">
+            <div class="partner-mark" style="background: linear-gradient(135deg, oklch(0.8 0.18 75), oklch(0.55 0.22 40));">▲</div>
+            <div class="partner-name">AVALANCHE</div>
+          </div>
+          <div class="partner">
+            <div class="partner-mark" style="background: linear-gradient(135deg, oklch(0.7 0.18 185), oklch(0.45 0.2 210));">◉</div>
+            <div class="partner-name">ARBITRUM</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">CHOOSE YOUR CLASS</span>
+          <h2>Free to start. Premium to fly.</h2>
+          <p>You keep every $EVA you earn, on every tier. Premium just makes you earn faster.</p>
+        </div>
+
+        <div class="pricing">
+          <div class="panel price-card reveal">
+            <div>
+              <div class="tier">SCOUT</div>
+              <div class="amount" style="margin-top: 12px;">$0<span class="period">/forever</span></div>
+            </div>
+            <h3>Learn the ropes.</h3>
+            <ul>
+              <li>Access to 20+ starter quests</li>
+              <li>Earn $EVA on every completion</li>
+              <li>1 streak freeze per week</li>
+              <li>Community leaderboard</li>
+            </ul>
+            <button class="btn btn-ghost" style="justify-content: center;" data-goto="signup">Start for Free</button>
+          </div>
+
+          <div class="panel price-card featured reveal">
+            <div>
+              <div class="tier">★ PILOT · MOST POPULAR</div>
+              <div class="amount" style="margin-top: 12px;">$19<span class="period">/month</span></div>
+            </div>
+            <h3>Unlock the full tree.</h3>
+            <ul>
+              <li>All 60+ quests + weekly drops</li>
+              <li>2x $EVA earn multiplier</li>
+              <li>Mint NFT badges on-chain</li>
+              <li>Priority raid matchmaking</li>
+              <li>Unlimited streak freezes</li>
+            </ul>
+            <button class="btn btn-primary" style="justify-content: center;" data-goto="signup">Become a Pilot →</button>
+          </div>
+
+          <div class="panel price-card reveal">
+            <div>
+              <div class="tier">COMMANDER</div>
+              <div class="amount" style="margin-top: 12px;">$79<span class="period">/month</span></div>
+            </div>
+            <h3>Build your own squadron.</h3>
+            <ul>
+              <li>Everything in Pilot</li>
+              <li>Host private raid rooms</li>
+              <li>1-on-1 mentor sessions</li>
+              <li>Early access to boss quests</li>
+              <li>Governance voting on $EVA</li>
+            </ul>
+            <button class="btn btn-ghost" style="justify-content: center;" data-goto="signup">Command →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+      <div class="container reveal">
+        <span class="eyebrow">READY FOR LAUNCH</span>
+        <h2 style="margin-top: 16px;">Press start.<br/><span class="gradient-text">Your code is waiting.</span></h2>
+        <p>Join 142k pilots learning frontend the fun way. No credit card. Wallet optional.</p>
+        <button class="btn btn-primary" data-goto="signup">Enter EVA-01 →</button>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container inner">
+        <div>© 2026 EVA-01 · All missions reserved.</div>
+        <div class="right">
+          <a href="#">Docs</a>
+          <a href="#">Discord</a>
+          <a href="#">X / Twitter</a>
+          <a href="#">GitHub</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- =========================== SIGNUP =========================== -->
+  <div id="screen-signup" class="screen" data-screen-label="01 Signup">
+    <!-- content injected by signup.js -->
+  </div>
+
+  <!-- =========================== DASHBOARD =========================== -->
+  <div id="screen-dashboard" class="screen" data-screen-label="02 Dashboard">
+    <!-- content injected by dashboard.js -->
+  </div>
+
+  <!-- =========================== QUEST =========================== -->
+  <div id="screen-quest" class="screen" data-screen-label="03 Quest">
+    <!-- content injected by quest.js -->
+  </div>
+
+  <!-- Route progress + overlay -->
+  <div class="route-progress" id="routeProgress"><div class="bar" id="routeBar"></div></div>
+  <div class="route-overlay" id="routeOverlay">
+    <div class="spinner"></div>
+    <div class="label">LOADING <span class="target" id="routeTarget">…</span></div>
+  </div>
+
+  <script>
+/* App router + scroll reveal + screen transitions */
+(function () {
+  const screens = ['landing', 'signup', 'dashboard', 'quest'];
+  const SCREEN_NAMES = {
+    landing: 'HOME', signup: 'ENLISTMENT',
+    dashboard: 'PILOT HQ', quest: 'MISSION BRIEF'
+  };
+  let routing = false;
+  let currentScreen = 'landing';
+
+  function setProgress(pct) {
+    const wrap = document.getElementById('routeProgress');
+    const bar = document.getElementById('routeBar');
+    if (!wrap || !bar) return;
+    if (pct > 0) wrap.classList.add('loading'); else wrap.classList.remove('loading');
+    bar.style.width = pct + '%';
+  }
+
+  function showOverlay(target) {
+    const ov = document.getElementById('routeOverlay');
+    const tg = document.getElementById('routeTarget');
+    if (tg) tg.textContent = SCREEN_NAMES[target] || target.toUpperCase();
+    if (ov) ov.classList.add('show');
+  }
+  function hideOverlay() {
+    const ov = document.getElementById('routeOverlay');
+    if (ov) ov.classList.remove('show');
+  }
+
+  function goto(screen) {
+    if (routing || screen === currentScreen) return;
+    if (!screens.includes(screen)) return;
+    routing = true;
+
+    setProgress(15);
+    showOverlay(screen);
+
+    // Animate progress
+    setTimeout(() => setProgress(45), 60);
+    setTimeout(() => setProgress(70), 180);
+
+    // Start exit animation on current
+    const fromEl = document.getElementById('screen-' + currentScreen);
+    if (fromEl) {
+      fromEl.classList.add('leaving');
+      fromEl.classList.remove('active');
+    }
+
+    setTimeout(() => {
+      // Hide all
+      screens.forEach(s => {
+        const el = document.getElementById('screen-' + s);
+        if (el) { el.classList.remove('active', 'leaving'); }
+      });
+      // Show target
+      const toEl = document.getElementById('screen-' + screen);
+      if (toEl) toEl.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      currentScreen = screen;
+      try { localStorage.setItem('eva-screen', screen); } catch (e) {}
+
+      setProgress(100);
+      hideOverlay();
+      setTimeout(() => { setProgress(0); routing = false; }, 350);
+      setTimeout(initReveal, 50);
+    }, 380);
+  }
+
+  function initReveal() {
+    const viewport = window.innerHeight;
+    const all = document.querySelectorAll('.reveal');
+    all.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      // If element is above/in viewport on first paint, show it immediately
+      if (rect.top < viewport * 0.9) {
+        el.classList.add('in');
+      } else {
+        el.classList.add('will-animate');
+      }
+    });
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal.will-animate:not(.in)').forEach(el => io.observe(el));
+  }
+
+  // Global click delegation for data-goto
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-goto]');
+    if (btn) {
+      ev.preventDefault();
+      goto(btn.dataset.goto);
+    }
+  });
+
+  // Smooth-scroll hash links
+  document.addEventListener('click', (ev) => {
+    const a = ev.target.closest('a[href^="#"]');
+    if (!a) return;
+    const id = a.getAttribute('href').slice(1);
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) {
+      ev.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  window.evaGoto = goto;
+
+  // Restore previous screen (instant, no transition on first load)
+  try {
+    const saved = localStorage.getItem('eva-screen');
+    if (saved && screens.includes(saved) && saved !== 'landing') {
+      screens.forEach(s => {
+        const el = document.getElementById('screen-' + s);
+        if (el) el.classList.toggle('active', s === saved);
+      });
+      currentScreen = saved;
+    }
+  } catch (e) {}
+
+  initReveal();
+})();
+
+/* Signup screen — wallet-first onboarding */
+(function () {
+  const root = document.getElementById('screen-signup');
+  if (!root) return;
+
+  root.innerHTML = `
+    <style>
+      #screen-signup .signup-wrap {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      #screen-signup .signup-left {
+        padding: 48px 56px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-right: 1px solid var(--line);
+        position: relative;
+        z-index: 2;
+      }
+      #screen-signup .signup-right {
+        padding: 48px 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background:
+          radial-gradient(ellipse 60% 50% at 70% 40%, oklch(0.4 0.2 295 / 0.35), transparent 70%),
+          radial-gradient(ellipse 50% 40% at 30% 80%, oklch(0.6 0.18 185 / 0.2), transparent 70%);
+        z-index: 2;
+      }
+      #screen-signup .signup-logo {
+        display: flex; align-items: center; gap: 12px;
+        font-family: var(--f-display); font-weight: 600; font-size: 17px;
+      }
+      #screen-signup .signup-logo .logo-mark {
+        width: 26px; height: 26px;
+        background: linear-gradient(135deg, var(--teal), var(--violet));
+        border-radius: 7px; box-shadow: var(--glow-teal); position: relative;
+      }
+      #screen-signup .signup-logo .logo-mark::after {
+        content: ""; position: absolute; inset: 5px; border: 2px solid #05070d; border-radius: 3px;
+      }
+      #screen-signup .signup-hero h1 {
+        font-size: 52px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05;
+        margin: 32px 0 20px;
+      }
+      #screen-signup .signup-hero p {
+        color: var(--ink-1); font-size: 17px; max-width: 440px;
+      }
+      #screen-signup .signup-stats {
+        display: flex; gap: 40px; padding-top: 32px; border-top: 1px solid var(--line);
+      }
+      #screen-signup .signup-stats .s { font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); }
+      #screen-signup .signup-stats .n {
+        font-family: var(--f-display); font-size: 28px; font-weight: 500; color: var(--ink-0);
+        letter-spacing: -0.02em; display: block;
+      }
+
+      #screen-signup .signup-card {
+        width: 100%; max-width: 440px;
+        padding: 40px 36px;
+      }
+      #screen-signup .signup-card h2 { font-size: 28px; margin-bottom: 8px; }
+      #screen-signup .signup-card .sub { color: var(--ink-2); font-size: 14px; margin-bottom: 32px; }
+
+      #screen-signup .wallets { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+      #screen-signup .wallet-btn {
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px 20px;
+        background: rgba(180, 200, 255, 0.02);
+        border: 1px solid var(--line-2);
+        border-radius: 12px;
+        width: 100%;
+        text-align: left;
+        transition: all 0.2s;
+        position: relative;
+      }
+      #screen-signup .wallet-btn:hover {
+        background: rgba(180, 200, 255, 0.05);
+        border-color: var(--teal);
+        transform: translateY(-1px);
+      }
+      #screen-signup .wallet-btn .mark {
+        width: 36px; height: 36px; border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-display); font-weight: 700; font-size: 16px;
+        flex-shrink: 0;
+      }
+      #screen-signup .wallet-btn .n { font-size: 15px; font-weight: 500; }
+      #screen-signup .wallet-btn .d { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); }
+      #screen-signup .wallet-btn .arrow {
+        margin-left: auto; color: var(--ink-3); font-family: var(--f-mono);
+        transition: transform 0.2s, color 0.2s;
+      }
+      #screen-signup .wallet-btn:hover .arrow { color: var(--teal); transform: translateX(4px); }
+      #screen-signup .wallet-btn .badge {
+        position: absolute; top: 10px; right: 14px;
+        font-family: var(--f-mono); font-size: 9px; color: var(--lime);
+        text-transform: uppercase; letter-spacing: 0.15em;
+      }
+
+      #screen-signup .or-divider {
+        display: flex; align-items: center; gap: 12px;
+        font-family: var(--f-mono); font-size: 11px;
+        color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.2em;
+        margin: 20px 0;
+      }
+      #screen-signup .or-divider::before, #screen-signup .or-divider::after {
+        content: ""; flex: 1; height: 1px; background: var(--line);
+      }
+
+      #screen-signup .email-field {
+        display: flex; gap: 10px; margin-bottom: 16px;
+      }
+      #screen-signup .email-field input {
+        flex: 1;
+        background: rgba(180, 200, 255, 0.02);
+        border: 1px solid var(--line-2);
+        border-radius: 10px;
+        padding: 14px 16px;
+        color: var(--ink-0);
+        font-family: var(--f-body);
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      #screen-signup .email-field input:focus { border-color: var(--teal); }
+      #screen-signup .email-field input::placeholder { color: var(--ink-3); }
+
+      #screen-signup .signup-footer {
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        text-align: center;
+        font-family: var(--f-mono); font-size: 11px; color: var(--ink-2);
+      }
+      #screen-signup .signup-footer a { color: var(--teal); }
+
+      #screen-signup .back-link {
+        font-family: var(--f-mono); font-size: 12px;
+        color: var(--ink-2);
+        display: inline-flex; align-items: center; gap: 6px;
+        cursor: pointer;
+      }
+      #screen-signup .back-link:hover { color: var(--teal); }
+
+      #screen-signup .pilot-preview {
+        position: absolute;
+        right: 48px; bottom: 48px;
+        padding: 14px 18px;
+        background: rgba(10, 13, 24, 0.7);
+        border: 1px solid var(--line-2);
+        border-radius: 12px;
+        backdrop-filter: blur(12px);
+        display: flex; align-items: center; gap: 12px;
+        font-family: var(--f-mono); font-size: 11px;
+        z-index: 3;
+      }
+      #screen-signup .pilot-preview .dot { color: var(--lime); }
+
+      @media (max-width: 900px) {
+        #screen-signup .signup-wrap { grid-template-columns: 1fr; }
+        #screen-signup .signup-left { border-right: none; border-bottom: 1px solid var(--line); }
+      }
+    <\/style>
+
+    <div class="signup-wrap">
+      <div class="signup-left">
+        <div>
+          <div class="signup-logo">
+            <div class="logo-mark"></div>
+            <span>EVA-01</span>
+          </div>
+
+          <div class="signup-hero">
+            <span class="chip chip-violet" style="margin-top: 80px; display: inline-flex;"><span class="dot dot-pulse"></span> ENLISTING · SEASON 01</span>
+            <h1>Welcome, pilot.<br/><span class="gradient-text">Let's suit up.</span></h1>
+            <p>Connect your wallet to mint your pilot ID, or sign up with email — we'll spin one up for you.</p>
+          </div>
+        </div>
+
+        <div class="signup-stats">
+          <div>
+            <span class="n">142k</span>
+            <span class="s">active pilots</span>
+          </div>
+          <div>
+            <span class="n gradient-text">2.4M</span>
+            <span class="s">$EVA earned</span>
+          </div>
+          <div>
+            <span class="n">24/7</span>
+            <span class="s">raid matchmaking</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="signup-right">
+        <div class="panel panel-glow signup-card">
+          <span class="back-link" data-goto="landing">← back to home</span>
+
+          <h2 style="margin-top: 24px;">Link your wallet</h2>
+          <p class="sub">Or create an account with email. You can add a wallet later.</p>
+
+          <div class="wallets">
+            <button class="wallet-btn" data-goto="dashboard">
+              <div class="mark" style="background: linear-gradient(135deg, oklch(0.7 0.25 295), oklch(0.5 0.2 200));">◎</div>
+              <div>
+                <div class="n">Phantom</div>
+                <div class="d">Solana · most popular</div>
+              </div>
+              <span class="badge">RECOMMENDED</span>
+              <span class="arrow">→</span>
+            </button>
+            <button class="wallet-btn" data-goto="dashboard">
+              <div class="mark" style="background: linear-gradient(135deg, oklch(0.75 0.18 75), oklch(0.55 0.22 40));">🦊</div>
+              <div>
+                <div class="n">MetaMask</div>
+                <div class="d">EVM chains</div>
+              </div>
+              <span class="arrow">→</span>
+            </button>
+            <button class="wallet-btn" data-goto="dashboard">
+              <div class="mark" style="background: linear-gradient(135deg, oklch(0.7 0.18 220), oklch(0.5 0.2 260));">◈</div>
+              <div>
+                <div class="n">WalletConnect</div>
+                <div class="d">Scan QR · 300+ wallets</div>
+              </div>
+              <span class="arrow">→</span>
+            </button>
+            <button class="wallet-btn" data-goto="dashboard">
+              <div class="mark" style="background: linear-gradient(135deg, oklch(0.8 0.1 220), oklch(0.5 0.1 200));">◉</div>
+              <div>
+                <div class="n">Coinbase Wallet</div>
+                <div class="d">Base &amp; Ethereum</div>
+              </div>
+              <span class="arrow">→</span>
+            </button>
+          </div>
+
+          <div class="or-divider">OR</div>
+
+          <div class="email-field">
+            <input type="email" placeholder="pilot@eva-01.xyz" />
+            <button class="btn btn-primary btn-sm" data-goto="dashboard">Launch →</button>
+          </div>
+
+          <div class="signup-footer">
+            By continuing you agree to the <a href="#">Flight Rules</a> &amp; <a href="#">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="pilot-preview">
+          <span class="dot" style="width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor;"></span>
+          <span>3,214 pilots online now</span>
+        </div>
+      </div>
+    </div>
+  `;
+})();
+
+/* Dashboard screen — pilot HQ (FULLY INTERACTIVE) */
+(function () {
+  const root = document.getElementById('screen-dashboard');
+  if (!root) return;
+
+  // ============ State ============
+  const state = {
+    activeNav: 'dashboard',
+    eva: 4820,
+    xp: 18420,
+    rank: 847,
+    streak: 12,
+    daily: {
+      'd1': true,  'd2': true,  'd3': false, 'd4': false
+    },
+    bellOpen: false,
+    avatarOpen: false,
+    walletOpen: false,
+    badgeOpen: null,
+    searchOpen: false,
+    searchQuery: '',
+  };
+
+  const ALL_RESULTS = [
+    { kind: 'quest',  title: 'The Flexbox Vault',  meta: 'CSS · Active', goto: 'quest', icon: 'JS', tone: 'magenta' },
+    { kind: 'quest',  title: 'The State Machine',  meta: 'React · 35 min', icon: '{ }', tone: 'teal' },
+    { kind: 'quest',  title: 'Debounce Drill',     meta: 'Timed · 18h', icon: '⏱', tone: 'amber' },
+    { kind: 'quest',  title: 'Flexbox Frogger',    meta: 'CSS · Cleared', icon: '⇌', tone: 'lime' },
+    { kind: 'quest',  title: 'Theme Switcher',     meta: 'JS · 30 min', icon: '◐', tone: 'violet' },
+    { kind: 'quest',  title: 'The Component Raid', meta: 'Raid · 5 players', icon: '※', tone: 'magenta' },
+    { kind: 'skill',  title: 'JavaScript', meta: 'In progress · 60%', icon: 'JS', tone: 'magenta' },
+    { kind: 'skill',  title: 'TypeScript', meta: 'Locked · 6,000 XP req.', icon: 'TS', tone: 'violet' },
+    { kind: 'skill',  title: 'React', meta: 'Locked · 9,000 XP req.', icon: 'R', tone: 'teal' },
+    { kind: 'pilot',  title: 'neo.vx', meta: 'Rank #1 · 42,180 XP', icon: 'NV', tone: 'magenta' },
+    { kind: 'pilot',  title: 'krypt0', meta: 'Rank #2 · 38,920 XP', icon: 'KR', tone: 'teal' },
+    { kind: 'pilot',  title: 'zx.eth', meta: 'Rank #3 · 35,440 XP', icon: 'ZX', tone: 'amber' },
+  ];
+
+  const NOTIFICATIONS = [
+    { icon: '★', tone: 'magenta', title: 'New badge available', text: 'Streak 12 — Mint your soulbound NFT', time: '2m ago', unread: true },
+    { icon: '⚡', tone: 'teal',    title: 'Quest reward credited', text: '+240 \$EVA from Flexbox Vault',     time: '14m ago', unread: true },
+    { icon: '※', tone: 'violet',  title: 'Raid invite',          text: 'krypt0 invited you to The Component Raid',  time: '1h ago',  unread: true },
+    { icon: '↑', tone: 'lime',    title: 'Rank climbed',         text: 'You moved up 23 places this week',     time: '3h ago',  unread: false },
+    { icon: '◐', tone: 'amber',   title: 'Daily reset in 4h',    text: '2 missions remaining today',           time: '5h ago',  unread: false },
+  ];
+
+  const VIEWS = {
+    dashboard: 'Dashboard',
+    quest:     'Active Quest',
+    tree:      'Skill Tree',
+    raids:     'Raids',
+    wallet:    '\$EVA Wallet',
+    badges:    'NFT Badges',
+    leaderboard: 'Leaderboard',
+    settings:  'Settings',
+  };
+
+  // ============ Render ============
+  root.innerHTML = `
+    <style>
+      #screen-dashboard .dash-wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; position: relative; z-index: 2; }
+      #screen-dashboard .sidebar {
+        padding: 24px 20px; border-right: 1px solid var(--line);
+        display: flex; flex-direction: column; gap: 24px;
+        background: rgba(5,7,13,0.5); backdrop-filter: blur(20px);
+        position: sticky; top: 0; height: 100vh;
+      }
+      #screen-dashboard .sidebar .logo { display: flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 600; font-size: 16px; padding: 4px 8px; cursor: pointer; }
+      #screen-dashboard .sidebar .logo .logo-mark { width: 24px; height: 24px; background: linear-gradient(135deg, var(--teal), var(--violet)); border-radius: 6px; box-shadow: var(--glow-teal); }
+      #screen-dashboard .sidebar .section-label { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.15em; padding: 0 12px; margin-bottom: 4px; }
+      #screen-dashboard .sidebar .navlist { display: flex; flex-direction: column; gap: 2px; }
+      #screen-dashboard .sidebar .navlist a {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 12px; border-radius: 8px;
+        font-size: 14px; color: var(--ink-1); cursor: pointer;
+        transition: all 0.15s;
+        position: relative;
+      }
+      #screen-dashboard .sidebar .navlist a:hover { background: rgba(180,200,255,0.04); color: var(--ink-0); }
+      #screen-dashboard .sidebar .navlist a.active {
+        background: linear-gradient(90deg, oklch(0.86 0.18 185 / 0.15), transparent);
+        color: var(--teal);
+        box-shadow: inset 2px 0 0 var(--teal);
+      }
+      #screen-dashboard .sidebar .navlist a .ic { width: 18px; text-align: center; font-family: var(--f-mono); font-size: 14px; }
+      #screen-dashboard .sidebar .navlist a .badge-count {
+        margin-left: auto; padding: 2px 7px; border-radius: 999px;
+        background: var(--magenta); color: #fff; font-size: 10px;
+        font-family: var(--f-mono); font-weight: 600;
+      }
+      #screen-dashboard .wallet-card {
+        margin-top: auto; padding: 14px;
+        background: rgba(180,200,255,0.03);
+        border: 1px solid var(--line); border-radius: 10px;
+        cursor: pointer; transition: all 0.15s;
+      }
+      #screen-dashboard .wallet-card:hover {
+        border-color: var(--magenta);
+        box-shadow: 0 0 20px oklch(0.72 0.28 340 / 0.2);
+      }
+      #screen-dashboard .wallet-card .addr { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+      #screen-dashboard .wallet-card .bal { font-family: var(--f-display); font-size: 20px; font-weight: 500; transition: color 0.3s; }
+      #screen-dashboard .wallet-card .bal.flash { color: var(--lime); }
+      #screen-dashboard .wallet-card .bal .u { color: var(--magenta); font-size: 12px; margin-left: 4px; font-family: var(--f-mono); }
+
+      #screen-dashboard .main { padding: 32px 40px 60px; overflow-x: hidden; }
+      #screen-dashboard .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; gap: 24px; position: relative; }
+      #screen-dashboard .search-wrap { flex: 1; max-width: 480px; position: relative; }
+      #screen-dashboard .search {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px;
+        background: rgba(180,200,255,0.03);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-family: var(--f-mono); font-size: 12px;
+        color: var(--ink-2);
+        transition: all 0.2s;
+      }
+      #screen-dashboard .search:focus-within {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px oklch(0.86 0.18 185 / 0.1);
+      }
+      #screen-dashboard .search input { flex: 1; background: none; border: none; color: var(--ink-0); font-family: inherit; font-size: 12px; outline: none; }
+      #screen-dashboard .search input::placeholder { color: var(--ink-3); }
+      #screen-dashboard .search .kbd { padding: 2px 6px; border: 1px solid var(--line-2); border-radius: 4px; font-size: 10px; }
+      #screen-dashboard .search-results {
+        position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+        background: rgba(8, 11, 22, 0.98);
+        border: 1px solid var(--line-2);
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 30px oklch(0.86 0.18 185 / 0.1);
+        backdrop-filter: blur(20px);
+        max-height: 480px; overflow-y: auto;
+        z-index: 50;
+        display: none;
+      }
+      #screen-dashboard .search-results.open { display: block; }
+      #screen-dashboard .search-results .group {
+        font-family: var(--f-mono); font-size: 10px; color: var(--ink-3);
+        text-transform: uppercase; letter-spacing: 0.15em;
+        padding: 10px 12px 6px; display: flex; justify-content: space-between;
+      }
+      #screen-dashboard .search-results .group .count { color: var(--ink-2); }
+      #screen-dashboard .search-results .res {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 12px; border-radius: 8px; cursor: pointer;
+        transition: background 0.1s;
+      }
+      #screen-dashboard .search-results .res:hover,
+      #screen-dashboard .search-results .res.sel {
+        background: oklch(0.86 0.18 185 / 0.08);
+      }
+      #screen-dashboard .search-results .res .ic {
+        width: 36px; height: 36px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-mono); font-size: 13px; font-weight: 600;
+        flex-shrink: 0;
+      }
+      #screen-dashboard .search-results .res .body { flex: 1; min-width: 0; }
+      #screen-dashboard .search-results .res .body .t { font-size: 14px; color: var(--ink-0); }
+      #screen-dashboard .search-results .res .body .m { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); margin-top: 2px; }
+      #screen-dashboard .search-results .res .arrow { color: var(--ink-3); font-family: var(--f-mono); font-size: 14px; }
+      #screen-dashboard .search-results .empty { padding: 32px 16px; text-align: center; color: var(--ink-2); font-size: 13px; }
+      #screen-dashboard .search-results .empty .small { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); margin-top: 6px; }
+
+      #screen-dashboard .top-actions { display: flex; align-items: center; gap: 14px; }
+      #screen-dashboard .top-actions .icon-btn {
+        width: 40px; height: 40px; border-radius: 50%;
+        border: 1px solid var(--line-2);
+        display: flex; align-items: center; justify-content: center;
+        position: relative; cursor: pointer;
+        background: transparent; color: var(--ink-1);
+        transition: all 0.15s;
+      }
+      #screen-dashboard .top-actions .icon-btn:hover { border-color: var(--teal); color: var(--teal); }
+      #screen-dashboard .top-actions .icon-btn.active { border-color: var(--teal); color: var(--teal); background: oklch(0.86 0.18 185 / 0.08); }
+      #screen-dashboard .top-actions .icon-btn .pulse-dot {
+        position: absolute; top: 8px; right: 9px;
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--magenta); box-shadow: 0 0 8px var(--magenta);
+      }
+      #screen-dashboard .top-actions .icon-btn .pulse-dot::before {
+        content: ''; position: absolute; inset: -4px;
+        border-radius: 50%; border: 1.5px solid var(--magenta);
+        animation: pingpulse 1.6s ease-out infinite;
+      }
+      @keyframes pingpulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+      #screen-dashboard .avatar {
+        width: 40px; height: 40px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--violet), var(--magenta));
+        box-shadow: var(--glow-violet);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-display); font-weight: 600; font-size: 14px; color: #fff;
+        cursor: pointer;
+        transition: transform 0.15s;
+      }
+      #screen-dashboard .avatar:hover { transform: scale(1.05); }
+
+      /* Dropdown panels */
+      #screen-dashboard .dropdown {
+        position: absolute; top: 56px; right: 0;
+        min-width: 360px;
+        background: rgba(8, 11, 22, 0.98);
+        border: 1px solid var(--line-2);
+        border-radius: 14px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 30px oklch(0.68 0.25 295 / 0.15);
+        backdrop-filter: blur(20px);
+        z-index: 60;
+        overflow: hidden;
+        animation: ddIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      @keyframes ddIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      #screen-dashboard .dropdown .dd-head {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      #screen-dashboard .dropdown .dd-head h4 { font-size: 15px; font-weight: 500; }
+      #screen-dashboard .dropdown .dd-head .clear {
+        font-family: var(--f-mono); font-size: 11px; color: var(--teal);
+        cursor: pointer;
+      }
+      #screen-dashboard .dropdown .dd-body { padding: 8px; max-height: 420px; overflow-y: auto; }
+      #screen-dashboard .notif {
+        display: grid; grid-template-columns: 32px 1fr auto; gap: 12px;
+        padding: 12px; border-radius: 10px; cursor: pointer;
+        transition: background 0.1s;
+        position: relative;
+      }
+      #screen-dashboard .notif:hover { background: rgba(180,200,255,0.04); }
+      #screen-dashboard .notif.unread::after {
+        content: ''; position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+        width: 4px; height: 4px; border-radius: 50%;
+        background: var(--magenta); box-shadow: 0 0 6px var(--magenta);
+      }
+      #screen-dashboard .notif .ic {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-mono); font-size: 14px;
+      }
+      #screen-dashboard .notif .body .t { font-size: 13px; color: var(--ink-0); margin-bottom: 2px; }
+      #screen-dashboard .notif .body .x { font-size: 12px; color: var(--ink-2); }
+      #screen-dashboard .notif .time { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); white-space: nowrap; }
+
+      #screen-dashboard .avatar-menu {
+        min-width: 240px; padding: 8px;
+      }
+      #screen-dashboard .avatar-menu .profile {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px; border-radius: 10px;
+        margin-bottom: 4px;
+        background: linear-gradient(90deg, oklch(0.68 0.25 295 / 0.1), transparent);
+      }
+      #screen-dashboard .avatar-menu .profile .av {
+        width: 44px; height: 44px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--violet), var(--magenta));
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-display); font-weight: 600; font-size: 16px; color: #fff;
+      }
+      #screen-dashboard .avatar-menu .profile .who { font-weight: 500; font-size: 14px; }
+      #screen-dashboard .avatar-menu .profile .addr { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); }
+      #screen-dashboard .avatar-menu .item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 12px; border-radius: 8px;
+        font-size: 14px; color: var(--ink-1); cursor: pointer;
+      }
+      #screen-dashboard .avatar-menu .item:hover { background: rgba(180,200,255,0.04); color: var(--ink-0); }
+      #screen-dashboard .avatar-menu .item .ic { width: 18px; text-align: center; font-family: var(--f-mono); }
+      #screen-dashboard .avatar-menu .item.danger { color: var(--magenta); }
+      #screen-dashboard .avatar-menu .div { height: 1px; background: var(--line); margin: 6px 4px; }
+
+      /* Hero banner */
+      #screen-dashboard .hero-banner {
+        padding: 32px 36px; border-radius: 18px;
+        margin-bottom: 28px; position: relative; overflow: hidden;
+        background: linear-gradient(120deg, oklch(0.25 0.18 295 / 0.7), oklch(0.2 0.15 220 / 0.6));
+        border: 1px solid var(--line);
+        display: grid; grid-template-columns: 1fr auto;
+        gap: 32px; align-items: center;
+      }
+      #screen-dashboard .hero-banner::before {
+        content: ""; position: absolute; inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mask-image: radial-gradient(ellipse at 80% 50%, black, transparent 70%);
+      }
+      #screen-dashboard .hero-banner h1 { font-size: 36px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 8px; }
+      #screen-dashboard .hero-banner p { color: var(--ink-1); font-size: 15px; max-width: 480px; }
+      #screen-dashboard .hero-banner .btn-primary { margin-top: 20px; }
+      #screen-dashboard .streak-art { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+      #screen-dashboard .streak-flame {
+        width: 120px; height: 120px; border-radius: 50%;
+        background: radial-gradient(circle at 40% 30%, oklch(0.95 0.22 75), oklch(0.7 0.25 40) 50%, oklch(0.5 0.28 20) 100%);
+        box-shadow: 0 0 60px oklch(0.7 0.25 40 / 0.6), inset -15px -15px 30px rgba(0,0,0,0.3);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-display); font-weight: 700; font-size: 44px; color: #fff;
+        animation: flameP 3s ease-in-out infinite;
+      }
+      @keyframes flameP {
+        0%, 100% { box-shadow: 0 0 60px oklch(0.7 0.25 40 / 0.6), inset -15px -15px 30px rgba(0,0,0,0.3); }
+        50% { box-shadow: 0 0 90px oklch(0.7 0.25 40 / 0.8), inset -15px -15px 30px rgba(0,0,0,0.3); }
+      }
+      #screen-dashboard .streak-lbl { font-family: var(--f-mono); font-size: 11px; color: var(--amber); text-transform: uppercase; letter-spacing: 0.15em; }
+
+      /* Stats */
+      #screen-dashboard .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+      #screen-dashboard .stat {
+        padding: 20px 22px;
+        background: rgba(180,200,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex; flex-direction: column; gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      #screen-dashboard .stat:hover {
+        background: rgba(180,200,255,0.04);
+        border-color: var(--line-2);
+        transform: translateY(-2px);
+      }
+      #screen-dashboard .stat .label { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.12em; display: flex; align-items: center; gap: 6px; }
+      #screen-dashboard .stat .val { font-family: var(--f-display); font-size: 30px; font-weight: 500; letter-spacing: -0.02em; transition: color 0.3s; }
+      #screen-dashboard .stat .val.flash { color: var(--lime); }
+      #screen-dashboard .stat .val .u { font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); margin-left: 4px; }
+      #screen-dashboard .stat .delta { font-family: var(--f-mono); font-size: 11px; color: var(--lime); }
+
+      /* 2-col layout */
+      #screen-dashboard .cols { display: grid; grid-template-columns: 1fr 340px; gap: 28px; }
+      #screen-dashboard .section-block { margin-bottom: 28px; }
+      #screen-dashboard .sb-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+      #screen-dashboard .sb-head h3 { font-size: 20px; font-weight: 500; }
+      #screen-dashboard .sb-head .more { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; }
+      #screen-dashboard .sb-head .more:hover { color: var(--teal); }
+
+      /* Active quests */
+      #screen-dashboard .aq-list { display: flex; flex-direction: column; gap: 10px; }
+      #screen-dashboard .aq {
+        padding: 18px 22px;
+        background: rgba(180,200,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: grid; grid-template-columns: auto 1fr auto auto;
+        align-items: center; gap: 18px;
+        cursor: pointer; transition: all 0.15s;
+      }
+      #screen-dashboard .aq:hover { background: rgba(180,200,255,0.04); border-color: var(--line-2); transform: translateX(2px); }
+      #screen-dashboard .aq .icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: var(--f-mono); font-weight: 700; font-size: 18px; }
+      #screen-dashboard .aq .title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+      #screen-dashboard .aq .meta { display: flex; gap: 10px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
+      #screen-dashboard .aq .pr { width: 120px; }
+      #screen-dashboard .aq .pr .bar { width: 100%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; margin-bottom: 4px; }
+      #screen-dashboard .aq .pr .bar .fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--violet)); transition: width 0.5s; }
+      #screen-dashboard .aq .pr .pct { font-family: var(--f-mono); font-size: 10px; color: var(--ink-2); }
+
+      /* Leaderboard */
+      #screen-dashboard .lb { padding: 24px; }
+      #screen-dashboard .lb-row {
+        display: grid; grid-template-columns: 28px 1fr auto;
+        align-items: center; gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+        cursor: pointer;
+      }
+      #screen-dashboard .lb-row:last-child { border-bottom: none; }
+      #screen-dashboard .lb-row:hover { background: rgba(180,200,255,0.02); }
+      #screen-dashboard .lb-row .rank { font-family: var(--f-mono); font-size: 13px; color: var(--ink-2); text-align: center; }
+      #screen-dashboard .lb-row.top .rank { font-weight: 700; }
+      #screen-dashboard .lb-row:nth-child(1) .rank { color: var(--amber); }
+      #screen-dashboard .lb-row:nth-child(2) .rank { color: var(--ink-0); }
+      #screen-dashboard .lb-row:nth-child(3) .rank { color: oklch(0.6 0.15 40); }
+      #screen-dashboard .lb-row .who { display: flex; align-items: center; gap: 10px; }
+      #screen-dashboard .lb-row .who .av { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--f-mono); font-size: 10px; font-weight: 700; color: #fff; }
+      #screen-dashboard .lb-row .xp { font-family: var(--f-mono); font-size: 12px; color: var(--teal); }
+      #screen-dashboard .lb-row.me {
+        background: linear-gradient(90deg, oklch(0.68 0.25 295 / 0.1), transparent);
+        padding: 10px 8px; margin: 0 -8px; border-radius: 6px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* Badges */
+      #screen-dashboard .badges-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+      #screen-dashboard .badge {
+        aspect-ratio: 1; border-radius: 12px;
+        border: 1px solid var(--line);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 4px;
+        font-family: var(--f-mono); font-size: 9px;
+        color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.08em;
+        position: relative; overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      #screen-dashboard .badge:hover {
+        transform: translateY(-3px) scale(1.03);
+      }
+      #screen-dashboard .badge .em { font-size: 22px; font-family: var(--f-display); font-weight: 700; }
+      #screen-dashboard .badge.earned { background: linear-gradient(135deg, oklch(0.86 0.18 185 / 0.15), oklch(0.68 0.25 295 / 0.15)); border-color: oklch(0.86 0.18 185 / 0.4); color: var(--teal); }
+      #screen-dashboard .badge.earned:hover { box-shadow: 0 10px 30px oklch(0.86 0.18 185 / 0.3); }
+      #screen-dashboard .badge.earned .em { color: var(--ink-0); }
+      #screen-dashboard .badge.rare { background: linear-gradient(135deg, oklch(0.72 0.28 340 / 0.15), oklch(0.68 0.25 295 / 0.15)); border-color: oklch(0.72 0.28 340 / 0.4); color: var(--magenta); }
+      #screen-dashboard .badge.rare:hover { box-shadow: 0 10px 30px oklch(0.72 0.28 340 / 0.3); }
+      #screen-dashboard .badge.locked { opacity: 0.4; }
+      #screen-dashboard .badge.locked:hover { opacity: 0.6; transform: none; }
+
+      /* Daily missions */
+      #screen-dashboard .daily-card { padding: 24px; }
+      #screen-dashboard .daily-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 0; border-bottom: 1px solid var(--line);
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      #screen-dashboard .daily-item:last-child { border-bottom: none; }
+      #screen-dashboard .daily-item .check {
+        width: 22px; height: 22px; border-radius: 50%;
+        border: 1.5px solid var(--line-2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; color: var(--ink-3);
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      #screen-dashboard .daily-item:hover .check { border-color: var(--teal); color: var(--teal); }
+      #screen-dashboard .daily-item.done .check {
+        background: oklch(0.9 0.22 135 / 0.15); border-color: var(--lime); color: var(--lime);
+        animation: checkpop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      @keyframes checkpop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+      }
+      #screen-dashboard .daily-item.done .t { color: var(--ink-2); text-decoration: line-through; }
+      #screen-dashboard .daily-item .t { font-size: 13px; flex: 1; }
+      #screen-dashboard .daily-item .rw { font-family: var(--f-mono); font-size: 11px; color: var(--magenta); }
+
+      /* Modal */
+      #screen-dashboard .modal-bg {
+        position: fixed; inset: 0;
+        background: rgba(5,7,13,0.85);
+        backdrop-filter: blur(12px);
+        display: none; align-items: center; justify-content: center;
+        z-index: 200; padding: 24px;
+      }
+      #screen-dashboard .modal-bg.open { display: flex; animation: fadeIn 0.25s; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      #screen-dashboard .modal {
+        max-width: 480px; width: 100%;
+        background: rgba(10, 13, 24, 0.98);
+        border: 1px solid var(--line-2);
+        border-radius: 18px;
+        padding: 32px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+        animation: popUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        position: relative;
+      }
+      @keyframes popUp {
+        0% { transform: scale(0.85); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      #screen-dashboard .modal .close {
+        position: absolute; top: 16px; right: 16px;
+        width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: var(--ink-2);
+        transition: all 0.15s;
+      }
+      #screen-dashboard .modal .close:hover { color: var(--ink-0); background: rgba(255,255,255,0.06); }
+
+      /* Badge modal art */
+      #screen-dashboard .badge-art {
+        width: 160px; height: 160px; margin: 0 auto 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, oklch(0.86 0.18 185 / 0.2), oklch(0.68 0.25 295 / 0.2));
+        border: 2px solid var(--teal);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-display); font-size: 64px; font-weight: 700;
+        color: var(--ink-0);
+        box-shadow: 0 0 60px oklch(0.86 0.18 185 / 0.4), inset 0 0 40px oklch(0.86 0.18 185 / 0.1);
+        position: relative;
+      }
+      #screen-dashboard .badge-art.rare {
+        background: linear-gradient(135deg, oklch(0.72 0.28 340 / 0.2), oklch(0.68 0.25 295 / 0.2));
+        border-color: var(--magenta);
+        box-shadow: 0 0 60px oklch(0.72 0.28 340 / 0.4), inset 0 0 40px oklch(0.72 0.28 340 / 0.1);
+      }
+      #screen-dashboard .badge-art.locked {
+        background: rgba(180,200,255,0.04);
+        border-color: var(--line-2);
+        color: var(--ink-3);
+        box-shadow: none;
+      }
+      #screen-dashboard .modal-meta {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        margin: 20px 0;
+      }
+      #screen-dashboard .modal-meta .m {
+        padding: 12px; background: rgba(180,200,255,0.02);
+        border: 1px solid var(--line); border-radius: 10px;
+      }
+      #screen-dashboard .modal-meta .m .lbl {
+        font-family: var(--f-mono); font-size: 10px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.12em;
+      }
+      #screen-dashboard .modal-meta .m .v {
+        font-family: var(--f-display); font-size: 18px; font-weight: 500; margin-top: 4px;
+      }
+
+      /* Wallet panel */
+      #screen-dashboard .wallet-modal { max-width: 540px; }
+      #screen-dashboard .wallet-balance {
+        text-align: center; padding: 20px 0 28px;
+        border-bottom: 1px solid var(--line); margin-bottom: 24px;
+      }
+      #screen-dashboard .wallet-balance .lbl {
+        font-family: var(--f-mono); font-size: 11px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;
+      }
+      #screen-dashboard .wallet-balance .v {
+        font-family: var(--f-display); font-size: 56px; font-weight: 500;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, var(--magenta), var(--violet), var(--teal));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      #screen-dashboard .wallet-balance .sub { font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); margin-top: 6px; }
+      #screen-dashboard .wallet-actions {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px;
+      }
+      #screen-dashboard .wallet-actions button {
+        padding: 14px 12px;
+        background: rgba(180,200,255,0.04);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink-0); cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        transition: all 0.15s;
+      }
+      #screen-dashboard .wallet-actions button:hover {
+        border-color: var(--teal); color: var(--teal);
+        background: oklch(0.86 0.18 185 / 0.08);
+      }
+      #screen-dashboard .wallet-actions button .ic {
+        font-family: var(--f-mono); font-size: 18px;
+      }
+      #screen-dashboard .wallet-actions button .l {
+        font-family: var(--f-mono); font-size: 11px;
+        text-transform: uppercase; letter-spacing: 0.1em;
+      }
+      #screen-dashboard .tx-list h5 {
+        font-family: var(--f-mono); font-size: 11px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 12px;
+      }
+      #screen-dashboard .tx {
+        display: grid; grid-template-columns: 32px 1fr auto;
+        gap: 12px; padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+        align-items: center;
+      }
+      #screen-dashboard .tx:last-child { border-bottom: none; }
+      #screen-dashboard .tx .ic {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-mono); font-size: 12px;
+      }
+      #screen-dashboard .tx.in .ic { background: oklch(0.9 0.22 135 / 0.15); color: var(--lime); }
+      #screen-dashboard .tx.out .ic { background: oklch(0.72 0.28 340 / 0.15); color: var(--magenta); }
+      #screen-dashboard .tx .body .t { font-size: 13px; }
+      #screen-dashboard .tx .body .m { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); }
+      #screen-dashboard .tx .amt { font-family: var(--f-mono); font-size: 13px; font-weight: 500; }
+      #screen-dashboard .tx.in .amt { color: var(--lime); }
+      #screen-dashboard .tx.out .amt { color: var(--magenta); }
+
+      /* View placeholders */
+      #screen-dashboard .view-placeholder {
+        padding: 80px 40px; text-align: center;
+        border: 1px dashed var(--line-2); border-radius: 18px;
+        background: rgba(180,200,255,0.02);
+      }
+      #screen-dashboard .view-placeholder .icon {
+        font-size: 56px; margin-bottom: 16px;
+        font-family: var(--f-display); font-weight: 700;
+        background: linear-gradient(135deg, var(--teal), var(--violet));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      #screen-dashboard .view-placeholder h2 {
+        font-size: 28px; margin-bottom: 8px;
+      }
+      #screen-dashboard .view-placeholder p {
+        color: var(--ink-2); max-width: 400px; margin: 0 auto 24px;
+      }
+
+      /* +EVA flying coin */
+      #screen-dashboard .flying-coin {
+        position: fixed; pointer-events: none; z-index: 300;
+        font-family: var(--f-display); font-weight: 600; font-size: 20px;
+        color: var(--lime);
+        text-shadow: 0 0 10px var(--lime);
+      }
+
+      @media (max-width: 1100px) {
+        #screen-dashboard .dash-wrap { grid-template-columns: 1fr; }
+        #screen-dashboard .sidebar { position: static; height: auto; }
+        #screen-dashboard .cols { grid-template-columns: 1fr; }
+        #screen-dashboard .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      }
+    <\/style>
+
+    <div class="dash-wrap">
+      <aside class="sidebar">
+        <div class="logo" data-goto="landing" title="Back to landing">
+          <div class="logo-mark"></div>
+          <span>EVA-01</span>
+        </div>
+
+        <div>
+          <div class="section-label">Pilot HQ</div>
+          <div class="navlist" data-group="pilot">
+            <a data-view="dashboard" class="active"><span class="ic">◈</span> Dashboard</a>
+            <a data-view="quest" data-route="quest"><span class="ic">▶</span> Active Quest <span class="badge-count">1</span></a>
+            <a data-view="tree"><span class="ic">⟐</span> Skill Tree</a>
+            <a data-view="raids"><span class="ic">※</span> Raids</a>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Rewards</div>
+          <div class="navlist" data-group="rewards">
+            <a data-view="wallet"><span class="ic">$</span> $EVA Wallet</a>
+            <a data-view="badges"><span class="ic">★</span> NFT Badges</a>
+            <a data-view="leaderboard"><span class="ic">♦</span> Leaderboard</a>
+          </div>
+        </div>
+
+        <div style="margin-top: auto;">
+          <div class="section-label">Account</div>
+          <div class="navlist">
+            <a data-view="settings"><span class="ic">◐</span> Settings</a>
+            <a data-goto="landing"><span class="ic">↩</span> Sign out</a>
+          </div>
+        </div>
+
+        <div class="wallet-card" id="dashWalletCard">
+          <div class="addr">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 6px var(--lime);display:inline-block;"></span>
+            0x7a2f...b4e1
+          </div>
+          <div class="bal" id="dashBal">4,820<span class="u">$EVA</span></div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div class="search-wrap">
+            <div class="search">
+              <span>⌕</span>
+              <input id="dashSearch" placeholder="Search quests, skills, pilots..." />
+              <span class="kbd">⌘K</span>
+            </div>
+            <div class="search-results" id="dashSearchResults"></div>
+          </div>
+          <div class="top-actions">
+            <button class="icon-btn" id="bellBtn" title="Notifications">
+              ◉
+              <span class="pulse-dot" id="bellDot"></span>
+            </button>
+            <div class="avatar" id="avatarBtn" title="Profile">AX</div>
+          </div>
+          <div id="dropdownHost"></div>
+        </div>
+
+        <div id="viewHost"></div>
+      </main>
+    </div>
+
+    <div class="modal-bg" id="modalBg">
+      <div class="modal" id="modalContent">
+        <div class="close" id="modalClose">✕</div>
+        <div id="modalBody"></div>
+      </div>
+    </div>
+  `;
+
+  // ============ Helpers ============
+  const $ = (s) => root.querySelector(s);
+  const $$ = (s) => [...root.querySelectorAll(s)];
+
+  function fmt(n) { return n.toLocaleString('en-US'); }
+
+  function flyingEva(amount, fromEl) {
+    const fly = document.createElement('div');
+    fly.className = 'flying-coin';
+    fly.textContent = '+' + amount + ' $EVA';
+    const r = fromEl ? fromEl.getBoundingClientRect() : { left: window.innerWidth/2, top: window.innerHeight/2, width: 0, height: 0 };
+    fly.style.left = (r.left + r.width/2) + 'px';
+    fly.style.top = (r.top + r.height/2) + 'px';
+    document.body.appendChild(fly);
+    const target = $('#dashBal').getBoundingClientRect();
+    fly.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${target.left - r.left}px, ${target.top - r.top}px) scale(0.6)`, opacity: 0 }
+    ], { duration: 900, easing: 'cubic-bezier(0.5, 0, 0.5, 1)' });
+    setTimeout(() => fly.remove(), 900);
+  }
+
+  function flashBalance() {
+    const bal = $('#dashBal');
+    bal.classList.add('flash');
+    setTimeout(() => bal.classList.remove('flash'), 600);
+  }
+
+  function updateBalance() {
+    $('#dashBal').innerHTML = fmt(state.eva) + '<span class="u">$EVA</span>';
+    const balStat = $('#statEva');
+    if (balStat) balStat.innerHTML = fmt(state.eva) + '<span class="u">EVA</span>';
+  }
+
+  function updateXP() {
+    const x = $('#statXp');
+    if (x) x.textContent = fmt(state.xp);
+  }
+
+  // ============ Views ============
+  function renderDashboard() {
+    return `
+      <div class="hero-banner">
+        <div>
+          <span class="chip chip-amber" style="display:inline-flex;"><span class="dot dot-pulse"></span> ${state.streak}-DAY STREAK</span>
+          <h1 style="margin-top: 16px;">GM, Pilot Axon.<br/><span class="gradient-text">Ready for today's mission?</span></h1>
+          <p>You're 3 quests away from unlocking <strong>React Act II</strong>. Keep the streak alive to 2x your rewards.</p>
+          <button class="btn btn-primary" data-route="quest">Resume Quest →</button>
+        </div>
+        <div class="streak-art">
+          <div class="streak-flame">${state.streak}</div>
+          <div class="streak-lbl">DAY STREAK · ×2 MULT</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat" data-stat="xp">
+          <div class="label"><span style="color:var(--teal);width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;display:inline-block;"></span> TOTAL XP</div>
+          <div class="val" id="statXp">${fmt(state.xp)}</div>
+          <div class="delta">+1,240 this week</div>
+        </div>
+        <div class="stat" data-stat="eva">
+          <div class="label"><span style="color:var(--magenta);width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;display:inline-block;"></span> $EVA BALANCE</div>
+          <div class="val" id="statEva">${fmt(state.eva)}<span class="u">EVA</span></div>
+          <div class="delta">+480 this week</div>
+        </div>
+        <div class="stat" data-stat="quests">
+          <div class="label"><span style="color:var(--violet);width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;display:inline-block;"></span> QUESTS CLEARED</div>
+          <div class="val">42<span class="u">/60</span></div>
+          <div class="delta">70% season</div>
+        </div>
+        <div class="stat" data-stat="rank">
+          <div class="label"><span style="color:var(--amber);width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;display:inline-block;"></span> GLOBAL RANK</div>
+          <div class="val">#${fmt(state.rank)}</div>
+          <div class="delta">↑ 23 places</div>
+        </div>
+      </div>
+
+      <div class="cols">
+        <div>
+          <div class="section-block">
+            <div class="sb-head">
+              <h3>Active Quests</h3>
+              <span class="more" data-view-go="quest">View all →</span>
+            </div>
+            <div class="aq-list">
+              <div class="aq" data-route="quest">
+                <div class="icon" style="background:linear-gradient(135deg, oklch(0.72 0.28 340 / 0.2), oklch(0.55 0.26 290 / 0.2)); color: var(--magenta);">JS</div>
+                <div>
+                  <div class="title">The Flexbox Vault</div>
+                  <div class="meta">
+                    <span class="chip chip-magenta" style="padding:2px 6px;">CURRENT</span>
+                    <span>~12 min remaining</span>
+                  </div>
+                </div>
+                <div class="pr">
+                  <div class="bar"><div class="fill" style="width:60%"></div></div>
+                  <div class="pct">60% · 1,840 XP</div>
+                </div>
+                <button class="btn btn-primary btn-sm">Resume</button>
+              </div>
+
+              <div class="aq" data-route="quest">
+                <div class="icon" style="background:linear-gradient(135deg, oklch(0.86 0.18 185 / 0.2), oklch(0.68 0.25 295 / 0.2)); color: var(--teal);">{ }</div>
+                <div>
+                  <div class="title">The State Machine</div>
+                  <div class="meta">
+                    <span>INTERMEDIATE</span>
+                    <span>~35 min</span>
+                  </div>
+                </div>
+                <div class="pr">
+                  <div class="bar"><div class="fill" style="width:20%"></div></div>
+                  <div class="pct">20% · 120 XP</div>
+                </div>
+                <button class="btn btn-ghost btn-sm">Continue</button>
+              </div>
+
+              <div class="aq" data-route="quest">
+                <div class="icon" style="background:linear-gradient(135deg, oklch(0.82 0.18 75 / 0.2), oklch(0.55 0.22 40 / 0.2)); color: var(--amber);">⏱</div>
+                <div>
+                  <div class="title">Debounce Drill</div>
+                  <div class="meta">
+                    <span class="chip chip-amber" style="padding:2px 6px;">TIMED · 18h LEFT</span>
+                    <span>2x reward active</span>
+                  </div>
+                </div>
+                <div class="pr">
+                  <div class="bar"><div class="fill" style="width:0%"></div></div>
+                  <div class="pct">NOT STARTED</div>
+                </div>
+                <button class="btn btn-ghost btn-sm">Start</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="sb-head">
+              <h3>NFT Badges</h3>
+              <span class="more" data-view-go="badges">Mint gallery →</span>
+            </div>
+            <div class="panel" style="padding: 20px;">
+              <div class="badges-grid" id="badgesGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-block">
+            <div class="sb-head">
+              <h3>Daily Missions</h3>
+              <span class="more" id="dailyCount">2/4</span>
+            </div>
+            <div class="panel daily-card" id="dailyCard"></div>
+          </div>
+
+          <div class="section-block">
+            <div class="sb-head">
+              <h3>Season Leaderboard</h3>
+              <span class="more" data-view-go="leaderboard">Full →</span>
+            </div>
+            <div class="panel lb">
+              <div class="lb-row top">
+                <div class="rank">1</div>
+                <div class="who"><div class="av" style="background:linear-gradient(135deg, oklch(0.72 0.28 340), oklch(0.55 0.26 290));">NV</div><span>neo.vx</span></div>
+                <div class="xp">42,180</div>
+              </div>
+              <div class="lb-row top">
+                <div class="rank">2</div>
+                <div class="who"><div class="av" style="background:linear-gradient(135deg, oklch(0.86 0.18 185), oklch(0.68 0.25 295));">KR</div><span>krypt0</span></div>
+                <div class="xp">38,920</div>
+              </div>
+              <div class="lb-row top">
+                <div class="rank">3</div>
+                <div class="who"><div class="av" style="background:linear-gradient(135deg, oklch(0.82 0.18 75), oklch(0.55 0.22 40));">ZX</div><span>zx.eth</span></div>
+                <div class="xp">35,440</div>
+              </div>
+              <div class="lb-row">
+                <div class="rank">4</div>
+                <div class="who"><div class="av" style="background:linear-gradient(135deg, oklch(0.7 0.25 295), oklch(0.5 0.2 200));">MK</div><span>midknight</span></div>
+                <div class="xp">31,200</div>
+              </div>
+              <div class="lb-row">
+                <div class="rank">5</div>
+                <div class="who"><div class="av" style="background:linear-gradient(135deg, oklch(0.9 0.22 135), oklch(0.55 0.18 185));">JL</div><span>juli.sol</span></div>
+                <div class="xp">28,640</div>
+              </div>
+              <div class="lb-row me">
+                <div class="rank">${fmt(state.rank)}</div>
+                <div class="who"><div class="av" style="background:linear-gradient(135deg, var(--violet), var(--magenta));">AX</div><span>axon.me · <span style="color:var(--magenta);font-size:10px;font-family:var(--f-mono);">YOU</span></span></div>
+                <div class="xp">${fmt(state.xp)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPlaceholder(view) {
+    const titles = {
+      tree:        { ic: '⟐', t: 'Skill Tree', p: 'Visualize your full progression. Coming back to the landing page hero shows the live tree — this view will let you drill into any node.' },
+      raids:       { ic: '※', t: 'Raids', p: 'Coordinate with up to 4 other pilots to ship a real component library. Live rooms drop every weekend.' },
+      wallet:      { ic: '$',  t: '$EVA Wallet', p: 'Send, stake, and swap your $EVA. Click your wallet card on the left to open the live panel right now.' },
+      badges:      { ic: '★', t: 'NFT Badges', p: 'Browse and mint your soulbound badges. Click any badge below for details.' },
+      leaderboard: { ic: '♦', t: 'Season Leaderboard', p: 'See where every pilot stands across XP, $EVA earned, and quest completion.' },
+      settings:    { ic: '◐', t: 'Settings', p: 'Account preferences, theme, and connected wallets.' },
+    };
+    const v = titles[view] || { ic: '?', t: view, p: '' };
+    return `
+      <div class="view-placeholder">
+        <div class="icon">${v.ic}</div>
+        <h2>${v.t}</h2>
+        <p>${v.p}</p>
+        <button class="btn btn-ghost" data-view-go="dashboard">← Back to Dashboard</button>
+      </div>
+    `;
+  }
+
+  function renderView() {
+    const host = $('#viewHost');
+    if (state.activeNav === 'dashboard') {
+      host.innerHTML = renderDashboard();
+      renderBadges();
+      renderDaily();
+    } else if (state.activeNav === 'quest') {
+      // navigate via router
+      window.evaGoto && window.evaGoto('quest');
+      state.activeNav = 'dashboard';
+      $$('#screen-dashboard .navlist a').forEach(a => a.classList.toggle('active', a.dataset.view === 'dashboard'));
+      host.innerHTML = renderDashboard();
+      renderBadges();
+      renderDaily();
+    } else {
+      host.innerHTML = renderPlaceholder(state.activeNav);
+    }
+  }
+
+  // ============ Badges ============
+  const BADGES = [
+    { id: 'html1',  em: 'H',  label: 'HTML I',    cls: 'earned', desc: 'Mastered semantic HTML.', when: 'Earned 14 days ago', xp: 1200 },
+    { id: 'css1',   em: 'C',  label: 'CSS I',     cls: 'earned', desc: 'Conquered the cascade.',  when: 'Earned 12 days ago', xp: 800 },
+    { id: 'flex',   em: 'F',  label: 'Flexbox',   cls: 'earned', desc: 'Aligned all the things.', when: 'Earned 8 days ago',  xp: 1500 },
+    { id: 'grid',   em: 'G',  label: 'Grid',      cls: 'earned', desc: 'Two dimensions, no fear.', when: 'Earned 6 days ago', xp: 1500 },
+    { id: 'anim',   em: 'A',  label: 'Animate',   cls: 'earned', desc: 'Movement with intent.',   when: 'Earned 3 days ago',  xp: 900 },
+    { id: 'streak', em: '★',  label: 'Streak 10', cls: 'rare',   desc: '10 days in a row. Rare.', when: 'Earned 2 days ago',  xp: 1000 },
+    { id: 'js1',    em: 'JS', label: 'JS I',      cls: 'locked', desc: 'Clear 5 more JS quests to unlock.', when: 'Locked', xp: 0 },
+    { id: 'react',  em: 'R',  label: 'React',     cls: 'locked', desc: 'Clear the React Act II to unlock.', when: 'Locked', xp: 0 },
+  ];
+
+  function renderBadges() {
+    const grid = $('#badgesGrid');
+    if (!grid) return;
+    grid.innerHTML = BADGES.map(b => `
+      <div class="badge ${b.cls}" data-badge="${b.id}">
+        <div class="em">${b.em}</div>${b.label}
+      </div>
+    `).join('');
+  }
+
+  // ============ Daily missions ============
+  const DAILY = [
+    { id: 'd1', t: 'Complete 1 quest',     rw: 50 },
+    { id: 'd2', t: 'Keep streak alive',    rw: 30 },
+    { id: 'd3', t: 'Answer 3 code reviews', rw: 80 },
+    { id: 'd4', t: 'Join 1 raid room',     rw: 120 },
+  ];
+
+  function renderDaily() {
+    const card = $('#dailyCard');
+    if (!card) return;
+    card.innerHTML = DAILY.map(m => `
+      <div class="daily-item ${state.daily[m.id] ? 'done' : ''}" data-daily="${m.id}">
+        <div class="check">${state.daily[m.id] ? '✓' : '○'}</div>
+        <div class="t">${m.t}</div>
+        <div class="rw">+${m.rw}</div>
+      </div>
+    `).join('');
+    const done = Object.values(state.daily).filter(Boolean).length;
+    const cnt = $('#dailyCount');
+    if (cnt) cnt.textContent = done + '/' + DAILY.length;
+  }
+
+  // ============ Search ============
+  function renderSearchResults() {
+    const q = state.searchQuery.trim().toLowerCase();
+    const wrap = $('#dashSearchResults');
+    if (!q) {
+      // recent / suggestions
+      wrap.innerHTML = `
+        <div class="group">SUGGESTED <span class="count">recent</span></div>
+        ${ALL_RESULTS.slice(0, 5).map(r => searchRow(r)).join('')}
+      `;
+      wrap.classList.add('open');
+      return;
+    }
+    const matches = ALL_RESULTS.filter(r =>
+      r.title.toLowerCase().includes(q) ||
+      r.meta.toLowerCase().includes(q) ||
+      r.kind.toLowerCase().includes(q)
+    );
+    if (matches.length === 0) {
+      wrap.innerHTML = `<div class="empty">No results for "${q}"<div class="small">Try "react", "raid", or a pilot name</div></div>`;
+    } else {
+      const groups = ['quest', 'skill', 'pilot'];
+      wrap.innerHTML = groups.map(g => {
+        const inG = matches.filter(m => m.kind === g);
+        if (!inG.length) return '';
+        return `
+          <div class="group">${g.toUpperCase()}S <span class="count">${inG.length}</span></div>
+          ${inG.map(r => searchRow(r)).join('')}
+        `;
+      }).join('');
+    }
+    wrap.classList.add('open');
+  }
+
+  function searchRow(r) {
+    const tones = {
+      magenta: 'background:linear-gradient(135deg, oklch(0.72 0.28 340 / 0.2), oklch(0.55 0.26 290 / 0.2));color:var(--magenta);',
+      teal:    'background:linear-gradient(135deg, oklch(0.86 0.18 185 / 0.2), oklch(0.68 0.25 295 / 0.2));color:var(--teal);',
+      amber:   'background:linear-gradient(135deg, oklch(0.82 0.18 75 / 0.2), oklch(0.55 0.22 40 / 0.2));color:var(--amber);',
+      lime:    'background:linear-gradient(135deg, oklch(0.9 0.22 135 / 0.15), oklch(0.55 0.18 185 / 0.2));color:var(--lime);',
+      violet:  'background:linear-gradient(135deg, oklch(0.68 0.25 295 / 0.2), oklch(0.55 0.26 290 / 0.2));color:var(--violet);',
+    };
+    return `
+      <div class="res" data-search-go="${r.goto || ''}" data-search-kind="${r.kind}">
+        <div class="ic" style="${tones[r.tone] || ''}">${r.icon}</div>
+        <div class="body">
+          <div class="t">${r.title}</div>
+          <div class="m">${r.meta}</div>
+        </div>
+        <div class="arrow">↗</div>
+      </div>
+    `;
+  }
+
+  function closeSearch() {
+    state.searchOpen = false;
+    $('#dashSearchResults').classList.remove('open');
+  }
+
+  // ============ Dropdowns ============
+  function closeAllDropdowns() {
+    state.bellOpen = false;
+    state.avatarOpen = false;
+    $('#dropdownHost').innerHTML = '';
+    $('#bellBtn').classList.remove('active');
+    $('#avatarBtn').style.boxShadow = '';
+  }
+
+  function openBell() {
+    closeAllDropdowns();
+    state.bellOpen = true;
+    $('#bellBtn').classList.add('active');
+    const tones = {
+      magenta: 'background:oklch(0.72 0.28 340 / 0.15);color:var(--magenta);',
+      teal:    'background:oklch(0.86 0.18 185 / 0.15);color:var(--teal);',
+      violet:  'background:oklch(0.68 0.25 295 / 0.15);color:var(--violet);',
+      lime:    'background:oklch(0.9 0.22 135 / 0.15);color:var(--lime);',
+      amber:   'background:oklch(0.82 0.18 75 / 0.15);color:var(--amber);',
+    };
+    const unreadCount = NOTIFICATIONS.filter(n => n.unread).length;
+    $('#dropdownHost').innerHTML = `
+      <div class="dropdown" style="right: 56px; min-width: 380px;">
+        <div class="dd-head">
+          <h4>Notifications ${unreadCount ? `<span style="font-family:var(--f-mono);font-size:11px;color:var(--magenta);margin-left:6px;">${unreadCount} new</span>` : ''}</h4>
+          <span class="clear" id="markAllRead">Mark all read</span>
+        </div>
+        <div class="dd-body">
+          ${NOTIFICATIONS.map((n, i) => `
+            <div class="notif ${n.unread ? 'unread' : ''}" data-notif="${i}">
+              <div class="ic" style="${tones[n.tone] || ''}">${n.icon}</div>
+              <div class="body"><div class="t">${n.title}</div><div class="x">${n.text}</div></div>
+              <div class="time">${n.time}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function openAvatar() {
+    closeAllDropdowns();
+    state.avatarOpen = true;
+    $('#dropdownHost').innerHTML = `
+      <div class="dropdown avatar-menu" style="right: 0;">
+        <div class="profile">
+          <div class="av">AX</div>
+          <div>
+            <div class="who">axon.me</div>
+            <div class="addr">0x7a2f...b4e1</div>
+          </div>
+        </div>
+        <div class="item" data-avatar="profile"><span class="ic">◉</span> View profile</div>
+        <div class="item" data-avatar="wallet"><span class="ic">$</span> Wallet</div>
+        <div class="item" data-avatar="settings"><span class="ic">◐</span> Settings</div>
+        <div class="item" data-avatar="help"><span class="ic">?</span> Help & docs</div>
+        <div class="div"></div>
+        <div class="item danger" data-avatar="signout"><span class="ic">↩</span> Sign out</div>
+      </div>
+    `;
+  }
+
+  // ============ Modal ============
+  function openModal(html) {
+    $('#modalBody').innerHTML = html;
+    $('#modalBg').classList.add('open');
+  }
+  function closeModal() {
+    $('#modalBg').classList.remove('open');
+    state.badgeOpen = null;
+    state.walletOpen = false;
+  }
+
+  function openBadgeModal(id) {
+    const b = BADGES.find(x => x.id === id);
+    if (!b) return;
+    state.badgeOpen = id;
+    const isLocked = b.cls === 'locked';
+    openModal(`
+      <div class="badge-art ${b.cls}">${b.em}</div>
+      <h2 style="text-align:center; margin-bottom: 8px;">${b.label}</h2>
+      <p style="text-align:center; color: var(--ink-2); margin-bottom: 0;">${b.desc}</p>
+      <div class="modal-meta">
+        <div class="m"><div class="lbl">XP REWARD</div><div class="v">${b.xp ? '+' + fmt(b.xp) : '—'}</div></div>
+        <div class="m"><div class="lbl">STATUS</div><div class="v" style="color: ${isLocked ? 'var(--ink-2)' : (b.cls === 'rare' ? 'var(--magenta)' : 'var(--teal)')};">${b.when}</div></div>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        ${isLocked
+          ? '<button class="btn btn-ghost" id="modalCloseBtn">Close</button>'
+          : '<button class="btn btn-ghost" id="modalCloseBtn">Close</button><button class="btn btn-primary" id="mintBadge">Mint as NFT →</button>'}
+      </div>
+    `);
+  }
+
+  function openWalletModal() {
+    state.walletOpen = true;
+    $('#modalContent').classList.add('wallet-modal');
+    openModal(`
+      <div class="wallet-balance">
+        <div class="lbl">$EVA BALANCE</div>
+        <div class="v">${fmt(state.eva)}</div>
+        <div class="sub">≈ $${(state.eva * 0.48).toFixed(2)} USD · 0x7a2f...b4e1</div>
+      </div>
+      <div class="wallet-actions">
+        <button data-wallet="send"><span class="ic">↗</span><span class="l">Send</span></button>
+        <button data-wallet="stake"><span class="ic">⚡</span><span class="l">Stake · 18% APR</span></button>
+        <button data-wallet="swap"><span class="ic">⇌</span><span class="l">Swap</span></button>
+      </div>
+      <div class="tx-list">
+        <h5>Recent transactions</h5>
+        <div class="tx in"><div class="ic">+</div><div class="body"><div class="t">Quest reward · Flexbox Vault</div><div class="m">2 minutes ago</div></div><div class="amt">+240</div></div>
+        <div class="tx in"><div class="ic">+</div><div class="body"><div class="t">Daily streak bonus</div><div class="m">14 hours ago</div></div><div class="amt">+50</div></div>
+        <div class="tx out"><div class="ic">↗</div><div class="body"><div class="t">Mint badge · Streak 10</div><div class="m">2 days ago</div></div><div class="amt">−100</div></div>
+        <div class="tx in"><div class="ic">+</div><div class="body"><div class="t">Raid victory · Component Raid</div><div class="m">3 days ago</div></div><div class="amt">+800</div></div>
+        <div class="tx in"><div class="ic">+</div><div class="body"><div class="t">Quest reward · Animate</div><div class="m">5 days ago</div></div><div class="amt">+320</div></div>
+      </div>
+    `);
+  }
+
+  // ============ Wire up events ============
+  // Sidebar nav
+  root.addEventListener('click', (e) => {
+    const navA = e.target.closest('#screen-dashboard .navlist a');
+    if (navA) {
+      const view = navA.dataset.view;
+      const route = navA.dataset.route;
+      if (route) {
+        // External screen route
+        window.evaGoto && window.evaGoto(route);
+        return;
+      }
+      if (view) {
+        state.activeNav = view;
+        $$('#screen-dashboard .navlist a').forEach(a => a.classList.toggle('active', a === navA));
+        renderView();
+        return;
+      }
+    }
+
+    // View-go (links inside main view)
+    const viewGo = e.target.closest('[data-view-go]');
+    if (viewGo) {
+      const v = viewGo.dataset.viewGo;
+      state.activeNav = v;
+      $$('#screen-dashboard .navlist a').forEach(a => a.classList.toggle('active', a.dataset.view === v));
+      renderView();
+      return;
+    }
+
+    // External route trigger
+    const routeBtn = e.target.closest('[data-route]');
+    if (routeBtn) {
+      window.evaGoto && window.evaGoto(routeBtn.dataset.route);
+      return;
+    }
+
+    // Bell
+    if (e.target.closest('#bellBtn')) {
+      e.stopPropagation();
+      if (state.bellOpen) closeAllDropdowns(); else openBell();
+      return;
+    }
+
+    // Avatar
+    if (e.target.closest('#avatarBtn')) {
+      e.stopPropagation();
+      if (state.avatarOpen) closeAllDropdowns(); else openAvatar();
+      return;
+    }
+
+    // Mark all read
+    if (e.target.closest('#markAllRead')) {
+      NOTIFICATIONS.forEach(n => n.unread = false);
+      $$('#screen-dashboard .notif').forEach(n => n.classList.remove('unread'));
+      $('#bellDot').style.display = 'none';
+      return;
+    }
+
+    // Notification click
+    const notif = e.target.closest('[data-notif]');
+    if (notif) {
+      const i = +notif.dataset.notif;
+      NOTIFICATIONS[i].unread = false;
+      notif.classList.remove('unread');
+      const stillUnread = NOTIFICATIONS.some(n => n.unread);
+      $('#bellDot').style.display = stillUnread ? '' : 'none';
+      return;
+    }
+
+    // Avatar menu items
+    const av = e.target.closest('[data-avatar]');
+    if (av) {
+      const action = av.dataset.avatar;
+      closeAllDropdowns();
+      if (action === 'wallet') openWalletModal();
+      else if (action === 'settings') { state.activeNav = 'settings'; $$('#screen-dashboard .navlist a').forEach(a => a.classList.toggle('active', a.dataset.view === 'settings')); renderView(); }
+      else if (action === 'signout') window.evaGoto && window.evaGoto('landing');
+      else if (action === 'profile' || action === 'help') openModal(`<h2 style="margin-bottom: 12px;">${action === 'profile' ? 'Profile' : 'Help & Docs'}</h2><p style="color:var(--ink-2);">Coming soon — for now, the dashboard is your home base.</p><div style="text-align:right;margin-top:20px;"><button class="btn btn-ghost" id="modalCloseBtn">Close</button></div>`);
+      return;
+    }
+
+    // Wallet card sidebar
+    if (e.target.closest('#dashWalletCard')) {
+      openWalletModal();
+      return;
+    }
+
+    // Wallet actions
+    const wa = e.target.closest('[data-wallet]');
+    if (wa) {
+      const a = wa.dataset.wallet;
+      const m = a === 'send' ? 'Send $EVA to another pilot. (Demo: action queued.)'
+              : a === 'stake' ? 'Staking 1,000 $EVA at 18% APR. (Demo: action queued.)'
+              : 'Swap $EVA for ETH/SOL/BASE. (Demo: action queued.)';
+      // toast
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);padding:12px 20px;background:rgba(8,11,22,0.98);border:1px solid var(--teal);border-radius:10px;box-shadow:0 0 20px oklch(0.86 0.18 185 / 0.4);font-family:var(--f-mono);font-size:12px;color:var(--teal);z-index:400;';
+      t.textContent = '◆ ' + m;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.transition = 'opacity 0.4s'; t.style.opacity = '0'; }, 1800);
+      setTimeout(() => t.remove(), 2200);
+      return;
+    }
+
+    // Badge click
+    const badge = e.target.closest('[data-badge]');
+    if (badge) {
+      openBadgeModal(badge.dataset.badge);
+      return;
+    }
+
+    // Daily mission toggle
+    const daily = e.target.closest('[data-daily]');
+    if (daily) {
+      const id = daily.dataset.daily;
+      const wasDone = state.daily[id];
+      const m = DAILY.find(x => x.id === id);
+      state.daily[id] = !wasDone;
+      renderDaily();
+      if (!wasDone && m) {
+        // award eva
+        state.eva += m.rw;
+        flyingEva(m.rw, daily);
+        setTimeout(() => { updateBalance(); flashBalance(); }, 700);
+      } else if (wasDone && m) {
+        state.eva -= m.rw;
+        updateBalance();
+      }
+      return;
+    }
+
+    // Mint badge
+    if (e.target.closest('#mintBadge')) {
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);padding:12px 20px;background:rgba(8,11,22,0.98);border:1px solid var(--magenta);border-radius:10px;box-shadow:0 0 20px oklch(0.72 0.28 340 / 0.4);font-family:var(--f-mono);font-size:12px;color:var(--magenta);z-index:400;';
+      t.textContent = '★ Minting badge to chain... (demo)';
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.transition = 'opacity 0.4s'; t.style.opacity = '0'; }, 1800);
+      setTimeout(() => t.remove(), 2200);
+      closeModal();
+      return;
+    }
+
+    // Modal close
+    if (e.target.closest('#modalClose') || e.target.closest('#modalCloseBtn')) {
+      closeModal();
+      $('#modalContent').classList.remove('wallet-modal');
+      return;
+    }
+    if (e.target === $('#modalBg')) {
+      closeModal();
+      $('#modalContent').classList.remove('wallet-modal');
+      return;
+    }
+
+    // Stat card click
+    const stat = e.target.closest('[data-stat]');
+    if (stat) {
+      const s = stat.dataset.stat;
+      if (s === 'eva') { openWalletModal(); return; }
+      if (s === 'rank') { state.activeNav = 'leaderboard'; $$('#screen-dashboard .navlist a').forEach(a => a.classList.toggle('active', a.dataset.view === 'leaderboard')); renderView(); return; }
+      if (s === 'quests') { state.activeNav = 'tree'; $$('#screen-dashboard .navlist a').forEach(a => a.classList.toggle('active', a.dataset.view === 'tree')); renderView(); return; }
+    }
+
+    // Search result
+    const sr = e.target.closest('[data-search-go]');
+    if (sr) {
+      const goto = sr.dataset.searchGo;
+      closeSearch();
+      $('#dashSearch').value = '';
+      state.searchQuery = '';
+      if (goto) {
+        window.evaGoto && window.evaGoto(goto);
+      } else {
+        // map kind to view
+        const kind = sr.dataset.searchKind;
+        if (kind === 'skill') { state.activeNav = 'tree'; }
+        else if (kind === 'pilot') { state.activeNav = 'leaderboard'; }
+        $$('#screen-dashboard .navlist a').forEach(a => a.classList.toggle('active', a.dataset.view === state.activeNav));
+        renderView();
+      }
+      return;
+    }
+
+    // Outside click closes dropdowns/search
+    if (!e.target.closest('.dropdown') && !e.target.closest('#bellBtn') && !e.target.closest('#avatarBtn')) {
+      closeAllDropdowns();
+    }
+    if (!e.target.closest('.search-wrap')) {
+      closeSearch();
+    }
+  });
+
+  // Search input
+  root.addEventListener('input', (e) => {
+    if (e.target.id === 'dashSearch') {
+      state.searchQuery = e.target.value;
+      renderSearchResults();
+    }
+  });
+
+  root.addEventListener('focusin', (e) => {
+    if (e.target.id === 'dashSearch') {
+      state.searchOpen = true;
+      renderSearchResults();
+    }
+  });
+
+  // Keyboard: ⌘K / Ctrl+K, Esc
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('screen-dashboard').classList.contains('active')) return;
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      const inp = $('#dashSearch');
+      if (inp) { inp.focus(); inp.select(); }
+    }
+    if (e.key === 'Escape') {
+      closeSearch();
+      closeAllDropdowns();
+      closeModal();
+    }
+  });
+
+  // Initial render
+  renderView();
+})();
+
+/* Quest screen — REAL working flexbox quest */
+(function () {
+  const root = document.getElementById('screen-quest');
+  if (!root) return;
+
+  root.innerHTML = `
+    <style>
+      #screen-quest .q-wrap {
+        display: grid;
+        grid-template-columns: 320px 1fr 360px;
+        min-height: 100vh;
+        position: relative;
+        z-index: 2;
+      }
+      #screen-quest .q-topbar {
+        grid-column: 1 / -1;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 16px 28px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(5,7,13,0.6);
+        backdrop-filter: blur(16px);
+        position: sticky; top: 0; z-index: 10;
+      }
+      #screen-quest .q-topbar .left { display: flex; align-items: center; gap: 16px; }
+      #screen-quest .q-topbar .back {
+        font-family: var(--f-mono); font-size: 12px; color: var(--ink-2);
+        cursor: pointer; padding: 6px 10px; border-radius: 6px;
+      }
+      #screen-quest .q-topbar .back:hover { color: var(--teal); background: rgba(180,200,255,0.04); }
+      #screen-quest .q-topbar .crumb {
+        font-family: var(--f-mono); font-size: 12px; color: var(--ink-2);
+        display: flex; align-items: center; gap: 8px;
+      }
+      #screen-quest .q-topbar .crumb .now { color: var(--ink-0); }
+      #screen-quest .q-topbar .right { display: flex; align-items: center; gap: 14px; }
+      #screen-quest .timer {
+        font-family: var(--f-mono); font-size: 13px; color: var(--amber);
+        padding: 6px 12px; border: 1px solid oklch(0.82 0.18 75 / 0.3);
+        border-radius: 999px; background: oklch(0.82 0.18 75 / 0.08);
+      }
+
+      /* LEFT brief */
+      #screen-quest .brief {
+        padding: 28px 24px; border-right: 1px solid var(--line);
+        overflow-y: auto; max-height: calc(100vh - 65px);
+      }
+      #screen-quest .brief-hero {
+        background: linear-gradient(135deg, oklch(0.4 0.2 295 / 0.4), oklch(0.6 0.18 185 / 0.2));
+        border: 1px solid var(--line);
+        border-radius: 14px; padding: 20px; margin-bottom: 20px;
+      }
+      #screen-quest .brief-hero h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; margin: 10px 0 8px; }
+      #screen-quest .brief-hero .chapter {
+        font-family: var(--f-mono); font-size: 11px; color: var(--teal);
+        text-transform: uppercase; letter-spacing: 0.15em;
+      }
+      #screen-quest .brief-hero p { color: var(--ink-1); font-size: 13px; }
+      #screen-quest .reward-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+      #screen-quest .reward-bar .rwd {
+        padding: 14px; background: rgba(180,200,255,0.02);
+        border: 1px solid var(--line); border-radius: 10px;
+      }
+      #screen-quest .reward-bar .rwd .lbl {
+        font-family: var(--f-mono); font-size: 10px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
+      }
+      #screen-quest .reward-bar .rwd .v {
+        font-family: var(--f-display); font-size: 22px; font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+      #screen-quest .reward-bar .rwd.eva .v { color: var(--magenta); }
+      #screen-quest .reward-bar .rwd.xp .v { color: var(--teal); }
+      #screen-quest .brief-section { margin-bottom: 24px; }
+      #screen-quest .brief-section h4 {
+        font-family: var(--f-mono); font-size: 11px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 12px;
+      }
+      #screen-quest .brief-section p { color: var(--ink-1); font-size: 14px; line-height: 1.65; margin-bottom: 12px; }
+      #screen-quest .brief-section code {
+        font-family: var(--f-mono); font-size: 12px;
+        padding: 1px 6px; border-radius: 4px;
+        background: rgba(180,200,255,0.06); color: var(--teal);
+      }
+      #screen-quest .objectives { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+      #screen-quest .objectives li {
+        display: flex; align-items: flex-start; gap: 10px;
+        font-size: 13px; color: var(--ink-1);
+        transition: color 0.3s;
+      }
+      #screen-quest .objectives li .bx {
+        width: 16px; height: 16px; border-radius: 4px;
+        border: 1px solid var(--line-2);
+        flex-shrink: 0; margin-top: 2px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px;
+        transition: all 0.3s;
+      }
+      #screen-quest .objectives li.done .bx {
+        background: oklch(0.9 0.22 135 / 0.15);
+        border-color: var(--lime); color: var(--lime);
+      }
+      #screen-quest .objectives li.done { color: var(--ink-2); }
+      #screen-quest .hint-btn {
+        width: 100%; padding: 12px;
+        border: 1px dashed var(--line-2); border-radius: 10px;
+        font-family: var(--f-mono); font-size: 12px; color: var(--ink-2);
+        text-align: center; cursor: pointer;
+      }
+      #screen-quest .hint-btn:hover { border-color: var(--teal); color: var(--teal); }
+      #screen-quest .hint-display {
+        margin-top: 12px; padding: 12px;
+        background: oklch(0.86 0.18 185 / 0.08);
+        border: 1px solid oklch(0.86 0.18 185 / 0.3);
+        border-radius: 8px;
+        font-family: var(--f-mono); font-size: 12px;
+        color: var(--teal);
+        display: none;
+      }
+      #screen-quest .hint-display.show { display: block; }
+
+      /* CENTER editor */
+      #screen-quest .editor-wrap { display: flex; flex-direction: column; border-right: 1px solid var(--line); overflow: hidden; }
+      #screen-quest .editor-tabs {
+        display: flex; border-bottom: 1px solid var(--line);
+        background: rgba(5,7,13,0.4); padding: 0 16px;
+      }
+      #screen-quest .editor-tab {
+        padding: 14px 16px; font-family: var(--f-mono); font-size: 12px;
+        color: var(--ink-2); border-bottom: 2px solid transparent; cursor: pointer;
+      }
+      #screen-quest .editor-tab.active { color: var(--teal); border-color: var(--teal); }
+      #screen-quest .editor-tab .dot {
+        display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+        background: var(--amber); margin-left: 8px;
+      }
+      #screen-quest .editor {
+        flex: 1; background: #030510; padding: 24px 0;
+        font-family: var(--f-mono); font-size: 14px; line-height: 1.85;
+        overflow-y: auto;
+      }
+      #screen-quest .editor .line {
+        display: grid; grid-template-columns: 60px 1fr;
+        padding: 0 24px 0 0;
+      }
+      #screen-quest .editor .line:hover { background: rgba(180,200,255,0.02); }
+      #screen-quest .editor .line .ln {
+        color: var(--ink-3); text-align: right; padding-right: 16px;
+        user-select: none; border-right: 1px solid var(--line); margin-right: 16px;
+      }
+      #screen-quest .editor .line.cur { background: oklch(0.86 0.18 185 / 0.04); }
+      #screen-quest .editor .line.cur .ln { color: var(--teal); }
+
+      /* Slot dropdowns */
+      #screen-quest .slot-wrap { position: relative; display: inline-block; }
+      #screen-quest .slot {
+        display: inline-block;
+        padding: 1px 22px 1px 8px;
+        border: 1px dashed var(--magenta);
+        border-radius: 4px;
+        background: oklch(0.72 0.28 340 / 0.1);
+        color: var(--magenta);
+        cursor: pointer;
+        font-family: var(--f-mono); font-size: 13px;
+        position: relative;
+        transition: all 0.2s;
+      }
+      #screen-quest .slot::after {
+        content: "▾";
+        position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+        font-size: 9px; opacity: 0.7;
+      }
+      #screen-quest .slot.filled {
+        border-style: solid; border-color: var(--teal);
+        background: oklch(0.86 0.18 185 / 0.1); color: var(--teal);
+      }
+      #screen-quest .slot.correct {
+        border-color: var(--lime); background: oklch(0.9 0.22 135 / 0.12); color: var(--lime);
+      }
+      #screen-quest .slot.wrong {
+        border-color: var(--magenta); background: oklch(0.72 0.28 340 / 0.15); color: var(--magenta);
+        animation: shake 0.4s;
+      }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        75% { transform: translateX(4px); }
+      }
+      #screen-quest .slot-menu {
+        position: absolute; top: calc(100% + 6px); left: 0;
+        min-width: 180px;
+        background: rgba(8, 11, 22, 0.98);
+        border: 1px solid var(--line-2);
+        border-radius: 10px;
+        padding: 4px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.7), var(--glow-teal);
+        z-index: 20;
+        backdrop-filter: blur(20px);
+        display: none;
+      }
+      #screen-quest .slot-menu.open { display: block; animation: menuIn 0.15s ease-out; }
+      @keyframes menuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+      #screen-quest .slot-menu .opt {
+        display: block; width: 100%; text-align: left;
+        padding: 8px 12px; border-radius: 6px;
+        font-family: var(--f-mono); font-size: 12px; color: var(--ink-1);
+        cursor: pointer;
+      }
+      #screen-quest .slot-menu .opt:hover { background: oklch(0.86 0.18 185 / 0.1); color: var(--teal); }
+
+      #screen-quest .editor-footer {
+        padding: 14px 24px; border-top: 1px solid var(--line);
+        background: rgba(5,7,13,0.6);
+        display: flex; justify-content: space-between; align-items: center;
+      }
+      #screen-quest .editor-footer .status {
+        font-family: var(--f-mono); font-size: 12px; color: var(--ink-2);
+        display: flex; align-items: center; gap: 8px;
+      }
+      #screen-quest .editor-footer .actions { display: flex; gap: 10px; }
+
+      /* RIGHT preview + tests */
+      #screen-quest .right-panel { display: flex; flex-direction: column; overflow: hidden; max-height: calc(100vh - 65px); overflow-y: auto; }
+      #screen-quest .preview-box { padding: 20px; border-bottom: 1px solid var(--line); }
+      #screen-quest .preview-box h4 {
+        font-family: var(--f-mono); font-size: 11px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 12px;
+        display: flex; justify-content: space-between; align-items: center;
+      }
+      #screen-quest .preview-box h4 .chip { font-size: 9px; padding: 2px 8px; }
+
+      /* The container being styled — values driven by data attributes */
+      #screen-quest .preview-frame {
+        background:
+          linear-gradient(135deg, rgba(20, 25, 50, 0.6), rgba(8, 12, 24, 0.8)),
+          repeating-linear-gradient(45deg, transparent 0 8px, rgba(180,200,255,0.02) 8px 9px);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        height: 220px;
+        padding: 16px;
+        position: relative;
+        display: flex;
+        transition: justify-content 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    align-items 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    flex-direction 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    gap 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      #screen-quest .preview-frame::before {
+        content: "PARENT"; position: absolute; top: 6px; left: 8px;
+        font-family: var(--f-mono); font-size: 9px; color: var(--ink-3);
+        letter-spacing: 0.15em;
+      }
+      #screen-quest .preview-card {
+        width: 64px; height: 64px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-mono); font-size: 11px; font-weight: 600;
+        color: #fff;
+        transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      }
+      #screen-quest .preview-card.c1 { background: linear-gradient(135deg, oklch(0.7 0.25 295), oklch(0.5 0.22 270)); }
+      #screen-quest .preview-card.c2 { background: linear-gradient(135deg, oklch(0.72 0.28 340), oklch(0.55 0.26 320)); }
+      #screen-quest .preview-card.c3 { background: linear-gradient(135deg, oklch(0.86 0.18 185), oklch(0.6 0.18 200)); }
+      #screen-quest .preview-card.c4 { background: linear-gradient(135deg, oklch(0.82 0.18 75), oklch(0.6 0.22 50)); }
+
+      #screen-quest .frame-controls {
+        margin-top: 10px;
+        display: flex; gap: 6px; align-items: center;
+        font-family: var(--f-mono); font-size: 10px;
+        color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.12em;
+      }
+      #screen-quest .frame-controls button {
+        padding: 4px 8px; border: 1px solid var(--line);
+        border-radius: 5px; color: var(--ink-2); cursor: pointer;
+        font-family: inherit; font-size: 10px;
+      }
+      #screen-quest .frame-controls button:hover { color: var(--teal); border-color: var(--teal); }
+      #screen-quest .frame-controls button.on { color: var(--teal); border-color: var(--teal); background: oklch(0.86 0.18 185 / 0.1); }
+
+      #screen-quest .tests-box { padding: 20px; }
+      #screen-quest .tests-box h4 {
+        font-family: var(--f-mono); font-size: 11px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 14px;
+        display: flex; justify-content: space-between; align-items: center;
+      }
+      #screen-quest .tests-box h4 .score { color: var(--teal); }
+      #screen-quest .test {
+        display: flex; gap: 12px;
+        padding: 12px; border: 1px solid var(--line);
+        border-radius: 10px; margin-bottom: 8px;
+        background: rgba(180,200,255,0.02);
+        transition: all 0.3s;
+      }
+      #screen-quest .test.pass {
+        border-color: oklch(0.9 0.22 135 / 0.4);
+        background: oklch(0.9 0.22 135 / 0.05);
+      }
+      #screen-quest .test.fail {
+        border-color: oklch(0.72 0.28 340 / 0.4);
+        background: oklch(0.72 0.28 340 / 0.05);
+      }
+      #screen-quest .test .mark {
+        width: 20px; height: 20px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; font-weight: 700; flex-shrink: 0;
+      }
+      #screen-quest .test.pass .mark { background: var(--lime); color: #000; }
+      #screen-quest .test.fail .mark { background: var(--magenta); color: #000; }
+      #screen-quest .test.pending .mark { background: rgba(255,255,255,0.04); color: var(--ink-3); border: 1px dashed var(--line-2); }
+      #screen-quest .test .t { font-size: 13px; flex: 1; }
+      #screen-quest .test .t .desc {
+        font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); margin-top: 2px;
+      }
+
+      /* progress bar in editor footer */
+      #screen-quest .qprog {
+        flex: 1; max-width: 220px;
+        display: flex; flex-direction: column; gap: 4px;
+        margin: 0 16px;
+      }
+      #screen-quest .qprog .lbl {
+        display: flex; justify-content: space-between;
+        font-family: var(--f-mono); font-size: 10px;
+        color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em;
+      }
+      #screen-quest .qprog .bar {
+        height: 4px; background: rgba(255,255,255,0.06);
+        border-radius: 999px; overflow: hidden;
+      }
+      #screen-quest .qprog .fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--teal), var(--violet), var(--magenta));
+        width: 0%;
+        transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 0 10px var(--teal);
+      }
+
+      /* Reward modal */
+      #screen-quest .reward-modal {
+        position: fixed; inset: 0;
+        background: rgba(5,7,13,0.85); backdrop-filter: blur(12px);
+        display: none; align-items: center; justify-content: center;
+        z-index: 100;
+      }
+      #screen-quest .reward-modal.open { display: flex; animation: fadeIn 0.3s; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes popUp {
+        0% { transform: scale(0.8); opacity: 0; }
+        60% { transform: scale(1.05); }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      #screen-quest .reward-inner {
+        padding: 48px 56px; max-width: 440px; text-align: center;
+        animation: popUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      #screen-quest .reward-coin {
+        width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 24px;
+        background: radial-gradient(circle at 35% 30%, oklch(0.95 0.2 340), oklch(0.6 0.28 320) 45%, oklch(0.4 0.25 300) 100%);
+        box-shadow: 0 0 80px oklch(0.72 0.28 340 / 0.6), inset -15px -15px 30px rgba(0,0,0,0.3);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--f-display); font-size: 36px; font-weight: 600; color: #fff;
+        animation: spin2 4s linear infinite;
+      }
+      @keyframes spin2 { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+      #screen-quest .reward-inner h2 { font-size: 36px; margin-bottom: 8px; }
+      #screen-quest .reward-inner p { color: var(--ink-1); margin-bottom: 24px; }
+      #screen-quest .reward-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;
+      }
+      #screen-quest .reward-grid .r {
+        padding: 14px; background: rgba(180,200,255,0.03);
+        border: 1px solid var(--line); border-radius: 10px;
+      }
+      #screen-quest .reward-grid .r .v {
+        font-family: var(--f-display); font-size: 26px; font-weight: 500;
+      }
+      #screen-quest .reward-grid .r .l {
+        font-family: var(--f-mono); font-size: 10px; color: var(--ink-2);
+        text-transform: uppercase; letter-spacing: 0.12em;
+      }
+
+      /* Confetti */
+      #screen-quest .confetti {
+        position: fixed; inset: 0; pointer-events: none; z-index: 99;
+        overflow: hidden;
+      }
+      #screen-quest .confetti span {
+        position: absolute; width: 8px; height: 12px;
+        opacity: 0; top: 50%; left: 50%;
+      }
+
+      @media (max-width: 1100px) {
+        #screen-quest .q-wrap { grid-template-columns: 1fr; }
+        #screen-quest .brief, #screen-quest .right-panel { max-height: none; border-right: none; border-bottom: 1px solid var(--line); }
+      }
+    <\/style>
+
+    <div class="q-wrap">
+      <div class="q-topbar">
+        <div class="left">
+          <span class="back" data-goto="dashboard">← Dashboard</span>
+          <div class="crumb">
+            <span>Flexbox</span> <span>›</span> <span class="now">The Flexbox Vault</span>
+          </div>
+        </div>
+        <div class="right">
+          <span class="chip chip-magenta"><span class="dot dot-pulse"></span> ACTIVE</span>
+          <span class="timer mono" id="qTimer">◷ 12:00</span>
+          <button class="btn btn-ghost btn-sm" id="qHintBtn">⚑ Hint</button>
+          <button class="btn btn-primary btn-sm" id="qSubmit">Run Tests ▶</button>
+        </div>
+      </div>
+
+      <aside class="brief">
+        <div class="brief-hero">
+          <div class="chapter">ACT II · CHAPTER 04</div>
+          <h2>The Flexbox Vault</h2>
+          <p>Four payload cards. One vault. Pick the right CSS to lay them out exactly as the brief specifies — and the lock opens.</p>
+        </div>
+
+        <div class="reward-bar">
+          <div class="rwd eva"><div class="lbl">REWARD</div><div class="v">+240 EVA</div></div>
+          <div class="rwd xp"><div class="lbl">XP</div><div class="v">+1,200</div></div>
+        </div>
+
+        <div class="brief-section">
+          <h4>BRIEF</h4>
+          <p>Click each <code>____</code> slot in the code and choose the correct value. Watch the live preview update in real time — when all tests turn green, the vault unlocks.</p>
+        </div>
+
+        <div class="brief-section">
+          <h4>OBJECTIVES</h4>
+          <ul class="objectives" id="qObj">
+            <li id="obj-direction"><div class="bx"></div>Lay cards in a horizontal row</li>
+            <li id="obj-justify"><div class="bx"></div>Distribute space between cards</li>
+            <li id="obj-align"><div class="bx"></div>Center cards on the cross-axis</li>
+            <li id="obj-gap"><div class="bx"></div>Add 16px gap between cards</li>
+          </ul>
+        </div>
+
+        <div class="hint-btn" id="qHintInline">⚑ Get a hint <span style="color: var(--magenta); margin-left: 6px;">−20 $EVA</span></div>
+        <div class="hint-display" id="qHintBox">
+          ◆ Try <code style="color:var(--lime);">justify-content: space-between</code> for spacing, and <code style="color:var(--lime);">align-items: center</code> for vertical alignment.
+        </div>
+      </aside>
+
+      <div class="editor-wrap">
+        <div class="editor-tabs">
+          <div class="editor-tab active">Vault.tsx <span class="dot"></span></div>
+          <div class="editor-tab">styles.css</div>
+          <div class="editor-tab">README.md</div>
+        </div>
+        <div class="editor" id="qEditor">
+          <div class="line"><span class="ln">1</span><span><span class="tk-com">// The Flexbox Vault — pick the correct values</span></span></div>
+          <div class="line"><span class="ln">2</span><span><span class="tk-kw">const</span> <span class="tk-fn">Vault</span> = () =&gt; (</span></div>
+          <div class="line cur"><span class="ln">3</span><span>&nbsp;&nbsp;&lt;<span class="tk-fn">div</span> <span class="tk-prop">style</span>={{</span></div>
+          <div class="line cur"><span class="ln">4</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tk-prop">display</span>: <span class="tk-str">"flex"</span>,</span></div>
+          <div class="line cur"><span class="ln">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tk-prop">flexDirection</span>: <span class="slot-wrap" data-slot="direction"><span class="slot">____</span></span>,</span></div>
+          <div class="line cur"><span class="ln">6</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tk-prop">justifyContent</span>: <span class="slot-wrap" data-slot="justify"><span class="slot">____</span></span>,</span></div>
+          <div class="line cur"><span class="ln">7</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tk-prop">alignItems</span>: <span class="slot-wrap" data-slot="align"><span class="slot">____</span></span>,</span></div>
+          <div class="line cur"><span class="ln">8</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tk-prop">gap</span>: <span class="slot-wrap" data-slot="gap"><span class="slot">____</span></span>,</span></div>
+          <div class="line"><span class="ln">9</span><span>&nbsp;&nbsp;}}&gt;</span></div>
+          <div class="line"><span class="ln">10</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tk-fn">Card</span> <span class="tk-prop">label</span>=<span class="tk-str">"ALPHA"</span> /&gt;</span></div>
+          <div class="line"><span class="ln">11</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tk-fn">Card</span> <span class="tk-prop">label</span>=<span class="tk-str">"BETA"</span> /&gt;</span></div>
+          <div class="line"><span class="ln">12</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tk-fn">Card</span> <span class="tk-prop">label</span>=<span class="tk-str">"GAMMA"</span> /&gt;</span></div>
+          <div class="line"><span class="ln">13</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="tk-fn">Card</span> <span class="tk-prop">label</span>=<span class="tk-str">"DELTA"</span> /&gt;</span></div>
+          <div class="line"><span class="ln">14</span><span>&nbsp;&nbsp;&lt;/<span class="tk-fn">div</span>&gt;</span></div>
+          <div class="line"><span class="ln">15</span><span>);</span></div>
+        </div>
+        <div class="editor-footer">
+          <div class="status">
+            <span class="dot" style="color:var(--lime);width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;"></span>
+            <span id="qSaveStatus">Autosaved · just now</span>
+          </div>
+          <div class="qprog">
+            <div class="lbl"><span>PROGRESS</span><span id="qProgPct">0%</span></div>
+            <div class="bar"><div class="fill" id="qProgFill"></div></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" id="qReset">↺ Reset</button>
+            <button class="btn btn-primary btn-sm" id="qSubmit2">Run Tests ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="right-panel">
+        <div class="preview-box">
+          <h4>LIVE PREVIEW <span class="chip chip-teal">RENDER OK</span></h4>
+          <div class="preview-frame" id="qPreview">
+            <div class="preview-card c1">ALPHA</div>
+            <div class="preview-card c2">BETA</div>
+            <div class="preview-card c3">GAMMA</div>
+            <div class="preview-card c4">DELTA</div>
+          </div>
+          <div class="frame-controls">
+            <span>VIEWPORT</span>
+            <button class="on" data-vp="full">FULL</button>
+            <button data-vp="tablet">TABLET</button>
+            <button data-vp="mobile">MOBILE</button>
+          </div>
+        </div>
+        <div class="tests-box">
+          <h4>TEST SUITE <span class="score" id="qScore">0/4 passing</span></h4>
+          <div class="test pending" data-test="direction">
+            <div class="mark">○</div>
+            <div class="t">
+              Cards arranged in a horizontal row
+              <div class="desc">flexDirection === "row"</div>
+            </div>
+          </div>
+          <div class="test pending" data-test="justify">
+            <div class="mark">○</div>
+            <div class="t">
+              Cards spaced between
+              <div class="desc">justifyContent === "space-between"</div>
+            </div>
+          </div>
+          <div class="test pending" data-test="align">
+            <div class="mark">○</div>
+            <div class="t">
+              Cards centered vertically
+              <div class="desc">alignItems === "center"</div>
+            </div>
+          </div>
+          <div class="test pending" data-test="gap">
+            <div class="mark">○</div>
+            <div class="t">
+              Visual gap of 16px between cards
+              <div class="desc">gap === "16px"</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="confetti" id="qConfetti"></div>
+
+    <div class="reward-modal" id="qRewardModal">
+      <div class="reward-inner">
+        <div class="reward-coin">EVA</div>
+        <span class="chip chip-lime" style="display:inline-flex;"><span class="dot dot-pulse"></span> QUEST CLEARED</span>
+        <h2 style="margin-top: 16px;"><span class="gradient-text">Vault unlocked.</span></h2>
+        <p>All tests green. Payload secured. Rewards minted to your wallet.</p>
+        <div class="reward-grid">
+          <div class="r"><div class="l">$EVA EARNED</div><div class="v magenta-text">+240</div></div>
+          <div class="r"><div class="l">XP GAINED</div><div class="v teal-text">+1,200</div></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button class="btn btn-ghost" id="qCloseModal">Review code</button>
+          <button class="btn btn-primary" data-goto="dashboard">Next mission →</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // ============ Quest logic ============
+  const SLOT_OPTIONS = {
+    direction: ['"row"', '"column"', '"row-reverse"', '"column-reverse"'],
+    justify:   ['"flex-start"', '"flex-end"', '"center"', '"space-between"', '"space-around"', '"space-evenly"'],
+    align:     ['"flex-start"', '"flex-end"', '"center"', '"stretch"', '"baseline"'],
+    gap:       ['"0px"', '"4px"', '"8px"', '"16px"', '"24px"', '"32px"']
+  };
+
+  const CORRECT = {
+    direction: '"row"',
+    justify: '"space-between"',
+    align: '"center"',
+    gap: '"16px"'
+  };
+
+  // Map of slot value -> CSS value
+  const VAL = (raw) => raw.replace(/^"|"$/g, '');
+
+  const state = { direction: null, justify: null, align: null, gap: null };
+
+  function applyStyles() {
+    const frame = document.getElementById('qPreview');
+    if (!frame) return;
+    frame.style.flexDirection = state.direction ? VAL(state.direction) : 'row';
+    frame.style.justifyContent = state.justify ? VAL(state.justify) : 'flex-start';
+    frame.style.alignItems = state.align ? VAL(state.align) : 'stretch';
+    frame.style.gap = state.gap ? VAL(state.gap) : '0px';
+  }
+
+  function checkTests(showResult) {
+    let passed = 0;
+    Object.keys(CORRECT).forEach(key => {
+      const ok = state[key] === CORRECT[key];
+      if (ok) passed++;
+      const test = document.querySelector(`.test[data-test="${key}"]`);
+      if (test) {
+        test.classList.remove('pass', 'fail', 'pending');
+        if (state[key] === null) {
+          test.classList.add('pending');
+          test.querySelector('.mark').textContent = '○';
+        } else if (ok) {
+          test.classList.add('pass');
+          test.querySelector('.mark').textContent = '✓';
+        } else if (showResult) {
+          test.classList.add('fail');
+          test.querySelector('.mark').textContent = '✗';
+        } else {
+          test.classList.add('pending');
+          test.querySelector('.mark').textContent = '○';
+        }
+      }
+      // Objective check
+      const obj = document.getElementById('obj-' + key);
+      if (obj) obj.classList.toggle('done', ok);
+      if (obj) obj.querySelector('.bx').textContent = ok ? '✓' : '';
+    });
+    const score = document.getElementById('qScore');
+    if (score) score.textContent = passed + '/4 passing';
+    const pct = Math.round(passed / 4 * 100);
+    const fill = document.getElementById('qProgFill');
+    const ptxt = document.getElementById('qProgPct');
+    if (fill) fill.style.width = pct + '%';
+    if (ptxt) ptxt.textContent = pct + '%';
+    return passed;
+  }
+
+  function setSlot(slotEl, value) {
+    const key = slotEl.dataset.slot;
+    state[key] = value;
+    const span = slotEl.querySelector('.slot');
+    span.textContent = value;
+    span.classList.add('filled');
+    span.classList.remove('correct', 'wrong');
+    applyStyles();
+    checkTests(false);
+    // Save status flicker
+    const st = document.getElementById('qSaveStatus');
+    if (st) {
+      st.textContent = 'Saving…';
+      setTimeout(() => { st.textContent = 'Autosaved · just now'; }, 500);
+    }
+  }
+
+  function openMenu(slotEl) {
+    closeAllMenus();
+    const key = slotEl.dataset.slot;
+    const opts = SLOT_OPTIONS[key];
+    const menu = document.createElement('div');
+    menu.className = 'slot-menu open';
+    opts.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = o;
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        setSlot(slotEl, o);
+        closeAllMenus();
+      });
+      menu.appendChild(b);
+    });
+    slotEl.appendChild(menu);
+  }
+
+  function closeAllMenus() {
+    document.querySelectorAll('#screen-quest .slot-menu').forEach(m => m.remove());
+  }
+
+  // Slot click handler
+  document.addEventListener('click', (ev) => {
+    const slot = ev.target.closest('#screen-quest .slot-wrap');
+    if (slot) {
+      ev.stopPropagation();
+      const existing = slot.querySelector('.slot-menu');
+      if (existing) { existing.remove(); }
+      else openMenu(slot);
+      return;
+    }
+    if (!ev.target.closest('#screen-quest .slot-menu')) closeAllMenus();
+  });
+
+  // Confetti
+  function fireConfetti() {
+    const wrap = document.getElementById('qConfetti');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    const colors = ['var(--teal)', 'var(--violet)', 'var(--magenta)', 'var(--lime)', 'var(--amber)'];
+    for (let i = 0; i < 80; i++) {
+      const s = document.createElement('span');
+      s.style.background = colors[i % colors.length];
+      s.style.borderRadius = (Math.random() > 0.5 ? '50%' : '2px');
+      const angle = (Math.random() * 360) * Math.PI / 180;
+      const dist = 200 + Math.random() * 400;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 200;
+      const rot = (Math.random() * 720 - 360) + 'deg';
+      const dur = 1.2 + Math.random() * 1;
+      s.style.animation = 'cfly ' + dur + 's cubic-bezier(0.2,0.8,0.2,1) forwards';
+      s.style.setProperty('--dx', dx + 'px');
+      s.style.setProperty('--dy', dy + 'px');
+      s.style.setProperty('--rot', rot);
+      wrap.appendChild(s);
+    }
+    setTimeout(() => { if (wrap) wrap.innerHTML = ''; }, 2500);
+  }
+  // Add confetti keyframes once
+  if (!document.getElementById('cfly-kf')) {
+    const st = document.createElement('style');
+    st.id = 'cfly-kf';
+    st.textContent = `
+      @keyframes cfly {
+        0% { transform: translate(0,0) rotate(0); opacity: 1; }
+        100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // Run Tests
+  function runTests() {
+    const passed = checkTests(true);
+    if (passed === 4) {
+      setTimeout(() => {
+        fireConfetti();
+        const modal = document.getElementById('qRewardModal');
+        if (modal) modal.classList.add('open');
+      }, 350);
+    } else {
+      // Shake any wrong slots
+      Object.keys(CORRECT).forEach(key => {
+        if (state[key] !== null && state[key] !== CORRECT[key]) {
+          const span = document.querySelector(`#screen-quest .slot-wrap[data-slot="${key}"] .slot`);
+          if (span) {
+            span.classList.add('wrong');
+            setTimeout(() => span.classList.remove('wrong'), 500);
+          }
+        }
+      });
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#qSubmit, #qSubmit2')) runTests();
+    if (e.target.closest('#qCloseModal')) {
+      const m = document.getElementById('qRewardModal');
+      if (m) m.classList.remove('open');
+    }
+    if (e.target.closest('#qReset')) {
+      Object.keys(state).forEach(k => state[k] = null);
+      document.querySelectorAll('#screen-quest .slot').forEach(s => {
+        s.textContent = '____';
+        s.classList.remove('filled', 'correct', 'wrong');
+      });
+      applyStyles();
+      checkTests(false);
+    }
+    if (e.target.closest('#qHintBtn, #qHintInline')) {
+      const h = document.getElementById('qHintBox');
+      if (h) h.classList.toggle('show');
+    }
+    // Viewport buttons
+    const vp = e.target.closest('#screen-quest .frame-controls button');
+    if (vp) {
+      document.querySelectorAll('#screen-quest .frame-controls button').forEach(b => b.classList.remove('on'));
+      vp.classList.add('on');
+      const frame = document.getElementById('qPreview');
+      if (frame) {
+        const w = vp.dataset.vp === 'mobile' ? '180px' : vp.dataset.vp === 'tablet' ? '280px' : '100%';
+        frame.style.width = w;
+      }
+    }
+  });
+
+  // Timer countdown
+  let secs = 12 * 60;
+  setInterval(() => {
+    if (document.getElementById('screen-quest').classList.contains('active') && secs > 0) {
+      secs--;
+      const m = String(Math.floor(secs / 60)).padStart(2, '0');
+      const s = String(secs % 60).padStart(2, '0');
+      const t = document.getElementById('qTimer');
+      if (t) t.textContent = '◷ ' + m + ':' + s;
+    }
+  }, 1000);
+
+  // Initial state
+  applyStyles();
+  checkTests(false);
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+/* ── FRIENDS RAIL — persistent war-room friends surface ──────────────────── */
+
+.fr-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: start;
+  position: sticky;
+  top: 72px;
+}
+
+.fr-block {
+  border: 1px solid #14141f;
+  border-radius: 6px;
+  background: #09090f;
+  padding: 10px 11px 11px;
+}
+
+.fr-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: #eaf6f540;
+  padding-bottom: 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #12121c;
+}
+.fr-count {
+  color: #3df0e8;
+  border: 1px solid #3df0e830;
+  background: #3df0e80a;
+  border-radius: 8px;
+  padding: 1px 6px;
+  letter-spacing: 0.06em;
+}
+
+.fr-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  border-bottom: 1px solid #0e0e16;
+}
+.fr-row:last-child { border-bottom: none; }
+
+.fr-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.fr-row-name {
+  font-size: 12px;
+  color: #eaf6f5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fr-row-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  color: #eaf6f530;
+}
+.fr-row-sub.in      { color: #3df0e880; }
+.fr-row-sub.pending { color: #f5c45390; }
+
+.fr-row-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+.fr-btn {
+  background: none;
+  border: 1px solid #1e1e30;
+  color: #eaf6f555;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  padding: 4px 7px;
+  border-radius: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.fr-btn:hover:not(:disabled) { color: #eaf6f5; border-color: #3df0e850; background: #3df0e80a; }
+.fr-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.fr-btn.wide { min-width: 54px; text-align: center; }
+.fr-btn.ok { color: #3df0e8; border-color: #3df0e840; }
+.fr-btn.ok:hover:not(:disabled) { background: #3df0e814; }
+.fr-btn.no { color: #ff3d8b90; border-color: #ff3d8b30; }
+.fr-btn.no:hover:not(:disabled) { background: #ff3d8b12; border-color: #ff3d8b60; }
+
+.fr-empty, .fr-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  line-height: 1.55;
+  color: #eaf6f530;
+  padding: 4px 0 2px;
+}
+.fr-note { color: #f5c45360; padding-top: 8px; }
+
+.fr-search {
+  width: 100%;
+  background: #06060c;
+  border: 1px solid #1a1a2a;
+  border-radius: 3px;
+  color: #eaf6f5;
+  font-family: 'Saira', sans-serif;
+  font-size: 12px;
+  padding: 7px 9px;
+  outline: none;
+  margin-bottom: 4px;
+}
+.fr-search:focus { border-color: #3df0e850; }
+.fr-search::placeholder { color: #eaf6f528; }
+
+.fr-count.pend { color: #f5c453; border-color: #f5c45330; background: #f5c4530a; }
+
+/* Confirmation that the ADD actually did something — a friend REQUEST is not
+   a friend yet, and without this the button looked inert. */
+.fr-notice {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #3df0e8;
+  background: #3df0e80c;
+  border: 1px solid #3df0e830;
+  border-radius: 2px;
+  padding: 5px 7px;
+  margin: 4px 0;
+}
+
+.fr-error {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #ff3d8b;
+  background: #ff3d8b0c;
+  border: 1px solid #ff3d8b30;
+  border-radius: 2px;
+  padding: 5px 7px;
+  margin: 4px 0;
+}
+
+/* Rail becomes a normal stacked block on narrow screens */
+@media (max-width: 900px) {
+  .fr-rail { position: static; }
+}

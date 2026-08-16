@@ -70,7 +70,9 @@
 }
 
 .r1w-body {
-  max-width: 1060px;
+  /* Wide enough for the content column AND the friends rail — at the old
+     1060px the rail squeezed the role cards until they overflowed the page. */
+  max-width: 1400px;
   margin: 0 auto;
   padding: 24px 20px 80px;
   display: flex;
@@ -78,20 +80,38 @@
   gap: 20px;
 }
 
+/* ── War room columns: content + persistent friends rail ── */
+.r1w-cols {
+  display: grid;
+  grid-template-columns: 1fr 264px;
+  gap: 20px;
+  align-items: start;
+}
+.r1w-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .r1w-cols { grid-template-columns: 1fr; }
+}
+
 /* ── Dossier ── */
 .r1w-dossier {
   display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 22px;
+  grid-template-columns: 440px 1fr;
+  gap: 26px;
   border: 1px solid #1a1024;
   border-radius: 6px;
   background:
-    radial-gradient(ellipse at 20% 100%, #ff3d8b08 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 100%, #ff3d8b0e 0%, transparent 55%),
     #0a0a10;
   padding: 20px;
   align-items: center;
 }
-.r1w-boss-stage { height: 230px; }
+/* Varkul needs room — a herald that fits in a thumbnail isn't a herald. */
+.r1w-boss-stage { height: 420px; display: flex; }
 .r1w-boss-tier {
   font-family: 'JetBrains Mono', monospace;
   font-size: 8px;
@@ -239,11 +259,129 @@
   letter-spacing: 0.1em;
 }
 
+/* ── Two-column step layout (roles left, friends right) ── */
+.r1w-step-cols {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 16px;
+  align-items: start;
+}
+.r1w-step-roles { min-width: 0; }
+
+.r1w-step-friends {
+  position: sticky;
+  top: 72px;
+}
+.r1w-step-friends-inner {
+  border: 1px solid #1a1a2c;
+  background: #0a0a12;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.r1w-step-friends-title {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #eaf6f550;
+  margin-bottom: 8px;
+}
+.r1w-friend-group { display: flex; flex-direction: column; }
+.r1w-friend-group-empty {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: #eaf6f530; padding: 2px 0;
+}
+/* Friend-request failures used to go to console.error only — the button just
+   did nothing. Show what the RPC actually said. */
+.r1w-friend-error {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #ff3d8b;
+  background: #ff3d8b0c;
+  border: 1px solid #ff3d8b30;
+  border-radius: 2px;
+  padding: 5px 7px;
+  margin-top: 5px;
+}
+.r1w-step-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.r1w-friend-card-static {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #08080e;
+  border: 1px solid #14141f;
+}
+.r1w-friend-card-avatar {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: linear-gradient(135deg, #3df0e8, #7c5cfc);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 700; font-size: 13px; color: #08080c;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.r1w-friend-card-info {
+  min-width: 0; display: flex; flex-direction: column; gap: 2px;
+}
+.r1w-friend-card-name {
+  font-size: 11px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.r1w-friend-card-status {
+  font-family: 'JetBrains Mono', monospace; font-size: 7px;
+  letter-spacing: 0.08em; color: #3df0e880;
+}
+.r1w-friend-card:disabled .r1w-friend-card-status { color: #eaf6f530; }
+.r1w-friend-card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.r1w-btn.btn-sm {
+  font-size: 10px; padding: 2px 8px; font-family: 'JetBrains Mono', monospace;
+  border: 1px solid #1e1e30; color: #eaf6f5; background: none; cursor: pointer;
+  letter-spacing: 0.06em; line-height: 1.4;
+}
+.r1w-btn.btn-sm:hover:not(:disabled) { border-color: #3df0e840; }
+.r1w-btn.btn-sm.sec { color: #ff3d8b60; border-color: #ff3d8b30; }
+.r1w-btn.btn-sm.sec:hover:not(:disabled) { color: #ff3d8b; border-color: #ff3d8b; }
+
+.r1w-step-friends-search {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.r1w-step-friends-search .r1w-input { max-width: 100%; font-size: 11px; padding: 6px 8px; }
+.r1w-step-friends-results {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 260px; overflow-y: auto;
+}
+.r1w-step-friend-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; border-bottom: 1px solid #14141f;
+}
+.r1w-step-friend-name {
+  font-size: 10px; color: #eaf6f5; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.r1w-step-friend-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 7px;
+  color: #3a4c4e; letter-spacing: 0.1em; white-space: nowrap;
+}
+
 /* ── Specialization cards ── */
+/* auto-fit so the cards wrap instead of overflowing when the rail is present */
 .r1w-roles-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
   gap: 10px;
+}
+.r1w-roles-grid.five {
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
 }
 .r1w-role-card {
   display: flex;
@@ -436,6 +574,8 @@
   box-shadow: 0 0 18px #ff3d8b28;
   color: #ff3d8b;
 }
+.r1w-btn.admin { border-color: #ff3d8b40; color: #ff3d8b; font-size: 10px; padding: 9px 12px; }
+.r1w-btn.admin:hover:not(:disabled) { border-color: #ff3d8b; background: #ff3d8b10; }
 .r1w-input {
   flex: 1;
   min-width: 180px;
@@ -470,6 +610,42 @@
   transition: border-color 0.15s;
 }
 .r1w-lobby-card:hover { border-color: #1e1e30; }
+/* The warband a hunter just accepted an invite to */
+.r1w-lobby-card.invited {
+  border-color: #f5c45360;
+  background: #f5c4530a;
+  box-shadow: 0 0 18px #f5c45318;
+}
+
+/* Invite-accepted banner — accepting reserves a slot, it does not join */
+.r1w-invite-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid #f5c45340;
+  border-radius: 4px;
+  background: #f5c4530c;
+}
+.r1w-invite-banner-tag {
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: #f5c453;
+  border: 1px solid #f5c45340;
+  border-radius: 2px;
+  padding: 3px 8px;
+}
+.r1w-invite-banner-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #eaf6f580;
+}
+.r1w-invite-banner-text strong { color: #f5c453; }
 .r1w-lobby-info { flex: 1; min-width: 0; }
 .r1w-lobby-name {
   display: block;
@@ -581,10 +757,13 @@
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .r1w-roles-grid { grid-template-columns: 1fr 1fr; }
+  .r1w-roles-grid.five { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 900px) {
+  .r1w-step-cols { grid-template-columns: 1fr; }
+  .r1w-step-friends { position: static; }
   .r1w-dossier { grid-template-columns: 1fr; }
-  .r1w-boss-stage { height: 190px; }
+  .r1w-boss-stage { height: 320px; }
   .r1w-rules-grid { grid-template-columns: 1fr; }
   .r1w-heads-grid { grid-template-columns: 1fr; }
 }
@@ -596,4 +775,223 @@
 @media (max-width: 480px) {
   .r1w-body { padding: 16px 12px 60px; }
   .r1w-boss-name { font-size: 26px; }
+}
+
+/* ── My pending invites popup ─────────────────────────────── */
+.r1w-invite-popup {
+  position: absolute; top: 56px; right: 16px; z-index: 15;
+  width: 380px; max-height: 300px; overflow-y: auto;
+  background: #10101a; border: 1px solid #1e1e30; border-radius: 4px;
+  padding: 10px; display: flex; flex-direction: column; gap: 6px;
+}
+.r1w-invite-popup-head {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  letter-spacing: 0.15em; color: #f5c453; padding-bottom: 6px;
+  border-bottom: 1px solid #1e1e30;
+}
+.r1w-invite-row {
+  display: flex; align-items: center; gap: 6px; padding: 4px 0;
+}
+.r1w-invite-from { font-size: 10px; color: #eaf6f5; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r1w-invite-raid { font-size: 9px; color: #eaf6f540; flex: 1; }
+
+@keyframes invitePulse {
+  0%, 100% { border-color: #f5c45340; }
+  50% { border-color: #f5c453; }
+}
+.invite-pulse { animation: invitePulse 2s ease-in-out infinite; }
+
+/* ── Admin bar (force-complete) ──────────────────────────── */
+.r1w-admin-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 12px; height: 34px;
+  background: #ff3d8b20; border-bottom: 1px solid #ff3d8b;
+  backdrop-filter: blur(4px);
+}
+.r1w-admin-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  letter-spacing: 0.15em; color: #ff3d8b; margin-right: 8px;
+}
+.r1w-admin-btn {
+  background: #1a1a2c; border: 1px solid #ff3d8b40; color: #eaf6f5;
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  padding: 2px 8px; border-radius: 2px; cursor: pointer; white-space: nowrap;
+}
+.r1w-admin-btn:hover { border-color: #ff3d8b; }
+.r1w-admin-btn:disabled { opacity: 0.3; cursor: default; }
+.r1w-admin-btn.primary { background: #ff3d8b; border-color: #ff3d8b; color: #08080c; }
+.r1w-admin-btn.primary:hover { background: #ff6ba8; }
+
+/* ── Multi-role selection ──────────────────────────────────── */
+.r1w-role-card.cap { opacity: 0.35; cursor: not-allowed; }
+.r1w-role-picked.extra { color: #f5c453; border-color: #f5c45360; }
+.r1w-role-summary {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px; padding: 8px 12px;
+  border: 1px solid #1a1a2e; border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: #eaf6f560; letter-spacing: 0.06em;
+}
+.r1w-role-total { color: #f5c453; }
+.r1w-role-insufficient { color: #ff3d8b; margin-left: 6px; }
+
+/* ── In-lobby panel (two-column layout) ────────────────────── */
+.r1w-lobby-panel {
+  display: flex; gap: 18px; align-items: flex-start;
+}
+.r1w-lobby-main {
+  flex: 1; min-width: 0;
+}
+.r1w-body.with-sidebar {
+  max-width: 1280px; /* wider to accommodate sidebar */
+}
+.r1w-lobby-section {
+  border: 1px solid #10101a; border-radius: 6px;
+  background: #0a0a10; padding: 14px 16px;
+}
+.r1w-lobby-section-head {
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid #10101a; padding-bottom: 7px; margin-bottom: 12px;
+}
+.r1w-lobby-section-title {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  letter-spacing: 0.22em; color: #eaf6f570; text-transform: uppercase;
+}
+
+/* ── My roles badges ───────────────────────────────────────── */
+.r1w-myroles {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; padding: 6px 4px;
+}
+.r1w-myroles-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 7px;
+  letter-spacing: 0.15em; color: #eaf6f535; flex-shrink: 0;
+}
+.r1w-myroles-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.r1w-myroles-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  letter-spacing: 0.08em; padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--role-c) 40%, transparent);
+  border-radius: 3px; color: var(--role-c);
+  background: color-mix(in srgb, var(--role-c) 6%, transparent);
+}
+
+/* ── Lobby role picker (leader with no roles) ───────────────── */
+.r1w-lobby-pick-roles {
+  margin-bottom: 12px; padding: 6px 4px;
+}
+.r1w-lobby-pick-roles .r1w-myroles-label {
+  display: block; margin-bottom: 8px;
+}
+.r1w-lobby-role-cards {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.r1w-role-sm {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; min-width: 72px; padding: 8px 6px;
+  background: #08080e; border: 1px solid #14141f;
+  cursor: pointer; color: #eaf6f5; font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.r1w-role-sm:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--role-c) 40%, transparent);
+  background: color-mix(in srgb, var(--role-c) 4%, #08080e);
+}
+.r1w-role-sm.picked {
+  border-color: var(--role-c);
+  background: color-mix(in srgb, var(--role-c) 8%, #08080e);
+}
+.r1w-role-sm.cap { opacity: 0.35; }
+.r1w-role-sm-check {
+  position: absolute; top: 2px; right: 4px;
+  font-size: 9px; color: var(--role-c);
+}
+.r1w-myroles-empty {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: #eaf6f530; padding: 8px 4px; margin-bottom: 12px;
+}
+
+
+/* ── Friends sidebar (Steam-style) ─────────────────────────── */
+.r1w-friends-sidebar {
+  width: 280px; flex-shrink: 0;
+  background: #0a0a10; border: 1px solid #14141f;
+  border-radius: 6px; display: flex; flex-direction: column;
+  position: sticky; top: 72px; max-height: calc(100vh - 88px);
+  overflow-y: auto;
+}
+.r1w-sidebar-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  letter-spacing: 0.2em; color: #eaf6f560;
+  border-bottom: 1px solid #10101a;
+}
+.r1w-sidebar-close {
+  background: none; border: none; color: #eaf6f535;
+  cursor: pointer; font-size: 12px; padding: 2px 6px;
+}
+.r1w-sidebar-close:hover { color: #eaf6f5; }
+.r1w-sidebar-section {
+  padding: 8px 12px; border-bottom: 1px solid #0c0c14;
+}
+.r1w-sidebar-section-title {
+  display: block;
+  font-family: 'JetBrains Mono', monospace; font-size: 7px;
+  letter-spacing: 0.18em; color: #eaf6f535; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.r1w-sidebar-empty {
+  font-size: 10px; color: #eaf6f530; font-style: italic; padding: 4px 0;
+}
+.r1w-friend-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid #08080e;
+}
+.r1w-friend-row:last-child { border-bottom: none; }
+.r1w-friend-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.r1w-friend-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: #3df0e8; /* online default */
+}
+.r1w-friend-dot.online { background: #3df0e8; box-shadow: 0 0 6px #3df0e860; }
+.r1w-friend-dot.pending {
+  background: #f5c453; box-shadow: 0 0 6px #f5c45360;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 5px; color: #08080c; font-weight: 700;
+}
+.r1w-friend-dot.search { background: #6a6a8a; }
+.r1w-friend-name {
+  font-size: 11px; color: #eaf6f5; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.r1w-friend-detail {
+  font-size: 9px; color: #eaf6f540; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.r1w-friend-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.r1w-btn.tiny {
+  font-size: 8px; padding: 2px 7px; font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.06em;
+}
+.r1w-btn.btn-add {
+  font-size: 10px; padding: 4px 12px; font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em; background: #3df0e810; border-color: #3df0e840;
+  color: #3df0e8; white-space: nowrap;
+}
+.r1w-btn.btn-add:hover:not(:disabled) { background: #3df0e820; }
+.r1w-sidebar-search { margin-bottom: 6px; font-size: 11px; padding: 6px 10px; }
+
+/* ── Roster highlight for self ── */
+.r1w-roster-row.me { background: #3df0e804; border-left: 2px solid #3df0e840; padding-left: 2px; }
+
+/* ── Topbar active state ── */
+.r1w-back.active { color: #eaf6f5; border-color: #3df0e860; }
+
+/* ── Responsive tweaks ── */
+@media (max-width: 600px) {
+  .r1w-lobby-role-cards { gap: 4px; }
+  .r1w-role-sm { min-width: 56px; padding: 6px 4px; }
 }

@@ -1,0 +1,196 @@
+/* ── ACCEPT RAID INVITE modal ─────────────────────────────────────────────── */
+
+.iam-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 320;
+  background: #08080cd8;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.iam {
+  width: 100%;
+  max-width: 440px;
+  background: #0b0b13;
+  border: 1px solid #1e1e32;
+  border-radius: 8px;
+  padding: 16px 18px 14px;
+  box-shadow: 0 24px 60px #000000a0;
+}
+
+.iam-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #16162a;
+  margin-bottom: 12px;
+}
+.iam-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: #f5c45390;
+}
+.iam-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #eaf6f5;
+  line-height: 1.15;
+}
+.iam-from {
+  font-size: 11.5px;
+  color: #eaf6f555;
+}
+.iam-x {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #eaf6f540;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.iam-x:hover { color: #ff3d8b; }
+
+.iam-loading, .iam-blocked {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #eaf6f540;
+  padding: 18px 0;
+  text-align: center;
+}
+.iam-blocked { color: #ff3d8b90; letter-spacing: 0.06em; font-size: 11px; }
+
+.iam-section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: #eaf6f540;
+  margin-bottom: 9px;
+}
+
+.iam-roles {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.iam-role {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 4px 7px;
+  background: #08080e;
+  border: 1px solid #1a1a2a;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+}
+.iam-role:hover:not(:disabled) { border-color: var(--rc); background: color-mix(in srgb, var(--rc) 8%, transparent); }
+.iam-role.picked {
+  border-color: var(--rc);
+  background: color-mix(in srgb, var(--rc) 14%, transparent);
+}
+.iam-role.taken, .iam-role:disabled { opacity: 0.34; cursor: not-allowed; }
+.iam-role-glyph { font-size: 14px; color: var(--rc); line-height: 1; }
+.iam-role-label {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #eaf6f5c0;
+}
+.iam-role-fn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  color: #eaf6f535;
+}
+.iam-role-taken {
+  position: absolute;
+  bottom: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 6px;
+  letter-spacing: 0.1em;
+  color: #ff3d8b90;
+}
+.iam-role-check {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 8px;
+  color: var(--rc);
+}
+
+.iam-cost {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: #eaf6f560;
+  padding: 9px 0;
+  border-top: 1px solid #14141f;
+}
+.iam-total {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #f5c453;
+  white-space: nowrap;
+}
+.iam-total.short { color: #ff3d8b; }
+
+.iam-error {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: #ff3d8b;
+  background: #ff3d8b0c;
+  border: 1px solid #ff3d8b30;
+  border-radius: 3px;
+  padding: 6px 8px;
+  margin-bottom: 10px;
+}
+
+.iam-actions { display: flex; gap: 8px; }
+.iam-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid #1e1e30;
+  color: #eaf6f560;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.iam-btn:hover:not(:disabled) { color: #eaf6f5; border-color: #3df0e840; }
+.iam-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.iam-btn.primary { border-color: #3df0e860; color: #3df0e8; }
+.iam-btn.primary:hover:not(:disabled) { background: #3df0e812; box-shadow: 0 0 18px #3df0e820; }
+
+.iam-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: #eaf6f528;
+  text-align: center;
+  margin-top: 9px;
+}
+
+@media (max-width: 480px) {
+  .iam-roles { grid-template-columns: repeat(3, 1fr); }
+}

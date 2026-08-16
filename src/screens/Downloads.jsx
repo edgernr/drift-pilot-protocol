@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../hooks/useTheme'
 
 // Installers are published to GitHub Releases by the desktop-release CI workflow.
 // NOTE: the repo/releases must be PUBLIC for these (unauthenticated) reads to work.
@@ -30,7 +29,6 @@ function fmtSize(bytes) {
 export default function Downloads() {
   const { goto } = useNav()
   const { user } = useAuth()
-  const { theme, toggleTheme } = useTheme()
   const [state, setState] = useState({ status: 'loading', release: null })
   const myOS = detectOS()
 
@@ -60,14 +58,6 @@ export default function Downloads() {
           <li><a href="/#academy" style={{ color: 'var(--builder-gold, oklch(0.86 0.19 80))' }}>Academy</a></li>
           <li><a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--teal)' }}>Download</a></li>
         </ul>
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={toggleTheme}
-          style={{ padding: '8px 12px', fontSize: 15, lineHeight: 1 }}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {theme === 'dark' ? '☀' : '◑'}
-        </button>
         {user
           ? <button className="btn btn-ghost btn-sm" onClick={() => goto('dashboard')}>Dashboard →</button>
           : <button className="btn btn-ghost btn-sm" onClick={() => goto('signup')}>Sign Up / Log In →</button>

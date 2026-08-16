@@ -19,9 +19,19 @@ export const HUNT_REWARDS = {
 
 // Raid XP rewards (distinct from DRIFT payout amounts: 2350/1050/250/0)
 export const RAID_XP_REWARDS  = { PERFECT: 500, PASSED: 300, PARTIAL: 100, FAILED: 0 }
+// A raid:* row stores XP in xp_earned; the $SHARD payout is DERIVED from it here.
 const RAID_XP_TO_HUNT  = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
 const RAID_NEW_XP_SET   = new Set([100, 300, 500])          // new-format XP values
 const RAID_OLD_TO_XP    = { 2350: 500, 1050: 300, 250: 100 } // old DRIFT amounts → XP
+
+// RAID 01 — THE BROODGATE pays per function on its own scale, and its rows are
+// identifiable by an :fN suffix. Keeping it in a separate table means the two
+// raid economies can never be mistaken for one another: an unlisted value here
+// used to fall through to the legacy branch, award 0 XP, and get counted as a
+// raw DRIFT amount — which is how a 1000 XP full clear silently paid 100.
+// Any new Broodgate tier MUST be added here.
+export const BROODGATE_ROW = /^raid:[^:]+:f[1-5]$/
+const BROODGATE_XP_TO_HUNT = { 350: 1650, 200: 800, 150: 500, 100: 250, 0: 0 }
 
 export const XP_LEVELS = [
   { level: 1,  min: 0,    label: 'CADET',     color: 'oklch(0.55 0.08 250)'  },
@@ -147,6 +157,7 @@ export function AuthProvider({ children }) {
       }
       const totalXp = xpRows?.reduce((s, r) => {
         if (r.quest_id?.startsWith('raid:')) {
+          if (BROODGATE_ROW.test(r.quest_id)) return s + r.xp_earned
           if (r.quest_id.endsWith(':bank')) return s  // bank = DRIFT only, no XP
           if (r.xp_earned === 0) return s
           // New format: xp_earned is actual XP (100/300/500 only)
@@ -159,6 +170,7 @@ export function AuthProvider({ children }) {
       const totalHunt = xpRows?.reduce((s, r) => {
         if (HUNT_REWARDS[r.quest_id]) return s + HUNT_REWARDS[r.quest_id]
         if (r.quest_id?.startsWith('raid:')) {
+          if (BROODGATE_ROW.test(r.quest_id)) return s + (BROODGATE_XP_TO_HUNT[r.xp_earned] ?? 0)
           if (r.quest_id.endsWith(':bank')) return s + r.xp_earned  // bank: xp_earned = direct DRIFT
           if (r.xp_earned === 0) return s
           // New format: derive DRIFT from XP amount

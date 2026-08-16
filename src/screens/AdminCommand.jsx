@@ -60,7 +60,14 @@ export default function AdminCommand() {
     const iso = midnight.toISOString()
     Promise.all([
       supabase.from('quest_completions').select('user_id, quest_id, time_taken, paste_count, completed_at').eq('flagged', true).order('completed_at', { ascending: false }),
-      supabase.from('profiles').select('id, name, is_subscribed, is_admin, banned_until, suspended_until, suspend_reason, prologue_done, dupe_flag, normalized_email, created_at').order('name'),
+      // Emails and moderation columns come from a SECURITY DEFINER RPC that
+      // re-checks is_admin in the DATABASE — the `if (!isAdmin) return` above is
+      // decoration any signed-in user can step around. Falls back to the direct
+      // read until supabase/admin_roster_rpc.sql has been run, so this screen
+      // never goes blank mid-migration.
+      supabase.rpc('admin_list_pilots').then(res => res.error
+        ? supabase.from('profiles').select('id, name, is_subscribed, is_admin, banned_until, suspended_until, suspend_reason, prologue_done, dupe_flag, normalized_email, created_at').order('name')
+        : res),
       supabase.from('bug_reports').select('id, user_id, description, view, url, user_agent, status, created_at').order('created_at', { ascending: false }),
       // Funnel source — client aggregate; becomes a SQL view at scale.
       supabase.from('quest_completions').select('quest_id'),

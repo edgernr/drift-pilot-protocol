@@ -168,6 +168,13 @@
   text-overflow: ellipsis;
 }
 .r1-edit-lock.sev { color: #ff3d8b90; }
+.r1-fn-progress {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: #eaf6f540;
+  white-space: nowrap;
+}
 .r1-editor-status {
   margin-left: auto;
   font-family: 'JetBrains Mono', monospace;
@@ -399,7 +406,7 @@
   background: #0d0d14;
 }
 .r1-strike-btn,
-.r1-claim-btn {
+.r1-complete-badge {
   background: none;
   border: 1px solid #1e1e30;
   color: #eaf6f540;
@@ -414,9 +421,7 @@
   white-space: nowrap;
   transition: all 0.15s;
 }
-.r1-claim-btn { border-color: #f5c45360; color: #f5c453; }
-.r1-claim-btn:hover:not(:disabled) { background: #f5c45310; box-shadow: 0 0 16px #f5c45325; }
-.r1-claim-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.r1-complete-badge { border-color: #3df0e840; color: #3df0e860; cursor: default; pointer-events: none; }
 .r1-strike-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .r1-strike-btn.ready {
   border-color: #ff3d8b;
@@ -574,38 +579,8 @@
 }
 .r1-panel-scroll.party { display: flex; flex-direction: column; padding: 0; }
 
-/* ── HEADS panel ── */
-.r1-phase-group { margin-bottom: 8px; }
-.r1-phase-group.locked { opacity: 0.38; }
-.r1-phase-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  letter-spacing: 0.18em;
-  padding: 6px 2px 5px;
-  border-bottom: 1px solid #0e0e18;
-  margin-bottom: 4px;
-}
-.r1-phase-head-tags { display: flex; align-items: center; gap: 5px; }
-.r1-domain-mini {
-  font-size: 7px;
-  letter-spacing: 0.1em;
-  border: 1px solid;
-  padding: 1px 5px;
-  border-radius: 2px;
-  white-space: nowrap;
-}
-.r1-lock {
-  color: #eaf6f530;
-  border: 1px solid #1e1e30;
-  padding: 1px 6px;
-  border-radius: 2px;
-  letter-spacing: 0.1em;
-}
-.r1-head-row {
+/* ── FUNCTIONS panel — sequential progression ── */
+.r1-fn-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -613,24 +588,21 @@
   background: #04040a;
   border: 1px solid #0e0e18;
   border-radius: 2px;
-  padding: 7px 8px;
-  margin-bottom: 3px;
-  cursor: pointer;
-  text-align: left;
+  padding: 9px 8px;
+  margin-bottom: 4px;
   transition: border-color 0.15s, background 0.15s;
 }
-.r1-head-row:hover:not(:disabled) { border-color: #1e1e30; background: #08080e; }
-.r1-head-row:disabled { cursor: not-allowed; }
-.r1-head-row.domain { border-left: 2px solid var(--domain-c, #3df0e8); }
-.r1-head-row.active { border-color: #ff3d8b50; background: #ff3d8b08; }
-.r1-head-row.severed { opacity: 0.5; }
-.r1-head-glyph { font-size: 11px; color: #3df0e880; flex-shrink: 0; }
-.r1-head-row.severed .r1-head-glyph { color: #eaf6f525; }
-.r1-head-name {
+.r1-fn-row.active { border-color: var(--fn-c, #3df0e8); background: color-mix(in srgb, var(--fn-c, #3df0e8) 6%, #04040a); }
+.r1-fn-row.done { opacity: 0.55; }
+.r1-fn-row.locked { opacity: 0.3; }
+.r1-fn-dot { font-size: 12px; flex-shrink: 0; width: 16px; text-align: center; }
+.r1-fn-row.active .r1-fn-dot { color: var(--fn-c, #3df0e8); }
+.r1-fn-row.done .r1-fn-dot { color: #ff3d8b; }
+.r1-fn-name {
   flex: 1;
   min-width: 0;
   font-family: 'Saira Condensed', sans-serif;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   color: #eaf6f5c0;
@@ -638,21 +610,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.r1-head-row.severed .r1-head-name { text-decoration: line-through; color: #eaf6f550; }
-.r1-head-state {
+.r1-fn-row.done .r1-fn-name { text-decoration: line-through; color: #eaf6f550; }
+.r1-fn-role {
   font-family: 'JetBrains Mono', monospace;
   font-size: 7px;
-  letter-spacing: 0.08em;
-  color: #eaf6f535;
-  flex-shrink: 0;
-  max-width: 74px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.12em;
   white-space: nowrap;
+  flex-shrink: 0;
 }
-.r1-head-state.sev   { color: #ff3d8b70; }
-.r1-head-state.mine  { color: #f5c453; }
-.r1-head-state.other { color: #3df0e870; }
+.r1-fn-status {
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: #eaf6f535;
+  max-width: 60px;
+  text-align: right;
+}
+.r1-fn-status.done  { color: #ff3d8b80; }
+.r1-fn-status.live  { color: var(--fn-c, #3df0e8); }
 
 /* Selected head briefing */
 .r1-brief {
@@ -687,19 +663,52 @@
   color: #f5c45360;
   margin-bottom: 1px;
 }
+.r1-brief-stages {
+  margin-top: 8px;
+  border-top: 1px solid #0e0e18;
+  padding-top: 8px;
+}
+.r1-brief-stage {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 6px;
+  align-items: baseline;
+  padding: 3px 0;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.r1-brief-stage-label {
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 600;
+  color: #eaf6f5a0;
+  white-space: nowrap;
+}
+.r1-brief-stage-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  color: #3df0e860;
+  white-space: nowrap;
+}
+.r1-brief-stage-desc {
+  color: #eaf6f550;
+  font-size: 8.5px;
+}
 
 /* ── BOSS panel ── */
 .r1-boss-scene {
   flex-shrink: 0;
-  height: 230px;
+  height: 430px;
+  display: flex;
   position: relative;
   border: 1px solid #0e0e18;
   border-radius: 4px;
   background:
     radial-gradient(ellipse at 50% 100%, #ff3d8b0a 0%, transparent 60%),
     radial-gradient(ellipse at 50% 0%, #12081e 0%, transparent 70%);
-  padding: 8px;
+  padding: 6px 6px 0;
   margin-bottom: 10px;
+  overflow: hidden;
 }
 .r1-boss-readout { padding: 0 2px; }
 .r1-readout-hp {
@@ -795,12 +804,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.r1-party-role {
+.r1-party-roles {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.r1-party-role-badge {
   font-family: 'JetBrains Mono', monospace;
   font-size: 7px;
-  letter-spacing: 0.1em;
-  color: #eaf6f540;
-  flex-shrink: 0;
+  letter-spacing: 0.08em;
+  color: var(--role-c);
+  border: 1px solid color-mix(in srgb, var(--role-c) 35%, transparent);
+  border-radius: 2px;
+  padding: 1px 5px;
+  white-space: nowrap;
 }
 .r1-party-severs {
   font-family: 'JetBrains Mono', monospace;
@@ -840,7 +859,6 @@
 }
 .r1-feed-line.t-sever  { color: #ff3d8b90; }
 .r1-feed-line.t-phase  { color: #f5c453; }
-.r1-feed-line.t-claim  { color: #3df0e870; }
 .r1-feed-line.t-fall   { color: #f5c45380; }
 .r1-feed-line.t-victory { color: #3df0e8; }
 
@@ -1177,4 +1195,141 @@
   .r1-sever-toast { max-width: 92vw; flex-wrap: wrap; gap: 6px; }
   .r1-wardbar { padding: 0 8px; gap: 7px; }
   .r1-strike-strip { padding: 0 8px; gap: 7px; }
+}
+
+/* ── Varkul attack — screen shake + corruption overlay ── */
+.r1-under-attack {
+  animation: r1-shake 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes r1-shake {
+  0%   { translate: 0 0; }
+  4%   { translate: -4px -2px; }
+  8%   { translate: 5px 3px; }
+  12%  { translate: -3px 1px; }
+  16%  { translate: 4px -3px; }
+  20%  { translate: -2px 2px; }
+  24%  { translate: 1px -1px; }
+  28%  { translate: -1px 0; }
+  100% { translate: 0 0; }
+}
+
+/* Attack overlay — red corruption bleeds across the editor area */
+.r1-attack-overlay {
+  position: absolute;
+  inset: 62px 46px 0 0;
+  z-index: 19;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 50% at 60% 30%, #ff3d8b 0%, transparent 70%);
+  opacity: 0;
+  animation: r1-attack-flash 0.7s ease-out forwards;
+  mix-blend-mode: screen;
+}
+@keyframes r1-attack-flash {
+  0%   { opacity: 0; }
+  8%   { opacity: 0.12; }
+  20%  { opacity: 0.06; }
+  35%  { opacity: 0.1; }
+  60%  { opacity: 0.03; }
+  100% { opacity: 0; }
+}
+
+/* Boss scene also gets a flash */
+.r1-boss-scene.boss-attack {
+  animation: r1-boss-flash 0.7s ease-out;
+}
+@keyframes r1-boss-flash {
+  0%   { box-shadow: 0 0 0 0 transparent; }
+  10%  { box-shadow: 0 0 60px 20px #ff3d8b30; }
+  40%  { box-shadow: 0 0 30px 8px #ff3d8b18; }
+  100% { box-shadow: none; }
+}
+
+/* ── Surrender / Force Finish ── */
+.r1-surrender-btn {
+  background: none;
+  border: 1px solid #ff3d8b30;
+  color: #ff3d8b70;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.r1-surrender-btn:hover {
+  border-color: #ff3d8b80;
+  color: #ff3d8b;
+  background: #ff3d8b08;
+}
+.r1-surrender-overlay {
+  position: fixed;
+  inset: 0;
+  background: #08080ce6;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: r1-fade-in 0.2s ease-out;
+}
+.r1-surrender-modal {
+  background: #0c0812;
+  border: 1px solid #ff3d8b30;
+  border-radius: 4px;
+  padding: 28px 26px 24px;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 0 50px #ff3d8b15;
+}
+.r1-surrender-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ff3d8b;
+  text-shadow: 0 0 30px #ff3d8b40;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+.r1-surrender-text {
+  font-size: 12.5px;
+  color: #eaf6f570;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+.r1-surrender-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.r1-surrender-cancel,
+.r1-surrender-confirm {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 9px 22px;
+  border-radius: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.r1-surrender-cancel {
+  background: none;
+  border: 1px solid #3df0e840;
+  color: #3df0e8;
+}
+.r1-surrender-cancel:hover { background: #3df0e808; border-color: #3df0e8; }
+.r1-surrender-confirm {
+  background: none;
+  border: 1px solid #ff3d8b;
+  color: #ff3d8b;
+}
+.r1-surrender-confirm:hover { background: #ff3d8b10; box-shadow: 0 0 20px #ff3d8b20; }
+
+@media (max-width: 768px) {
+  .r1-surrender-btn { font-size: 9px; padding: 3px 7px; }
 }

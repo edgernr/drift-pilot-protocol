@@ -1,0 +1,474 @@
+/* ── WARBAND ROSTER — party at a glance ──────────────────────────────────── */
+
+.wr-wrap {
+  border: 1px solid #14141f;
+  border-radius: 6px;
+  background:
+    radial-gradient(ellipse at 50% 0%, #3df0e806 0%, transparent 60%),
+    #09090f;
+  padding: 12px 14px 14px;
+}
+
+.wr-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.wr-head-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: #eaf6f540;
+}
+.wr-head-count {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: #eaf6f545;
+  border: 1px solid #1c1c2c;
+  border-radius: 2px;
+  padding: 3px 7px;
+}
+.wr-head-count + .wr-head-count { margin-left: 0; }
+.wr-head-count.ok   { color: #3df0e8; border-color: #3df0e830; background: #3df0e808; }
+.wr-head-count.warn { color: #f5c453; border-color: #f5c45330; background: #f5c45308; }
+
+/* ── The rail of slots ── */
+.wr-rail {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.wr-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 16px 8px 10px;
+  border: 1px solid #16162a;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #101018 0%, #0a0a12 100%);
+  min-width: 0;
+  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+.wr-card.filled { border-color: #3df0e828; }
+.wr-card.filled:hover { transform: translateY(-2px); box-shadow: 0 8px 24px #00000060; }
+.wr-card.me { border-color: #3df0e860; box-shadow: 0 0 20px #3df0e814; }
+.wr-card.pending  { border-color: #f5c45330; border-style: dashed; }
+.wr-card.declined { border-color: #ff3d8b28; opacity: 0.72; }
+
+/* Leader crown, floating above the card like the reference */
+.wr-crown {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  color: #f5c453;
+  text-shadow: 0 0 12px #f5c45370;
+  line-height: 1;
+}
+
+.wr-portrait {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wr-portrait-veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #08080cc4;
+  border-radius: 50%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  color: #f5c453;
+}
+.wr-portrait-veil.declined { color: #ff3d8b; font-size: 16px; }
+
+.wr-name {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #eaf6f5;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+.wr-you { color: #3df0e8; font-weight: 400; font-size: 10px; }
+
+.wr-roles { display: flex; gap: 4px; min-height: 16px; }
+.wr-role-pip {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  font-size: 9px;
+  color: var(--rc, #3df0e8);
+  border: 1px solid color-mix(in srgb, var(--rc, #3df0e8) 40%, transparent);
+  background: color-mix(in srgb, var(--rc, #3df0e8) 9%, transparent);
+}
+.wr-role-pip.none { color: #eaf6f525; border-color: #1c1c2c; background: none; }
+
+.wr-slot-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.16em;
+  color: #eaf6f530;
+  border-top: 1px solid #14141f;
+  padding-top: 6px;
+  width: 100%;
+  text-align: center;
+}
+.wr-slot-tag.filled   { color: #3df0e880; }
+.wr-slot-tag.pending  { color: #f5c45390; }
+.wr-slot-tag.declined { color: #ff3d8b90; }
+
+.wr-mini {
+  background: none;
+  border: 1px solid #1e1e30;
+  color: #eaf6f550;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.wr-mini:hover:not(:disabled) { color: #ff3d8b; border-color: #ff3d8b40; }
+.wr-mini:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Empty slot — the invite affordance */
+.wr-empty {
+  cursor: pointer;
+  border-style: dashed;
+  border-color: #1c1c2c;
+  color: inherit;
+  font: inherit;
+  justify-content: center;
+  min-height: 158px;
+}
+.wr-empty:hover:not(:disabled) {
+  border-color: #3df0e850;
+  background: linear-gradient(180deg, #3df0e808 0%, #0a0a12 100%);
+}
+.wr-empty:disabled { opacity: 0.5; cursor: not-allowed; }
+/* No warband yet — the seat is shown but does nothing */
+.wr-empty.inert { cursor: default; opacity: 0.55; }
+.wr-empty.inert .wr-empty-plus { color: #eaf6f520; }
+
+.wr-hint {
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  line-height: 1.55;
+  color: #eaf6f535;
+}
+.wr-empty-plus {
+  font-size: 26px;
+  line-height: 1;
+  color: #3df0e860;
+  font-family: 'Saira Condensed', sans-serif;
+}
+.wr-empty-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: #eaf6f540;
+}
+
+/* ── Declined strip — refusals don't hold a seat on the rail ── */
+.wr-declined-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #14141f;
+}
+.wr-declined-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: #ff3d8b70;
+}
+.wr-declined-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #eaf6f570;
+  border: 1px solid #ff3d8b22;
+  background: #ff3d8b08;
+  border-radius: 12px;
+  padding: 3px 5px 3px 11px;
+}
+.wr-declined-again {
+  background: none;
+  border: 1px solid #1e1e30;
+  border-radius: 10px;
+  color: #eaf6f545;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.wr-declined-again:hover:not(:disabled) { color: #3df0e8; border-color: #3df0e840; }
+.wr-declined-again:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Function board: all five roles, held or open ── */
+.wr-board {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #14141f;
+}
+.wr-board-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: #eaf6f530;
+  margin-bottom: 7px;
+}
+.wr-board-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.wr-board-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid #16162a;
+  border-left: 2px solid #24243a;
+  border-radius: 3px;
+  background: #08080e;
+  min-width: 0;
+}
+.wr-board-role.held {
+  border-left-color: var(--rc);
+  background: color-mix(in srgb, var(--rc) 7%, transparent);
+}
+.wr-board-glyph { font-size: 11px; color: var(--rc); flex-shrink: 0; opacity: 0.55; }
+.wr-board-role.held .wr-board-glyph { opacity: 1; }
+.wr-board-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: #eaf6f545;
+  flex-shrink: 0;
+}
+.wr-board-holder {
+  margin-left: auto;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #eaf6f5c0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wr-board-holder.open {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: #f5c45370;
+}
+.wr-board-note {
+  margin-top: 8px;
+  font-size: 10px;
+  font-style: italic;
+  color: #eaf6f535;
+}
+@media (max-width: 900px) {
+  .wr-board-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Uncovered roles strip (legacy) ── */
+.wr-uncovered {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #14141f;
+}
+.wr-uncovered-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: #f5c45380;
+}
+.wr-uncovered-role {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--rc, #f5c453);
+  border: 1px solid color-mix(in srgb, var(--rc, #f5c453) 35%, transparent);
+  background: color-mix(in srgb, var(--rc, #f5c453) 8%, transparent);
+  border-radius: 2px;
+  padding: 2px 7px;
+}
+.wr-uncovered-note {
+  font-size: 10px;
+  color: #eaf6f535;
+  font-style: italic;
+}
+
+/* ── Friend picker ── */
+.wr-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #08080cd0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+.wr-picker {
+  width: 100%;
+  max-width: 380px;
+  background: #0c0c14;
+  border: 1px solid #1e1e32;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.wr-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  border-bottom: 1px solid #16162a;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #eaf6f560;
+}
+.wr-picker-x {
+  background: none; border: none; cursor: pointer;
+  color: #eaf6f540; font-size: 12px; padding: 2px 4px;
+}
+.wr-picker-x:hover { color: #ff3d8b; }
+.wr-picker-empty {
+  padding: 20px 16px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #eaf6f545;
+  text-align: center;
+}
+.wr-picker-list { max-height: 320px; overflow-y: auto; }
+.wr-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 13px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #10101a;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.wr-picker-row:hover:not(:disabled) { background: #3df0e808; }
+.wr-picker-row:disabled { opacity: 0.5; cursor: not-allowed; }
+.wr-picker-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: #eaf6f5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wr-picker-search {
+  width: calc(100% - 26px);
+  margin: 11px 13px 4px;
+  background: #06060c;
+  border: 1px solid #1a1a2a;
+  border-radius: 3px;
+  color: #eaf6f5;
+  font-family: 'Saira', sans-serif;
+  font-size: 12px;
+  padding: 7px 9px;
+  outline: none;
+}
+.wr-picker-search:focus { border-color: #3df0e850; }
+.wr-picker-search::placeholder { color: #eaf6f528; }
+.wr-picker-group {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  color: #eaf6f530;
+  padding: 8px 13px 4px;
+}
+.wr-picker-foot {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  color: #f5c45360;
+  padding: 8px 13px 10px;
+  border-top: 1px solid #12121c;
+}
+
+/* invite countdown */
+.wr-timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #f5c453;
+  border: 1px solid #f5c45330;
+  background: #f5c4530a;
+  border-radius: 8px;
+  padding: 1px 7px;
+}
+.wr-timer.urgent { color: #ff3d8b; border-color: #ff3d8b40; background: #ff3d8b0c; animation: wr-tick 1s steps(2) infinite; }
+@keyframes wr-tick { 50% { opacity: 0.45; } }
+
+.wr-declined-why {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: #eaf6f535;
+}
+
+.wr-picker-go {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: #3df0e880;
+  flex-shrink: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .wr-rail { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 560px) {
+  .wr-rail { grid-template-columns: repeat(2, 1fr); }
+  .wr-uncovered-note { display: none; }
+}

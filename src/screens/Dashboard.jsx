@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './Dashboard.css'
 import { useNav } from '../context/NavigationContext'
 import { useAuth, isSuspendActive, HUNT_REWARDS, SEASON_PASS_XP_MULT, USERNAME_COLORS } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import RaidView from './RaidView'
 import HunterSigil, { SIGIL_PALETTES } from '../components/HunterSigil'
+import * as F from '../lib/friends'
 
 function fmt(n) { return (n ?? 0).toLocaleString() }
 function randomSeed() { return Math.floor(Math.random() * 1e9) }
@@ -46,6 +47,13 @@ export default function Dashboard() {
     if (ok) window.history.replaceState({}, '', '/dashboard')
     return ok
   })
+  const [showFriends, setShowFriends] = useState(false)
+  const [friends, setFriends] = useState([])
+  const [myInvites, setMyInvites] = useState([])
+  const [friendSearch, setFriendSearch] = useState('')
+  const [friendSearchResults, setFriendSearchResults] = useState([])
+  const [friendRequests, setFriendRequests] = useState([])
+  const [friendError, setFriendError] = useState(null)
 
   const CARD_VARIANTS = [
     { id: 'dark',    grad: 'linear-gradient(135deg, oklch(0.20 0.08 270), oklch(0.12 0.04 250))', swatch: 'oklch(0.22 0.08 270)' },
@@ -126,6 +134,48 @@ export default function Dashboard() {
   useEffect(() => {
     if (needsPrologue) goto('prologue')
   }, [needsPrologue, goto])
+
+  // ─── Friends sidebar data ──────────────────────────────────────────────────
+  // Incoming requests are loaded here too: without them the dashboard could
+  // send a request but never show one, so an invite from a friend was invisible
+  // unless you happened to open the raid war room.
+  const fetchFriends = useCallback(async () => {
+    const [{ data: fr }, { data: reqs }] = await Promise.all([
+      F.listFriends(),
+      F.listFriendRequests(),
+    ])
+    if (fr) setFriends(fr)
+    setFriendRequests(reqs ?? [])
+  }, [])
+  useEffect(() => { if (user) fetchFriends() }, [user, fetchFriends])
+
+  // Live: a request arriving while you're on HQ should just appear.
+  useEffect(() => {
+    if (!user) return
+    const ch = supabase
+      .channel('dash-friend-requests')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'friend_requests', filter: `receiver_id=eq.${user.id}` },
+        fetchFriends)
+      .subscribe()
+    return () => ch.unsubscribe()
+  }, [user, fetchFriends])
+
+  useEffect(() => {
+    if (!user) return
+    const fetchInvites = async () => {
+      const { data } = await F.listMyRaidInvites()
+      if (data) setMyInvites(data)
+    }
+    fetchInvites()
+    const ch = supabase
+      .channel('dash-my-invites')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'raid_invites', filter: `invitee_id=eq.${user.id}` },
+        fetchInvites)
+      .subscribe()
+    return () => ch.unsubscribe()
+  }, [user])
 
   // Welcome modal yields to the prologue (which replaces its teaching role).
   const showWelcome = !welcomed && (profile?.questsCompleted ?? 0) === 0 && !needsPrologue
@@ -582,8 +632,21 @@ export default function Dashboard() {
           <div className="hamburger" onClick={() => setSidebarOpen(o => !o)}>
             <span /><span /><span />
           </div>
-          <div className="top-actions">
-            {/* Notifications */}
+            <div className="top-actions">
+              <button className="dash-friends-btn"
+                onClick={() => setShowFriends(!showFriends)}>
+                FRIENDS
+              </button>
+              {myInvites.length > 0 && (
+                <button className="dash-invites-btn"
+                  onClick={async () => {
+                    const { data } = await F.listMyRaidInvites()
+                    if (data) setMyInvites(data)
+                  }}>
+                  INVITES ({myInvites.length})
+                </button>
+              )}
+              {/* Notifications */}
             <div style={{ position: 'relative' }}>
               {notifOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setNotifOpen(false)} />}
               <div className="bell" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => { setNotifOpen(o => !o); setProfileOpen(false) }}>
@@ -1448,6 +1511,151 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+          </>
+        )}
+
+        {/* ══ FRIENDS SIDEBAR (Steam-style overlay) ══ */}
+        {showFriends && (
+          <>
+            <div className="dash-sidebar-backdrop" onClick={() => setShowFriends(false)} />
+            <aside className="dash-friends-sidebar">
+              <div className="dash-sidebar-head">
+                <span>HUNTER NETWORK</span>
+                <button className="dash-sidebar-close" onClick={() => setShowFriends(false)}>✕</button>
+              </div>
+
+              {/* Pending invites */}
+              {myInvites.length > 0 && (
+                <div className="dash-sidebar-section">
+                  <span className="dash-sidebar-title">PENDING INVITES ({myInvites.length})</span>
+                  {myInvites.map(inv => (
+                    <div key={inv.invite_id} className="dash-friend-row">
+                      <div className="dash-friend-info">
+                        <span className="dash-friend-dot pending">!</span>
+                        <span className="dash-friend-name">{inv.sender_name}</span>
+                        <span className="dash-friend-detail">→ {inv.raid_name}</span>
+                      </div>
+                      <div className="dash-friend-actions">
+                        <button className="dash-btn-tiny" onClick={async () => {
+                          const { error } = await F.respondRaidInvite(inv.invite_id, true)
+                          const { data } = await F.listMyRaidInvites()
+                          setMyInvites(data ?? [])
+                          await fetchFriends()
+                          // Accepting only reserves the slot — the hunter still
+                          // picks a specialization and burns entry in the war room.
+                          if (!error) goto('raid01')
+                        }}>
+                          JOIN
+                        </button>
+                        <button className="dash-btn-tiny sec" onClick={async () => {
+                          await F.respondRaidInvite(inv.invite_id, false)
+                          const { data } = await F.listMyRaidInvites()
+                          setMyInvites(data ?? [])
+                        }}>
+                          DECLINE
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Friends list */}
+              <div className="dash-sidebar-section">
+                <span className="dash-sidebar-title">FRIENDS</span>
+                {friends.length === 0 && (
+                  <div className="dash-sidebar-empty">No friends yet. Search below to add hunters.</div>
+                )}
+                {friends.map(f => (
+                  <div key={f.friend_id} className="dash-friend-row">
+                    <div className="dash-friend-info">
+                      <span className="dash-friend-dot online" />
+                      {/* list_friends() returns `name` — `friend_name` was
+                          undefined, so every friend rendered as a blank row. */}
+                      <span className="dash-friend-name">{f.name ?? 'Hunter'}</span>
+                    </div>
+                    <button className="dash-btn-tiny"
+                      onClick={() => {
+                        // Inviting happens in the war room lobby (it needs a raid
+                        // to invite INTO). The old setShowWarRoom state was
+                        // removed when the card moved to the Raids tab, leaving
+                        // this button throwing a ReferenceError.
+                        setShowFriends(false)
+                        goto('raid01')
+                      }}>
+                      INVITE
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Incoming friend requests */}
+              {friendRequests.length > 0 && (
+                <div className="dash-sidebar-section">
+                  <span className="dash-sidebar-title">FRIEND REQUESTS ({friendRequests.length})</span>
+                  {friendRequests.map(fr => (
+                    <div key={fr.request_id} className="dash-friend-row">
+                      <div className="dash-friend-info">
+                        <span className="dash-friend-dot pending">!</span>
+                        <span className="dash-friend-name">{fr.name ?? 'Hunter'}</span>
+                      </div>
+                      <div className="dash-friend-actions">
+                        <button className="dash-btn-tiny" onClick={async () => {
+                          const { error } = await F.respondFriendRequest(fr.request_id, true)
+                          if (error) setFriendError(F.friendError(error))
+                          await fetchFriends()
+                        }}>ACCEPT</button>
+                        <button className="dash-btn-tiny sec" onClick={async () => {
+                          await F.respondFriendRequest(fr.request_id, false)
+                          await fetchFriends()
+                        }}>DECLINE</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Search & add */}
+              <div className="dash-sidebar-section">
+                <span className="dash-sidebar-title">ADD HUNTER</span>
+                <input className="dash-sidebar-input"
+                  placeholder="Search by name…"
+                  value={friendSearch}
+                  onChange={async (e) => {
+                    const q = e.target.value
+                    setFriendSearch(q)
+                    setFriendError(null)
+                    if (!q.trim()) { setFriendSearchResults([]); return }
+                    const { data, error } = await F.searchHunters(q.trim(), user?.id)
+                    if (error) { setFriendError(F.friendError(error)); setFriendSearchResults([]); return }
+                    setFriendSearchResults(data ?? [])
+                  }}
+                />
+                {friendError && <div className="dash-friend-error">{friendError}</div>}
+                {friendSearch.trim() && !friendError && friendSearchResults.length === 0 && (
+                  <div className="dash-friend-empty">No hunter by that name.</div>
+                )}
+                {friendSearchResults.map(h => (
+                  <div key={h.user_id} className="dash-friend-row">
+                    <div className="dash-friend-info">
+                      <span className="dash-friend-dot search" />
+                      <span className="dash-friend-name">{h.name}</span>
+                    </div>
+                    <button className="dash-btn-tiny"
+                      disabled={friends.some(f => f.friend_id === h.user_id)}
+                      onClick={async () => {
+                        const { error } = await F.sendFriendRequest(h.user_id)
+                        if (error) { setFriendError(F.friendError(error)); return }
+                        setFriendError(null)
+                        setFriendSearch(''); setFriendSearchResults([])
+                        await fetchFriends()
+                      }}>
+                      {friends.some(f => f.friend_id === h.user_id) ? 'FRIENDS' : 'ADD'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </aside>
           </>
         )}
 

@@ -1,8 +1,8 @@
-// RAID 01 solver harness (rule #6) — proves all nine heads of THE BROODGATE are
-// severable end-to-end through the REAL Raid01Combat shell: each head's
-// `solution` loads as the stored code → CLAIM → wards pass through the live
-// check pipeline (rendered offscreen iframe, computed styles, geometry, events)
-// → STRIKE → severed. After nine severs the victory overlay must appear.
+// RAID 01 solver harness (rule #6) — proves all five functions of THE BROODGATE
+// are completable end-to-end through the REAL Raid01Combat shell: each function's
+// `solution` loads as the stored code → wards pass through the live check pipeline
+// (rendered offscreen iframe, computed styles, geometry, events) → STRIKE →
+// function complete. After five completions the victory overlay must appear.
 //
 // Usage:  node scripts/solve-raid01.mjs [baseUrl]
 // Requires: dev server running (the /__raidsolver route is dev-only), Chrome.
@@ -68,38 +68,34 @@ await send('Page.enable')
 let ok = true
 try {
   await send('Page.navigate', { url: `${BASE}/__raidsolver` })
-  await waitFor(`!!document.querySelector('.r1-head-row')`, TIMEOUT_MS, 'raid shell mount')
+  await waitFor(`!!document.querySelector('.r1-strike-btn')`, TIMEOUT_MS, 'raid shell mount')
 
-  for (let n = 1; n <= 9; n++) {
+  for (let n = 1; n <= 5; n++) {
     const t0 = Date.now()
-    // Claim whatever head is currently selected (the shell auto-advances after
-    // each sever; head 1 is selected on mount).
-    await waitFor(`!!document.querySelector('.r1-claim-btn')`, TIMEOUT_MS, `claim button (head ${n})`)
-    await evaluate(`document.querySelector('.r1-claim-btn')?.click()`)
-    // Solution code is pre-loaded; wait for every ward to pass live…
+    // Wait for the STRIKE button with all wards green (solution code is pre-loaded).
     await waitFor(
       `!!document.querySelector('.r1-scanner-count.clear')`,
-      TIMEOUT_MS, `wards green (head ${n})`
+      TIMEOUT_MS, `wards green (function ${n})`
     )
-    // …then STRIKE and confirm the sever registered.
-    await waitFor(`!!document.querySelector('.r1-strike-btn')`, TIMEOUT_MS, `strike button (head ${n})`)
+    // STRIKE and confirm the function completed.
+    await waitFor(`!!document.querySelector('.r1-strike-btn:not(:disabled)')`, TIMEOUT_MS, `strike button (function ${n})`)
     await evaluate(`document.querySelector('.r1-strike-btn')?.click()`)
     await waitFor(
-      `document.querySelectorAll('.r1-head-row.severed').length >= ${n}`,
-      TIMEOUT_MS, `sever ${n} registered`
+      `document.querySelectorAll('.r1-fn-row.done').length >= ${n}`,
+      TIMEOUT_MS, `complete ${n} registered`
     )
     const hp = await evaluate(`document.querySelector('.r1-boss-hp-val')?.textContent ?? '?'`)
-    console.log(`HEAD ${n}/9  ✂ SEVERED   boss ${String(hp).trim()}   (${Date.now() - t0}ms)`)
+    console.log(`FUNCTION ${n}/5  ✦ COMPLETE   boss ${String(hp).trim()}   (${Date.now() - t0}ms)`)
   }
 
   await waitFor(`!!document.querySelector('.r1-victory-overlay')`, 12000, 'victory overlay')
-  console.log('\nVARKUL, THE NULLHEART HYDRA — DEFEATED. 9/9 heads machine-verified.')
+  console.log('\nVARKUL, THE NULLHEART HYDRA — DEFEATED. 5/5 functions machine-verified.')
 } catch (e) {
   ok = false
   const state = await evaluate(`({
-    severed: document.querySelectorAll('.r1-head-row.severed').length,
+    completed: document.querySelectorAll('.r1-fn-row.done').length,
     scanner: document.querySelector('.r1-scanner-count')?.textContent ?? '(none)',
-    wards: [...document.querySelectorAll('.r1-ward')].map(w => w.textContent.trim().slice(0, 70)),
+    wards: [...document.querySelectorAll('.r1-chip')].map(w => w.textContent.trim().slice(0, 70)),
   })`)
   console.error(`\n❌ RAID SOLVER FAILED: ${e.message}`)
   console.error('   state:', JSON.stringify(state, null, 2))

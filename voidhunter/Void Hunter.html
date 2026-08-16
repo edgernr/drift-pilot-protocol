@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Void Hunter — Awaken. Clear Gates. Level up as a developer.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=Saira:wght@300;400;500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="voidhunter.css">
+</head>
+<body>
+  <div class="fx-scanlines"></div>
+  <div class="fx-grain"></div>
+
+  <!-- ============================ NAV ============================ -->
+  <nav class="nav" id="nav">
+    <div class="brand"><span class="mark"></span> Void Hunter</div>
+    <div class="links">
+      <a href="#journey">Journey</a>
+      <a href="#worlds">Worlds</a>
+      <a href="#gate">Gates</a>
+      <a href="#ranks">Ranks</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-right">
+      <div class="hunter-chip"><span class="rank e" style="width:26px;height:30px;font-size:17px;">E</span> RANK&nbsp;E&nbsp;//&nbsp;UNAWAKENED</div>
+      <a href="#gate" class="btn btn-gold">Awaken <span class="arr">⟶</span></a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <!-- ============================ HERO ============================ -->
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">System online // Hunter Association</span>
+        <h1 class="h-xl glitch">
+          <span class="l1">Awaken</span>
+          <span class="l1">as a <span class="tint-cyan">Hunter.</span></span>
+          <span class="l2">Clear <b>Gates.</b> Level up as a <b>developer.</b></span>
+        </h1>
+        <p class="lead">Void Hunter turns learning to code into a Solo-Leveling-style ascent. Step through a Gate, clear a real coding mission, earn XP and Void Shards, and rank up from E to S as your actual skills grow.</p>
+        <div class="hero-cta">
+          <a href="#gate" class="btn btn-cyan">Enter the first Gate <span class="arr">⟶</span></a>
+          <a href="#journey" class="btn btn-ghost">How it works</a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="s">
+            <div class="n">48,210</div>
+            <div class="k">Hunters awakened</div>
+          </div>
+          <div class="s">
+            <div class="n">312<span class="u">k</span></div>
+            <div class="k">Gates cleared</div>
+          </div>
+          <div class="s">
+            <div class="n">Season <span class="u">01</span></div>
+            <div class="k">The Abyss is open</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THE GATE -->
+      <div class="gate-stage">
+        <div class="gate" id="gateVisual">
+          <span class="frame-br tl"></span><span class="frame-br tr"></span>
+          <span class="frame-br bl"></span><span class="frame-br brr"></span>
+          <div class="gate-glow"></div>
+          <div class="arch a1"></div>
+          <div class="arch a2"></div>
+          <div class="arch a3"></div>
+          <div class="gate-core"></div>
+          <div class="gate-beam"></div>
+          <div class="gate-particles" id="gateParticles"></div>
+          <div class="hunter"></div>
+          <div class="gate-floor"></div>
+          <div class="gate-readout">
+            GATE // OPEN<br/>
+            <span class="d">THREAT: E-RANK</span><br/>
+            <span class="d">STATUS: STABLE</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ JOURNEY ============================ -->
+    <section class="sec" id="journey">
+      <div class="sec-head">
+        <span class="eyebrow">// The Hunter's journey</span>
+        <h2 class="h-lg reveal">From <span class="tint-dim">E-rank</span> novice<br/>to <span class="tint-gold">S-rank</span> developer.</h2>
+        <p class="lead reveal">No abstract “learning paths.” A clear loop you can feel: awaken, enter a Gate, clear it, rank up, and walk out with real projects.</p>
+      </div>
+
+      <div class="journey reveal">
+        <div class="journey-track" id="journeyTrack"><i></i></div>
+
+        <div class="j-step">
+          <span class="j-dot"></span>
+          <div class="j-node panel">
+            <span class="j-rank rank e">E</span>
+            <div class="j-num">01</div>
+            <h3>Awaken</h3>
+            <p>Take the Awakening test. The System reads your level and assigns your first E-rank Gate. No setup, no wallet.</p>
+          </div>
+        </div>
+
+        <div class="j-step">
+          <span class="j-dot"></span>
+          <div class="j-node panel">
+            <span class="j-rank rank d">D</span>
+            <div class="j-num">02</div>
+            <h3>Enter a Gate</h3>
+            <p>Each Gate is a contained coding mission with a clear objective, a live editor, and a System that checks your work.</p>
+          </div>
+        </div>
+
+        <div class="j-step">
+          <span class="j-dot"></span>
+          <div class="j-node panel">
+            <span class="j-rank rank c">C</span>
+            <div class="j-num">03</div>
+            <h3>Clear it</h3>
+            <p>Pass every objective to clear the Gate. You earn XP and <span class="shard"></span> Void Shards the moment it closes.</p>
+          </div>
+        </div>
+
+        <div class="j-step">
+          <span class="j-dot"></span>
+          <div class="j-node panel">
+            <span class="j-rank rank b">B</span>
+            <div class="j-num">04</div>
+            <h3>Rank up</h3>
+            <p>XP raises your Hunter rank E→D→C→B→A→S. Higher ranks unlock harder Gates and rarer rewards.</p>
+          </div>
+        </div>
+
+        <div class="j-step">
+          <span class="j-dot"></span>
+          <div class="j-node panel">
+            <span class="j-rank rank s">S</span>
+            <div class="j-num">05</div>
+            <h3>Build real projects</h3>
+            <p>S-rank Gates are full builds — ship a real app, add it to your portfolio, prove the skill is yours.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ WORLDS ============================ -->
+    <section class="sec" id="worlds">
+      <div class="sec-head split">
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <span class="eyebrow">// Choose your world</span>
+          <h2 class="h-lg reveal">Three worlds.<br/>One ascent.</h2>
+        </div>
+        <p class="lead reveal">Each world is a different domain with its own mood, its own Gates, and its own threats. Start anywhere. Hunt everywhere.</p>
+      </div>
+
+      <div class="worlds">
+        <!-- The Abyss -->
+        <article class="world abyss reveal">
+          <div class="w-bg"></div>
+          <div class="w-inner">
+            <div class="w-label">World 01 — Frontend &amp; web</div>
+            <h3>The Abyss</h3>
+            <p>A dark-fantasy descent through the building blocks of the web. Bend HTML, command CSS, and animate the interface until the void renders exactly as you will it. This is where most Hunters awaken.</p>
+            <div class="w-meta">
+              <span class="tag cyan">HTML · CSS · JS</span>
+              <span class="tag">42 Gates</span>
+              <span class="tag">Rank E–A</span>
+            </div>
+            <a href="#gate" class="w-enter glitch">Descend into the Abyss <span class="arr">⟶</span></a>
+          </div>
+        </article>
+
+        <!-- Night City -->
+        <article class="world night reveal">
+          <div class="w-bg"></div>
+          <div class="w-inner">
+            <div class="w-label">World 02 — Software engineering</div>
+            <h3>Night City</h3>
+            <p>A neon sprawl of systems, data structures and algorithms. Run jobs, route requests, survive the architecture.</p>
+            <div class="w-meta">
+              <span class="tag" style="color:var(--magenta);border-color:rgba(255,61,139,0.4);">Algorithms · APIs</span>
+              <span class="tag">Rank C–S</span>
+            </div>
+            <a href="#gate" class="w-enter glitch">Jack into Night City <span class="arr">⟶</span></a>
+          </div>
+        </article>
+
+        <!-- Young Hunters -->
+        <article class="world young reveal">
+          <div class="w-bg"></div>
+          <div class="w-inner">
+            <div class="w-label">World 03 — Young Hunters</div>
+            <h3>The Academy</h3>
+            <p>A brighter, friendlier training ground for young Hunters (8–14). Same Gates, gentler threats, colorful guides.</p>
+            <div class="w-meta">
+              <span class="tag gold">Ages 8–14</span>
+              <span class="tag">Guided</span>
+            </div>
+            <a href="#gate" class="w-enter glitch">Enter the Academy <span class="arr">⟶</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============================ SAMPLE GATE ============================ -->
+    <section class="sec" id="gate">
+      <div class="sec-head">
+        <span class="eyebrow">// Sample Gate</span>
+        <h2 class="h-lg reveal">Look inside a Gate.</h2>
+      </div>
+
+      <div class="gate-sample">
+        <div class="reveal">
+          <p class="lead">Every Gate is a mission briefing: a clear objective, a rank, and a fixed reward. The System grades your code against the objectives — clear them all and the Gate closes, paying out XP and Void Shards instantly.</p>
+          <div style="margin-top:28px; display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; gap:14px; align-items:center;">
+              <span class="rank c" style="width:32px;height:38px;font-size:21px;">C</span>
+              <span class="mono" style="font-size:13px; color:var(--ink-2); letter-spacing:0.06em;">Rank scales with the threat inside</span>
+            </div>
+            <div style="display:flex; gap:14px; align-items:center;">
+              <span class="shard" style="width:22px;height:22px;"></span>
+              <span class="mono" style="font-size:13px; color:var(--ink-2); letter-spacing:0.06em;">Shards drop the instant a Gate clears</span>
+            </div>
+          </div>
+          <a href="#ranks" class="btn btn-cyan" style="margin-top:34px;">Enter Gate 01 <span class="arr">⟶</span></a>
+        </div>
+
+        <div class="gate-window panel cyan-edge reveal" data-bracket>
+          <div class="gw-head">
+            <span class="id">▸ Gate 01 // The Abyss</span>
+            <span class="stat">STATUS: UNCLEARED</span>
+          </div>
+          <div class="gw-body">
+            <div class="gw-title">
+              <h3>Responsive Landing Page</h3>
+              <span class="rank d">D</span>
+            </div>
+            <div class="gw-sub">Objective — render a landing page that holds its shape from 320px to 1440px</div>
+
+            <div class="gw-rewards">
+              <div class="gw-reward xp">
+                <div class="k">XP Reward</div>
+                <div class="v">+1,200</div>
+              </div>
+              <div class="gw-reward shard">
+                <div class="k">Void Shards</div>
+                <div class="v"><span class="shard"></span> 340</div>
+              </div>
+            </div>
+
+            <div class="gw-obj">
+              <div class="o done"><span class="bx"></span> Semantic structure: header, main, footer</div>
+              <div class="o done"><span class="bx"></span> Fluid type scale with clamp()</div>
+              <div class="o"><span class="bx"></span> Layout reflows cleanly at 3 breakpoints</div>
+              <div class="o"><span class="bx"></span> No horizontal scroll at 320px</div>
+            </div>
+          </div>
+          <div class="gw-foot">
+            <div class="gw-diff">
+              Difficulty
+              <span class="bar" data-fill="45"><i></i></span>
+            </div>
+            <a href="#ranks" class="btn btn-gold" style="padding:12px 22px;">Clear Gate <span class="arr">⟶</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ RANKS & SHARDS ============================ -->
+    <section class="sec" id="ranks">
+      <div class="sec-head">
+        <span class="eyebrow gold">// Ranks &amp; Void Shards</span>
+        <h2 class="h-lg reveal">Climb the ladder.<br/>Bank the <span class="tint-gold">Shards.</span></h2>
+      </div>
+
+      <div class="ranks-grid">
+        <div class="ladder reveal">
+          <div class="row s">
+            <span class="rank s">S</span>
+            <div><div class="lvl-name tint-gold">Sovereign</div><div class="lvl-desc">Ship production-grade builds</div></div>
+            <div class="lvl-xp">120,000 XP</div>
+          </div>
+          <div class="row">
+            <span class="rank a">A</span>
+            <div><div class="lvl-name">Ascendant</div><div class="lvl-desc">Architect full features</div></div>
+            <div class="lvl-xp">60,000 XP</div>
+          </div>
+          <div class="row">
+            <span class="rank b">B</span>
+            <div><div class="lvl-name">Breaker</div><div class="lvl-desc">Compose real components</div></div>
+            <div class="lvl-xp">28,000 XP</div>
+          </div>
+          <div class="row">
+            <span class="rank c">C</span>
+            <div><div class="lvl-name">Clearer</div><div class="lvl-desc">Solve multi-step Gates</div></div>
+            <div class="lvl-xp">12,000 XP</div>
+          </div>
+          <div class="row">
+            <span class="rank d">D</span>
+            <div><div class="lvl-name">Delver</div><div class="lvl-desc">Handle the fundamentals</div></div>
+            <div class="lvl-xp">4,000 XP</div>
+          </div>
+          <div class="row">
+            <span class="rank e">E</span>
+            <div><div class="lvl-name tint-dim">Unawakened</div><div class="lvl-desc">Where every Hunter begins</div></div>
+            <div class="lvl-xp">0 XP</div>
+          </div>
+        </div>
+
+        <div class="shard-side reveal">
+          <div class="shard-visual">
+            <div class="big-shard"><span class="label">$SHARD</span></div>
+          </div>
+          <div class="shard-points">
+            <div class="pt">
+              <span class="shard ic" style="width:18px;height:18px;"></span>
+              <div><h4>Earned, not bought</h4><p>Shards only drop from clearing Gates and keeping streaks. You can’t buy your way up a rank.</p></div>
+            </div>
+            <div class="pt">
+              <span class="shard ic" style="width:18px;height:18px;"></span>
+              <div><h4>Spend them in-game</h4><p>Trade Shards for hints, Gate retries, cosmetic Hunter gear, and early access to new worlds.</p></div>
+            </div>
+            <div class="pt">
+              <span class="shard ic" style="width:18px;height:18px;"></span>
+              <div><h4>Yours to keep</h4><p>Shards live in your Hunter profile. No wallet, no purchase, no obligation — ever.</p></div>
+            </div>
+          </div>
+          <div class="wallet-note">
+            <b>Wallet optional.</b> Void Shards are in-app points by default. If you ever want to claim them on-chain you can connect a wallet — but you never have to, and nothing in the game is gated behind one.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ TRUST / FAQ ============================ -->
+    <section class="sec" id="faq">
+      <div class="sec-head">
+        <span class="eyebrow">// System log / FAQ</span>
+        <h2 class="h-lg reveal">Before you awaken.</h2>
+      </div>
+
+      <div class="trust-grid">
+        <div class="trust-left reveal">
+          <div class="who">
+            <div class="item">
+              <div class="k">Who built this</div>
+              <p>A small team of working developers and game designers who were tired of tutorials that felt like chores. We build the Gates we wish we’d learned from.</p>
+            </div>
+            <div class="item">
+              <div class="k">The roadmap</div>
+              <p>Season 01 (The Abyss) is live. Night City enters open beta next, followed by the Young Hunters Academy and a Season 02 of S-rank project Gates.</p>
+            </div>
+          </div>
+          <div class="disclaimer">
+            ⚠ Void Hunter is an independent learning platform. It is <b>not affiliated with, sponsored by, or endorsed by any cryptocurrency project</b>. “Void Shards / $SHARD” are in-app progression points; any optional on-chain claim is a convenience feature, not an investment, and carries no promise of value.
+          </div>
+        </div>
+
+        <div class="faq reveal">
+          <div class="faq-item open">
+            <button class="faq-q">Do I need to know how to code already? <span class="pm">+</span></button>
+            <div class="faq-a"><div class="inner">No. The Awakening test places you at the right Gate — most Hunters start at E-rank with zero experience. The System scales the threat to your level.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">How do Void Shards actually work? <span class="pm">+</span></button>
+            <div class="faq-a"><div class="inner">Shards are points you earn by clearing Gates and holding streaks. Spend them in-game on hints, retries, and cosmetics. They’re stored in your Hunter profile — no purchase required, ever.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">Do I need a crypto wallet? <span class="pm">+</span></button>
+            <div class="faq-a"><div class="inner">No. A wallet is entirely optional. The whole game — every Gate, rank, and reward — works without one. Connecting a wallet only lets you optionally claim Shards on-chain if that’s something you want.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">Is the code real, or just quizzes? <span class="pm">+</span></button>
+            <div class="faq-a"><div class="inner">Real. You write actual code in a live editor and the System grades it against the Gate’s objectives. S-rank Gates are full builds you can put straight into a portfolio.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q">Is there a track for kids? <span class="pm">+</span></button>
+            <div class="faq-a"><div class="inner">Yes — the Young Hunters Academy is built for ages 8–14 with the same Gate structure, gentler threats, brighter guides, and parent-friendly safeguards.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================ FINAL CTA ============================ -->
+  <section class="final">
+    <div class="glowline"></div>
+    <div class="wrap">
+      <span class="eyebrow" style="justify-content:center;">// The Gate is open</span>
+      <h2 class="h-lg reveal" style="margin-top:18px;">Will you <span class="tint-cyan">awaken?</span></h2>
+      <p class="lead reveal">Step through your first Gate in under a minute. No card, no wallet, no setup — just you and the void.</p>
+      <div class="final-cta">
+        <a href="#gate" class="btn btn-gold glitch">Awaken now <span class="arr">⟶</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="inner">
+      <div class="brand"><span class="mark"></span> Void Hunter</div>
+      <div class="f-links">
+        <a href="#journey">Journey</a>
+        <a href="#worlds">Worlds</a>
+        <a href="#ranks">Ranks</a>
+        <a href="#faq">FAQ</a>
+        <a href="#">Discord</a>
+      </div>
+      <div class="copy">© 2026 Void Hunter — an independent learning platform.</div>
+    </div>
+  </footer>
+
+  <script src="voidhunter.js"></script>
+</body>
+</html>

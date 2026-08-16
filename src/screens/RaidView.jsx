@@ -3,7 +3,20 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useNav } from '../context/NavigationContext'
 import RaidIDE, { SYNC_CODE_CHECKS } from './RaidIDE'
+import { attachNames } from '../lib/publicProfiles'
+import {
+  RAID01, ROLES as RAID01_ROLES, ROLE_LIST as RAID01_ROLE_LIST, FUNCTIONS as RAID01_FUNCTIONS,
+  BOSS_HP_MAX as RAID01_BOSS_HP, PARTY_MIN as RAID01_PARTY_MIN, PARTY_MAX as RAID01_PARTY_MAX,
+  ENTRY_COST as RAID01_ENTRY_COST,
+} from '../data/raids/raid01'
 import './RaidView.css'
+
+// This view renders member names as `member.profiles.name` in four places.
+// Rather than touch every render site, rebuild that shape from the public view
+// — so nothing here reads another hunter's row in the profiles table.
+const attachMemberNames = async (rows) =>
+  (await attachNames(rows, 'user_id', '__name'))
+    .map(({ __name, ...m }) => ({ ...m, profiles: { name: __name } }))
 
 const ROLES = {
   interface: {
@@ -496,11 +509,13 @@ export default function RaidView() {
   const loadRaidDetails = useCallback(async (raidId) => {
     const [{ data: raid }, { data: mems }, { data: evts }] = await Promise.all([
       supabase.from('raids').select('*').eq('id', raidId).single(),
-      supabase.from('raid_members').select('*, profiles(name)').eq('raid_id', raidId),
+      supabase.from('raid_members').select('*').eq('raid_id', raidId),
       supabase.from('raid_events').select('*').eq('raid_id', raidId).order('created_at', { ascending: false }).limit(60),
     ])
     if (raid) setActiveRaid(raid)
-    if (mems) setMembers(mems)
+    // Names resolve through public_profiles; the shape below keeps the existing
+    // `member.profiles.name` render sites working unchanged.
+    if (mems) setMembers(await attachMemberNames(mems))
     if (evts) setEvents(evts)
   }, [])
 
@@ -514,9 +529,9 @@ export default function RaidView() {
     setOpenRaids(list)
     if (!list.length) { setOpenRaidMembers({}); return }
     const { data: allMems } = await supabase
-      .from('raid_members').select('*, profiles(name)').in('raid_id', list.map(r => r.id))
+      .from('raid_members').select('*').in('raid_id', list.map(r => r.id))
     const grouped = {}
-    for (const m of allMems ?? []) {
+    for (const m of await attachMemberNames(allMems)) {
       if (!grouped[m.raid_id]) grouped[m.raid_id] = []
       grouped[m.raid_id].push(m)
     }
@@ -1143,154 +1158,47 @@ export default function RaidView() {
   if (!activeRaid) {
     return (
       <div className="raid-lobby">
-        {/* RAID 01 — THE BROODGATE (playable boss raid, own screen) */}
-        <button
-          onClick={() => goto('raid01')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 16, width: '100%', textAlign: 'left',
-            background: 'linear-gradient(90deg, rgba(255,61,139,0.09), rgba(8,8,12,0))',
-            border: '1px solid rgba(255,61,139,0.35)', borderRadius: 8,
-            padding: '14px 18px', marginBottom: 18, cursor: 'pointer',
-          }}
-        >
-          <span style={{ fontSize: 26 }}>⚔</span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.22em', color: '#ff3d8b', marginBottom: 3 }}>
-              RAID 01 · NOW OPEN · 2–5 HUNTERS
-            </span>
-            <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: 'var(--ink-1, #eaf6f5)', letterSpacing: '0.04em' }}>
-              THE BROODGATE — VARKUL, THE NULLHEART HYDRA
-            </span>
-            <span style={{ display: 'block', fontSize: 11, color: 'var(--ink-3, #8a9a98)', marginTop: 2 }}>
-              A real boss with nine heads of real code. Sever them all. Live party, live HP, per-neck payouts.
-            </span>
-          </span>
-          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: '#ff3d8b', whiteSpace: 'nowrap' }}>
-            ENTER THE WAR ROOM →
-          </span>
-        </button>
-
-        <div className="raid-lore-banner">
-          <div className="raid-lore-glyph">※</div>
-          <div>
-            <div className="raid-lore-name">THE ABYSSAL RAID — GATE ZERO</div>
-            <div className="raid-lore-text">
-              Gate Zero doesn't appear on any map. A party of <strong>five seekers</strong> is the minimum.
-              Gate Zero is a <strong>living system</strong> — build, deploy, and defend it in 48 to 72 hours
-              while it actively tries to destroy what you're creating.
+        {/* ══ BROODGATE WAR ROOM CARD ══ */}
+        <div className="dash-raid-card">
+          <div className="dash-raid-card-bg" />
+          <div className="dash-raid-card-body">
+            <div className="dash-raid-card-left">
+              <span className="dash-raid-tag">RAID 01 · NOW OPEN · {RAID01_PARTY_MIN}–{RAID01_PARTY_MAX} HUNTERS</span>
+              <h2 className="dash-raid-title">THE BROODGATE — {RAID01.boss.name}</h2>
+              <p className="dash-raid-lore">{RAID01.boss.lore}</p>
+              <div className="dash-raid-meta">
+                <span>⚔ {RAID01_PARTY_MIN}–{RAID01_PARTY_MAX} Hunters</span>
+                <span>◈ {RAID01_ENTRY_COST} $SHARD entry</span>
+                <span>⏱ 5 Sequential Functions</span>
+              </div>
+              <div className="dash-raid-actions">
+                <button className="btn btn-primary"
+                  onClick={() => goto('raid01')}
+                  style={{ fontSize: 14, padding: '12px 28px' }}>
+                  ⚔ ENTER THE WAR ROOM
+                </button>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
-              {[{ ic: '⚑', t: '5 Seekers' }, { ic: '⏱', t: '48–72 Hours' }, { ic: '$', t: 'SHARD Bounty' }, { ic: '★', t: 'Raid Badge' }].map(f => (
-                <span key={f.t} className="chip" style={{ padding: '4px 10px', fontSize: 11, display: 'inline-flex', gap: 6 }}><span>{f.ic}</span>{f.t}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, marginBottom: 24, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button className="btn btn-primary" onClick={() => setCreating(c => !c)}>
-            {creating ? 'Cancel' : 'Form a Squad →'}
-          </button>
-          <input
-            className="set-input"
-            placeholder="Search by squad name..."
-            value={searchName}
-            onChange={e => setSearchName(e.target.value)}
-            style={{ maxWidth: 220, padding: '8px 12px', fontSize: 12 }}
-          />
-          <button className="btn" onClick={loadOpenRaids} style={{ fontSize: 12 }}>↺ Refresh</button>
-        </div>
-
-        {creating && (
-          <div className="panel raid-create-panel">
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>New Raid</div>
-            <input
-              className="set-input"
-              placeholder="Squad name (e.g. Team Zero)"
-              value={raidName}
-              onChange={e => setRaidName(e.target.value)}
-              style={{ marginBottom: 18, maxWidth: 360, display: 'block' }}
-            />
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Your Role</div>
-            <div className="raid-role-grid">
-              {ROLE_ORDER.map(k => {
-                const r = ROLES[k]
-                return (
-                  <div key={k} className={`raid-role-card${selectedRole === k ? ' selected' : ''}`} style={{ '--rc': r.color }} onClick={() => setSelectedRole(k)}>
-                    <div className="rrc-icon">{r.icon}</div>
-                    <div className="rrc-label">{r.label}</div>
-                    <div className="rrc-owns">{r.owns}</div>
-                  </div>
-                )
-              })}
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              <button className="btn btn-primary" disabled={!raidName.trim() || !selectedRole || busy || (spendableDrift < RAID_ENTRY_COST && !isAdmin)} onClick={handleCreate}>
-                {busy ? 'Creating...' : `Create Raid → (${RAID_ENTRY_COST} $SHARD)`}
-              </button>
-              <button className="btn" onClick={() => { setCreating(false); setRaidName(''); setSelectedRole(null) }}>Cancel</button>
-            </div>
-          </div>
-        )}
-
-        <div>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
-            Open Squads {openRaids.length > 0 && <span style={{ color: 'var(--ink-4)' }}>· {openRaids.length} available · live</span>}
-          </div>
-          {filteredOpenRaids.length === 0 ? (
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink-3)', padding: '20px 0' }}>
-              {searchName.trim() ? `No squads matching "${searchName}"` : 'No open squads. Form one and share your squad name with your team.'}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {filteredOpenRaids.map(raid => {
-                const mems = openRaidMembers[raid.id] ?? []
-                const alreadyIn = mems.some(m => m.user_id === user?.id)
-                const remainMin = Math.max(0, Math.floor((60 * 60 * 1000 - (Date.now() - new Date(raid.created_at).getTime())) / 60000))
-                const expirySoon = remainMin <= 10
-                return (
-                  <div key={raid.id} className="panel raid-open-card">
-                    <div className="raid-open-header">
-                      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 14, color: 'var(--ink-1)', fontWeight: 600 }}>{raid.name}</div>
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>{mems.length}/5 seekers</div>
-                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: expirySoon ? 'var(--magenta)' : 'var(--ink-3)' }}>
-                          {expirySoon ? `⚠ expires in ${remainMin}m` : `expires in ${remainMin}m`}
-                        </div>
+            <div className="dash-raid-card-right">
+              <div className="dash-raid-roles">
+                {RAID01_ROLE_LIST.map(r => {
+                  const fn = RAID01_FUNCTIONS.find(f => f.role === r.id)
+                  return (
+                    <div key={r.id} className="dash-raid-role" style={{ '--role-c': r.color }}>
+                      <span className="dash-role-glyph">{r.glyph}</span>
+                      <div className="dash-role-info">
+                        <span className="dash-role-label">{r.label}</span>
+                        <span className="dash-role-duty">{r.duty}</span>
                       </div>
+                      {fn && <span className="dash-role-fn">F{fn.seq}</span>}
                     </div>
-                    <div className="raid-slots">
-                      {ROLE_ORDER.map(k => {
-                        const r = ROLES[k]
-                        const member = mems.find(m => m.role === k)
-                        const isMe = member?.user_id === user?.id
-                        const canJoin = !member && !alreadyIn
-                        return (
-                          <div key={k}
-                            className={`raid-slot${member ? ' slot-taken' : canJoin ? ' slot-open' : ''}`}
-                            style={{ '--rc': r.color }}
-                            onClick={canJoin ? () => setJoiningRaid({ raidId: raid.id, role: k }) : undefined}
-                          >
-                            <span className="slot-icon">{r.icon}</span>
-                            <span className="slot-name">{member ? (isMe ? 'YOU' : (member.profiles?.name ?? 'Seeker')) : r.label.split(' ')[0]}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    {joiningRaid?.raidId === raid.id && (
-                      <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-2)' }}>Join as {ROLES[joiningRaid.role]?.label}?</span>
-                        <button className="btn btn-primary" style={{ fontSize: 11, padding: '4px 10px' }} disabled={busy || (spendableDrift < RAID_ENTRY_COST && !isAdmin)}
-                          onClick={() => handleJoin(joiningRaid.raidId, joiningRaid.role)}>Join → ({RAID_ENTRY_COST} $SHARD)</button>
-                        <button className="btn" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setJoiningRaid(null)}>Cancel</button>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          )}
+          </div>
         </div>
+
       </div>
     )
   }

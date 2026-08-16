@@ -1,5 +1,101 @@
 /* ── Raid Lobby ─────────────────────────────────────── */
-.raid-lobby { max-width: 800px; }
+.raid-lobby { }
+
+/* ══ RAIDS TAB BROODGATE CARD ══ */
+.dash-raid-card {
+  position: relative;
+  border: 1px solid rgba(255, 61, 139, 0.3);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.dash-raid-card-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,61,139,0.08), rgba(61,240,232,0.04), rgba(8,8,12,0));
+  pointer-events: none;
+}
+.dash-raid-card-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  padding: 24px 28px;
+  align-items: start;
+}
+.dash-raid-card-left { min-width: 0; }
+.dash-raid-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: #ff3d8b;
+  margin-bottom: 8px;
+}
+.dash-raid-title {
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #eaf6f5;
+  margin: 0 0 8px;
+  line-height: 1.15;
+}
+.dash-raid-lore {
+  font-size: 13px;
+  color: #eaf6f570;
+  line-height: 1.65;
+  margin: 0 0 14px;
+}
+.dash-raid-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #eaf6f550;
+  margin-bottom: 18px;
+  letter-spacing: 0.08em;
+}
+.dash-raid-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.dash-raid-card-right { min-width: 0; }
+.dash-raid-roles { display: flex; flex-direction: column; gap: 6px; }
+.dash-raid-role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--role-c) 25%, transparent);
+  background: color-mix(in srgb, var(--role-c) 3%, #08080e);
+}
+.dash-role-glyph { font-size: 16px; color: var(--role-c); width: 18px; text-align: center; }
+.dash-role-info { flex: 1; min-width: 0; }
+.dash-role-label {
+  display: block;
+  font-family: 'Saira Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #eaf6f5;
+}
+.dash-role-duty {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: 0.06em;
+  color: #eaf6f550;
+}
+.dash-role-fn {
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--role-c);
+  border: 1px solid color-mix(in srgb, var(--role-c) 35%, transparent);
+  padding: 2px 6px;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 800px) {
+  .dash-raid-card-body { grid-template-columns: 1fr; }
+}
 
 .raid-lore-banner {
   display: flex; gap: 24px; align-items: flex-start;

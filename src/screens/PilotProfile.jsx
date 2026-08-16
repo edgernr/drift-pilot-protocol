@@ -6,9 +6,14 @@ import { computeLevelData, HUNT_REWARDS, USERNAME_COLORS } from '../context/Auth
 import HunterSigil from '../components/HunterSigil'
 import { useNav } from '../context/NavigationContext'
 
+// Must stay in step with AuthContext — these maps decide what a raid row is
+// worth, and a missing value reads as legacy DRIFT with zero XP.
 const RAID_XP_TO_HUNT = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
 const RAID_NEW_XP_SET  = new Set([100, 300, 500])
 const RAID_OLD_TO_XP   = { 2350: 500, 1050: 300, 250: 100 }
+// RAID 01 — THE BROODGATE: own scale, identified by the :fN suffix.
+const BROODGATE_ROW = /^raid:[^:]+:f[1-5]$/
+const BROODGATE_XP_TO_HUNT = { 350: 1650, 200: 800, 150: 500, 100: 250, 0: 0 }
 
 // All of Stratum 1 (+ a raid fallback) so cleared contracts + recent activity read right.
 const GATE_META = {
@@ -50,23 +55,22 @@ export default function PilotProfile() {
 
   useEffect(() => {
     async function load() {
-      // Prefer the safe public_profiles view (avatar + guild + derived is_banned,
-      // never wallet/stripe/raw ban). Fall back to base profiles pre-migration.
+      // public_profiles only: avatar + guild + derived is_banned, never
+      // wallet/stripe/email. The old fallback read the base profiles table for
+      // an ARBITRARY id — the one cross-user read on this screen — and it is
+      // dead weight now that the view has shipped everywhere.
       const [{ data: pv }, { data: rows }] = await Promise.all([
         supabase.from('public_profiles').select('*').eq('id', id).maybeSingle(),
         supabase.from('public_completions').select('quest_id, xp_earned, completed_at').eq('user_id', id),
       ])
-      let prof = pv
-      if (!prof) {
-        const { data: bp } = await supabase.from('profiles').select('id, name, created_at, is_subscribed, username_color, is_founder').eq('id', id).maybeSingle()
-        prof = bp
-      }
+      const prof = pv
       if (!prof) { setNotFound(true); setLoading(false); return }
 
       const completions = rows ?? []
 
       const totalXp = completions.reduce((s, r) => {
         if (r.quest_id?.startsWith('raid:')) {
+          if (BROODGATE_ROW.test(r.quest_id)) return s + r.xp_earned
           if (r.xp_earned === 0) return s
           if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + r.xp_earned
           return s + (RAID_OLD_TO_XP[r.xp_earned] ?? 0)
@@ -77,6 +81,7 @@ export default function PilotProfile() {
       const totalHunt = completions.reduce((s, r) => {
         if (HUNT_REWARDS[r.quest_id]) return s + HUNT_REWARDS[r.quest_id]
         if (r.quest_id?.startsWith('raid:')) {
+          if (BROODGATE_ROW.test(r.quest_id)) return s + (BROODGATE_XP_TO_HUNT[r.xp_earned] ?? 0)
           if (r.xp_earned === 0) return s
           if (RAID_NEW_XP_SET.has(r.xp_earned)) return s + (RAID_XP_TO_HUNT[r.xp_earned] ?? 0)
           return s + r.xp_earned

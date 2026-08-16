@@ -6,79 +6,95 @@ import HunterBrowser from './HunterBrowser'
 import RaidBossVarkul from './RaidBossVarkul'
 import { CONSOLE_HOOK } from '../lib/consoleHook'
 import {
-  RAID01, HEADS, HEADS_BY_ID, PHASES, ROLES,
-  BOSS_HP_MAX, HEAD_DAMAGE, PLAYER_HP_MAX, STRIKE_FAIL_DMG, IDLE_BLEED_AFTER,
+  RAID01, FUNCTIONS, FUNCTIONS_BY_ID, FUNCTIONS_BY_ROLE,
+  PHASES, ROLES,
+  BOSS_HP_MAX, FUNCTION_DAMAGE, PLAYER_HP_MAX, STRIKE_FAIL_DMG, IDLE_BLEED_AFTER, ENTRY_COST,
 } from '../data/raids/raid01'
 import './Raid01Combat.css'
 
-// ── RAID 01 combat shell ──────────────────────────────────────────────────────
-// Session-agnostic: all shared state (heads, members, events) and all writes
-// (claim / sever / code persistence) come through props, so the live Supabase
-// session (Raid01.jsx) and the offline solver harness (/__raidsolver) drive the
-// exact same component. Personal combat (HP / combo / bleed) is local.
+// ── RAID 01 combat shell (v2 — Sequential Functions) ──────────────────────────
+// Session-agnostic: all shared state (functions, members, events) and all writes
+// (complete / code persistence) come through props, so the live Supabase session
+// (Raid01.jsx) and the offline solver harness (/__raidsolver) drive the exact
+// same component.
 //
-// Layout: EDITOR-FIRST. The editor owns the main area; heads / boss / party
-// live in a docked drawer opened from a vertical icon strip (IDE idiom).
-// All three panels stay MOUNTED at all times (drawer visibility is pure CSS)
-// so the headless solver's selectors (.r1-head-row etc.) always exist in the
-// DOM. Wards ride a permanent chip strip under the editor; CLAIM / STRIKE
-// live in the always-visible strike strip.
+// Unlike v1 (independent heads), this version shows ONE active function at a
+// time. The whole party sees the same editor, the same wards, the same code.
+// Functions unlock in order: F1 → F2 → F3 → F4 → F5. No claiming, no head
+// hopping — join mid-raid and you only need to understand the current function.
 //
-// Rules (CLAUDE.md combat defaults):
-//   sever a head        → shared −111 boss HP (the only real boss damage)
-//   deflected STRIKE    → personal −15 (nothing new passed)
-//   idle past 90s       → personal −1/s (reading the Field Manual pauses this)
-//   fall at 0           → respawn at the Gate: HP restored, combo reset,
-//                          code + severed heads untouched
+// Layout: EDITOR-FIRST. The editor owns the main area; the function progression,
+// boss visual, and party list live in a docked drawer.
 //
-// Ward tests run top-to-bottom on one rendered doc per evaluation — H8 depends
-// on that order (its wards click sequentially). Do not parallelize.
+// Rules:
+//   complete a function → shared −200 boss HP
+//   deflected STRIKE   → personal −15 (nothing new passed)
+//   idle past 90s      → personal −1/s
+//   fall at 0          → respawn at the Gate: HP restored, combo reset,
+//                          code + completed functions untouched
 
 export default function Raid01Combat({
-  heads,          // { h1: { status, claimed_by, severed_by }, ... }
+  functions,      // { f1: { status, severed_by }, f2: ..., f3: ..., f4: ..., f5: ... }
   members,        // [{ user_id, name, role }]
   myId,
   events,         // [{ id, type, label, created_at }] newest first
-  onClaim,        // (headId) => void
-  onSever,        // (headId) => Promise|void
-  onEvent,        // (type, label) => void  (flavor feed posts)
-  loadCode,       // (headId) => Promise<string|null>
-  saveCode,       // (headId, content) => void
-  onVictory,      // () => void — fired once when the 9th head falls
+  onComplete,     // (fnId) => Promise|void
+  onEvent,        // (type, label) => void
+  loadCode,       // (fnId) => Promise<string|null>
+  saveCode,       // (fnId, content) => void
+  onVictory,      // () => void
   onExit,         // () => void
+  onAbandon,      // () => void — leave a LIVE raid (optional; absent offline)
 }) {
   const { profile, user } = useAuth()
   const { onPaste, bindEditor, onCodeChange, pasteBlocked } = useQuestAnalytics()
+  const [confirmAbandon, setConfirmAbandon] = useState(false)
 
   // ─── Shared-state derivations ────────────────────────────────────────────────
-  const severedCount = HEADS.filter(h => heads[h.id]?.status === 'severed').length
-  const bossHP = Math.max(0, BOSS_HP_MAX - severedCount * HEAD_DAMAGE)
-  const phaseDone = (n) => HEADS.filter(h => h.phase === n).every(h => heads[h.id]?.status === 'severed')
-  const currentPhase = phaseDone(1) ? (phaseDone(2) ? 3 : 2) : 1
-  const allDead = severedCount === HEADS.length
-  const headStates = useMemo(() => Object.fromEntries(
-    HEADS.map(h => [h.id, heads[h.id]?.status ?? 'open'])
-  ), [heads])
+  const fnList = FUNCTIONS
+  const completedCount = fnList.filter(f => functions[f.id]?.status === 'severed').length
+  const bossHP = Math.max(0, BOSS_HP_MAX - completedCount * FUNCTION_DAMAGE)
+
+  // Current function = first not-severed in sequence
+  const currentFn = fnList.find(f => functions[f.id]?.status !== 'severed')
+  const allDone = completedCount === fnList.length
+
+  // Phase (visual only — 3 phases mapped across 5 functions)
+  const currentPhase = currentFn?.phase ?? 3
+
+  // Head states for RaidBossVarkul — derived from function completion
+  const headStates = useMemo(() => {
+    const states = {}
+    for (const f of fnList) {
+      const fnStatus = functions[f.id]?.status ?? 'open'
+      const state = fnStatus === 'severed' ? 'severed' : fnStatus === 'claimed' ? 'claimed' : 'open'
+      for (const hid of f.headIds) {
+        states[hid] = state
+      }
+    }
+    return states
+  }, [functions])
+
   const memberName = useCallback(
     (id) => members.find(m => m.user_id === id)?.name ?? 'HUNTER',
     [members]
   )
 
-  // My specialization — soft guidance only. Slayer / legacy roles → no domain.
-  const myRole = ROLES[members.find(m => m.user_id === myId)?.role] ?? null
-  const myNeck = myRole?.neck ?? null
+  // My roles (multi-role: a hunter can have up to 3 roles)
+  const myRoles = members.filter(m => m.user_id === myId).map(m => ROLES[m.role]).filter(Boolean)
+  const myFunctionIds = myRoles.map(r => fnList.find(f => f.role === r.id)?.id).filter(Boolean)
 
   // ─── Local state ─────────────────────────────────────────────────────────────
-  const firstOpen = HEADS.find(h => h.phase === currentPhase && heads[h.id]?.status !== 'severed')?.id ?? 'h1'
-  const [currentHeadId, setCurrentHeadId] = useState(firstOpen)
-  const [codeMap, setCodeMap] = useState({})           // headId -> editor code
+  const lastFnRef = useRef(currentFn?.id)
+  const [currentFnId, setCurrentFnId] = useState(currentFn?.id ?? 'f1')
+  const [codeMap, setCodeMap] = useState({})
   const [wardResults, setWardResults] = useState({})
   const [expandedHint, setExpandedHint] = useState(null)
   const [playerHP, setPlayerHP] = useState(PLAYER_HP_MAX)
   const [combo, setCombo] = useState(0)
   const [fell, setFell] = useState(false)
   const [strikeKey, setStrikeKey] = useState(0)
-  const [dmgFlash, setDmgFlash] = useState(null)       // {id, text, cls}
+  const [dmgFlash, setDmgFlash] = useState(null)
   const [phaseBanner, setPhaseBanner] = useState(null)
   const [showVictory, setShowVictory] = useState(false)
   const [browserOpen, setBrowserOpen] = useState(false)
@@ -86,43 +102,61 @@ export default function Raid01Combat({
   const [browserReloadKey, setBrowserReloadKey] = useState(0)
   const [consoleOpen, setConsoleOpen] = useState(false)
   const [consoleEntries, setConsoleEntries] = useState([])
-  const [panel, setPanel] = useState('heads')          // heads | boss | party
-  const [drawerOpen, setDrawerOpen] = useState(true)   // HEADS open on entry — pick a target
-  const [severToast, setSeverToast] = useState(null)   // {id, glyph, name, by, byMe}
+  const [confirmSurrender, setConfirmSurrender] = useState(false)
+  const [panel, setPanel] = useState('function')
+  const [drawerOpen, setDrawerOpen] = useState(true)
+  const [severToast, setSeverToast] = useState(null)
   const [bossFlash, setBossFlash] = useState(false)
+  const [attacking, setAttacking] = useState(false)
 
   // ─── Refs ────────────────────────────────────────────────────────────────────
-  const checkIframeRef   = useRef(null)
-  const browserFrameRef  = useRef(null)
-  const struckRef        = useRef({})     // headId -> Set(wardId) already struck
-  const bleedTimerRef    = useRef(null)
-  const bleedCountRef    = useRef(0)
-  const saveTimerRef     = useRef(null)
-  const loadedRef        = useRef(new Set())
-  const consoleBufRef    = useRef([])
-  const consoleFlushRef  = useRef(null)
-  const consoleIdRef     = useRef(0)
-  const consoleBodyRef   = useRef(null)
-  const guideOpenRef     = useRef(false)
-  const dmgIdRef         = useRef(0)
-  const fellRef          = useRef(false)
-  const victoryFiredRef  = useRef(false)
-  const prevPhaseDoneRef = useRef({ 1: phaseDone(1), 2: phaseDone(2) })
-  const prevSeveredRef   = useRef(null)   // null until first heads pass — no toast for history
-  const toastIdRef       = useRef(0)
-  const bossFlashRef     = useRef(null)
+  const checkIframeRef = useRef(null)
+  const browserFrameRef = useRef(null)
+  const struckRef = useRef({})
+  const bleedTimerRef = useRef(null)
+  const bleedCountRef = useRef(0)
+  const saveTimerRef = useRef(null)
+  const loadedRef = useRef(new Set())
+  const consoleBufRef = useRef([])
+  const consoleFlushRef = useRef(null)
+  const consoleIdRef = useRef(0)
+  const consoleBodyRef = useRef(null)
+  const guideOpenRef = useRef(false)
+  const dmgIdRef = useRef(0)
+  const fellRef = useRef(false)
+  const victoryFiredRef = useRef(false)
+  const prevSeveredRef = useRef(null)
+  const toastIdRef = useRef(0)
+  const bossFlashRef = useRef(null)
 
-  const head = HEADS_BY_ID[currentHeadId]
-  const headShared = heads[currentHeadId] ?? { status: 'open' }
-  const claimedByMe = headShared.claimed_by === myId
-  const claimedByOther = headShared.status === 'claimed' && !claimedByMe
-  const isSevered = headShared.status === 'severed'
-  const canEdit = claimedByMe && !isSevered && !fell
-  const code = codeMap[currentHeadId] ?? head.starter
+  const fn = currentFn ?? fnList[fnList.length - 1]
+  const fnShared = functions[fn.id] ?? { status: 'open' }
+  const isSevered = fnShared.status === 'severed'
+  const canEdit = !isSevered && !fell
+  const code = codeMap[currentFnId] ?? fn.starter
+
+  // ─── Sync currentFn with local state ────────────────────────────────────────
+  useEffect(() => {
+    if (currentFn && currentFn.id !== lastFnRef.current) {
+      lastFnRef.current = currentFn.id
+      setCurrentFnId(currentFn.id)
+      setCodeMap(prev => {
+        if (prev[currentFn.id] != null) return prev
+        return { ...prev, [currentFn.id]: fn.starter }
+      })
+    }
+  }, [currentFn, fn.starter])
 
   // ─── Personal damage helper ──────────────────────────────────────────────────
+  const triggerAttack = useCallback(() => {
+    setAttacking(true)
+    clearTimeout(bossFlashRef.current)
+    bossFlashRef.current = setTimeout(() => setAttacking(false), 700)
+  }, [])
+
   const takeDamage = useCallback((amount, why) => {
     if (fellRef.current) return
+    triggerAttack()
     setPlayerHP(hp => {
       const next = Math.max(0, hp - amount)
       if (next === 0 && !fellRef.current) {
@@ -136,7 +170,7 @@ export default function Raid01Combat({
     const id = ++dmgIdRef.current
     setDmgFlash({ id, text: `−${amount} ${why}`, cls: 'hurt' })
     setTimeout(() => setDmgFlash(f => (f?.id === id ? null : f)), 1100)
-  }, [onEvent, profile?.name])
+  }, [onEvent, profile?.name, triggerAttack])
 
   const handleRespawn = useCallback(() => {
     fellRef.current = false
@@ -145,72 +179,65 @@ export default function Raid01Combat({
     bleedCountRef.current = 0
   }, [])
 
-  // ─── Load stored code on head switch ─────────────────────────────────────────
-  // No stale-cancellation on purpose: StrictMode replays this effect, and a
-  // cleanup flag would discard the only resolution while the ref guard blocks
-  // the retry. Double-resolution is harmless — local edits win via the
-  // functional update, and marking loaded happens only after resolve.
+  // ─── Load stored code on function switch ────────────────────────────────────
   useEffect(() => {
-    if (loadedRef.current.has(currentHeadId)) return
-    const headId = currentHeadId
-    Promise.resolve(loadCode?.(headId)).then(stored => {
-      loadedRef.current.add(headId)
+    if (loadedRef.current.has(currentFnId)) return
+    const fnId = currentFnId
+    Promise.resolve(loadCode?.(fnId)).then(stored => {
+      loadedRef.current.add(fnId)
       if (stored == null) return
-      setCodeMap(prev => (prev[headId] != null ? prev : { ...prev, [headId]: stored }))
+      setCodeMap(prev => ({ ...prev, [fnId]: stored }))
     })
-  }, [currentHeadId, loadCode])
+  }, [currentFnId, loadCode])
 
-  // ─── Ward evaluation (offscreen rendered iframe, debounced) ──────────────────
+  // ─── Ward evaluation ─────────────────────────────────────────────────────────
   const runChecks = useCallback((afterResults) => {
     const iframe = checkIframeRef.current
-    if (!iframe) return
-    const h = HEADS_BY_ID[currentHeadId]
-    const currentCode = codeMap[currentHeadId] ?? h.starter
-    iframe.srcdoc = h.buildCheckDoc(currentCode)
+    if (!iframe || !fn) return
+    const currentCode = codeMap[currentFnId] ?? fn.starter
+    iframe.srcdoc = fn.buildCheckDoc(currentCode)
     iframe.onload = () => {
       requestAnimationFrame(() => {
         const doc = iframe.contentDocument
         const win = iframe.contentWindow
         if (!doc || !win) return
         const results = {}
-        // Sequential on purpose — H8's wards mutate the doc in order.
-        h.wards.forEach(w => {
+        fn.wards.forEach(w => {
           try { results[w.id] = w.test(doc, win, currentCode) } catch { results[w.id] = false }
         })
         afterResults?.(results)
       })
     }
-  }, [currentHeadId, codeMap])
+  }, [currentFnId, codeMap, fn])
 
   useEffect(() => {
     const t = setTimeout(() => runChecks(setWardResults), 350)
     return () => clearTimeout(t)
   }, [runChecks])
 
-  // Reset ward display when switching heads
-  useEffect(() => { setWardResults({}); setExpandedHint(null) }, [currentHeadId])
+  useEffect(() => { setWardResults({}); setExpandedHint(null) }, [currentFnId])
 
-  // ─── Code change → local map + debounced shared save ─────────────────────────
+  // ─── Code change → local map + debounced save ──────────────────────────────
   const handleCodeChange = useCallback((val, ev) => {
     const v = val ?? ''
     onCodeChange(v, ev)
-    setCodeMap(prev => ({ ...prev, [currentHeadId]: v }))
+    setCodeMap(prev => ({ ...prev, [currentFnId]: v }))
     bleedCountRef.current = 0
     clearTimeout(saveTimerRef.current)
-    saveTimerRef.current = setTimeout(() => saveCode?.(currentHeadId, v), 1200)
-  }, [currentHeadId, onCodeChange, saveCode])
+    saveTimerRef.current = setTimeout(() => saveCode?.(currentFnId, v), 1200)
+  }, [currentFnId, onCodeChange, saveCode])
 
   useEffect(() => () => clearTimeout(saveTimerRef.current), [])
 
-  // ─── Hunter Browser srcdoc + console clear ───────────────────────────────────
+  // ─── Hunter Browser ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!browserFrameRef.current) return
     consoleBufRef.current.length = 0
     setConsoleEntries(prev => (prev.length ? [] : prev))
-    browserFrameRef.current.srcdoc = CONSOLE_HOOK + head.buildPreview(code)
-  }, [code, head, browserReloadKey])
+    browserFrameRef.current.srcdoc = CONSOLE_HOOK + fn.buildPreview(code)
+  }, [code, fn, browserReloadKey])
 
-  // ─── Console capture (same contract as ArenaShell) ───────────────────────────
+  // ─── Console capture ────────────────────────────────────────────────────────
   useEffect(() => {
     const onMsg = (e) => {
       const d = e.data
@@ -245,7 +272,7 @@ export default function Raid01Combat({
     if (el) el.scrollTop = el.scrollHeight
   }, [consoleEntries, consoleOpen])
 
-  // ─── Hotkeys ─────────────────────────────────────────────────────────────────
+  // ─── Hotkeys ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape' && !e.ctrlKey && !e.altKey && !e.metaKey) {
@@ -264,99 +291,86 @@ export default function Raid01Combat({
     guideOpenRef.current = browserOpen && browserTab === 'guide'
   }, [browserOpen, browserTab])
 
-  // ─── Idle bleed — the brood feeds on stillness ───────────────────────────────
+  // ─── Idle bleed ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (allDead || fell) { clearInterval(bleedTimerRef.current); return }
+    if (allDone || fell) { clearInterval(bleedTimerRef.current); return }
     bleedTimerRef.current = setInterval(() => {
       if (guideOpenRef.current || fellRef.current) return
       bleedCountRef.current += 1
       if (bleedCountRef.current > IDLE_BLEED_AFTER) takeDamage(1, 'BROOD BLEED')
     }, 1000)
     return () => clearInterval(bleedTimerRef.current)
-  }, [allDead, fell, takeDamage])
+  }, [allDone, fell, takeDamage])
 
-  // ─── Panel toggling (IDE dock idiom) ─────────────────────────────────────────
+  // ─── Panel toggling ─────────────────────────────────────────────────────────
   const togglePanel = useCallback((p) => {
     if (drawerOpen && panel === p) { setDrawerOpen(false); return }
     setPanel(p)
     setDrawerOpen(true)
   }, [drawerOpen, panel])
 
-  // Claim locks the target — clear the field so the editor owns the screen.
-  const handleClaimClick = useCallback(() => {
-    onClaim?.(currentHeadId)
-    setDrawerOpen(false)
-  }, [onClaim, currentHeadId])
-
-  // ─── Sever toast + phase transitions + victory ───────────────────────────────
+  // ─── Completion toast + phase transitions + victory ─────────────────────────
   useEffect(() => {
-    // Sever moment — felt even with every panel closed: toast + boss bar flash.
-    const severedIds = HEADS.filter(h => heads[h.id]?.status === 'severed').map(h => h.id)
+    const severedFns = fnList.filter(f => functions[f.id]?.status === 'severed').map(f => f.id)
     if (prevSeveredRef.current) {
-      const fresh = severedIds.filter(hid => !prevSeveredRef.current.has(hid))
+      const fresh = severedFns.filter(fid => !prevSeveredRef.current.has(fid))
       if (fresh.length) {
-        const h = HEADS_BY_ID[fresh[fresh.length - 1]]
-        const by = heads[h.id]?.severed_by
+        const f = FUNCTIONS_BY_ID[fresh[fresh.length - 1]]
+        const by = functions[f.id]?.severed_by
         const tid = ++toastIdRef.current
-        setSeverToast({ id: tid, glyph: h.glyph, name: h.name, by, byMe: by === myId })
+        setSeverToast({ id: tid, glyph: f.glyph, name: f.name, by, byMe: by === myId })
         setTimeout(() => setSeverToast(t => (t?.id === tid ? null : t)), 2600)
         setBossFlash(true)
         clearTimeout(bossFlashRef.current)
         bossFlashRef.current = setTimeout(() => setBossFlash(false), 900)
-        // My kill and heads remain → reopen HEADS to pick the next target.
-        if (fresh.some(hid => heads[hid]?.severed_by === myId) && severedIds.length < HEADS.length) {
-          setPanel('heads')
-          setDrawerOpen(true)
-        }
       }
     }
-    prevSeveredRef.current = new Set(severedIds)
+    prevSeveredRef.current = new Set(severedFns)
 
-    const p1 = phaseDone(1); const p2 = phaseDone(2)
-    if (p1 && !prevPhaseDoneRef.current[1]) {
-      setPhaseBanner({ label: 'STRUCTURE NECK FALLS', sub: 'THE SKIN IS EXPOSED — PHASE II', color: '#f5c453' })
+    // Phase banners — visual-only
+    const phase1Done = completedCount >= 1
+    const phase2Done = completedCount >= 2
+    if (phase1Done && prevPhaseDoneRef.current[0] === 0) {
+      setPhaseBanner({ label: `${FUNCTIONS[0].name} — DEPLOYED`, sub: 'THE PIPELINE OPENS — PHASE II', color: '#f5c453' })
       setTimeout(() => setPhaseBanner(null), 3200)
     }
-    if (p2 && !prevPhaseDoneRef.current[2]) {
-      setPhaseBanner({ label: 'SKIN NECK FALLS', sub: 'THE NERVES ARE BARE — PHASE III', color: '#ff3d8b' })
+    if (phase2Done && prevPhaseDoneRef.current[1] === 0) {
+      setPhaseBanner({ label: `${FUNCTIONS[1].name} — SECURED`, sub: 'THE CORE STANDS BARE — PHASE III', color: '#ff3d8b' })
       setTimeout(() => setPhaseBanner(null), 3200)
     }
-    prevPhaseDoneRef.current = { 1: p1, 2: p2 }
-    if (allDead && !victoryFiredRef.current) {
+    prevPhaseDoneRef.current = [completedCount >= 1 ? 1 : 0, completedCount >= 2 ? 1 : 0]
+
+    if (allDone && !victoryFiredRef.current) {
       victoryFiredRef.current = true
       onVictory?.()
       setTimeout(() => setShowVictory(true), 1800)
     }
-    // Auto-advance selection off a severed head to the next open one
-    if (heads[currentHeadId]?.status === 'severed' && !allDead) {
-      const next = HEADS.find(h => h.phase === currentPhase && heads[h.id]?.status !== 'severed')
-      if (next) setCurrentHeadId(next.id)
-    }
-  }, [heads]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [functions]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── STRIKE ──────────────────────────────────────────────────────────────────
+  const prevPhaseDoneRef = useRef([0, 0])
+
+  // ─── STRIKE ─────────────────────────────────────────────────────────────────
   const handleStrike = useCallback(() => {
-    if (fell || isSevered || !claimedByMe) return
+    if (fell || isSevered || !fn) return
     setStrikeKey(k => k + 1)
     bleedCountRef.current = 0
     runChecks((results) => {
       setWardResults(results)
-      const h = HEADS_BY_ID[currentHeadId]
-      const struck = struckRef.current[currentHeadId] ?? new Set()
-      const newly = h.wards.filter(w => results[w.id] && !struck.has(w.id))
+      const struck = struckRef.current[currentFnId] ?? new Set()
+      const newly = fn.wards.filter(w => results[w.id] && !struck.has(w.id))
       newly.forEach(w => struck.add(w.id))
-      struckRef.current[currentHeadId] = struck
-      const allPass = h.wards.every(w => results[w.id])
+      struckRef.current[currentFnId] = struck
+      const allPass = fn.wards.every(w => results[w.id])
 
       if (allPass) {
         setCombo(c => c + newly.length + 1)
+        triggerAttack()
         const id = ++dmgIdRef.current
-        setDmgFlash({ id, text: `−${HEAD_DAMAGE} SEVERED`, cls: 'sever' })
+        setDmgFlash({ id, text: `−${FUNCTION_DAMAGE} ${fn.name} COMPLETE`, cls: 'sever' })
         setTimeout(() => setDmgFlash(f => (f?.id === id ? null : f)), 1400)
-        // Persist final code immediately, then the sever itself.
         clearTimeout(saveTimerRef.current)
-        saveCode?.(currentHeadId, codeMap[currentHeadId] ?? h.starter)
-        onSever?.(currentHeadId)
+        saveCode?.(currentFnId, codeMap[currentFnId] ?? fn.starter)
+        onComplete?.(currentFnId)
       } else if (newly.length > 0) {
         setCombo(c => c + newly.length)
         const id = ++dmgIdRef.current
@@ -364,44 +378,58 @@ export default function Raid01Combat({
         setTimeout(() => setDmgFlash(f => (f?.id === id ? null : f)), 1100)
       } else {
         setCombo(0)
+        triggerAttack()
         takeDamage(STRIKE_FAIL_DMG, 'DEFLECTED')
       }
     })
-  }, [fell, isSevered, claimedByMe, runChecks, currentHeadId, codeMap, onSever, saveCode, takeDamage])
+  }, [fell, isSevered, fn, runChecks, currentFnId, codeMap, onComplete, saveCode, takeDamage])
 
   // ─── Computed display ────────────────────────────────────────────────────────
   const bossPct = (bossHP / BOSS_HP_MAX) * 100
   const playerPct = (playerHP / PLAYER_HP_MAX) * 100
   const playerLow = playerHP <= 30
-  const passedCount = head.wards.filter(w => wardResults[w.id]).length
-  const failCount = head.wards.length - passedCount
-  const editorLanguage = head.language === 'js' ? 'javascript' : head.language
+  const passedCount = fn.wards.filter(w => wardResults[w.id]).length
+  const failCount = fn.wards.length - passedCount
+  const editorLanguage = fn.language === 'js' ? 'javascript' : fn.language
   const consoleErrs = consoleEntries.filter(en => en.level === 'error').length
   const consoleWarns = consoleEntries.filter(en => en.level === 'warn').length
+
+  // Who severed each function
   const severCounts = useMemo(() => {
     const counts = {}
-    for (const h of HEADS) {
-      const s = heads[h.id]
+    for (const f of fnList) {
+      const s = functions[f.id]
       if (s?.status === 'severed' && s.severed_by) counts[s.severed_by] = (counts[s.severed_by] ?? 0) + 1
     }
     return counts
-  }, [heads])
+  }, [functions])
+
   const displayName = profile?.name ?? user?.email ?? 'HUNTER'
   const browserConfig = useMemo(() => ({
-    id: `${RAID01.id}/${head.id}`,
+    id: `${RAID01.id}/${fn.id}`,
     region: RAID01.region,
     guide: RAID01.guide,
-  }), [head.id])
-  const phaseColor = PHASES[head.phase - 1].color
-  const expandedWard = expandedHint ? head.wards.find(w => w.id === expandedHint) : null
+  }), [fn.id])
+  const phaseColor = PHASES[fn.phase - 1].color
+  const expandedWard = expandedHint ? fn.wards.find(w => w.id === expandedHint) : null
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="r1-shell">
+    <div className={`r1-shell${attacking ? ' r1-under-attack' : ''}`}>
 
-      {/* Top bar — boss HP is the headline, permanently visible */}
+      {/* Top bar */}
       <header className="r1-topbar">
         <button className="r1-back" onClick={onExit}>← WAR ROOM</button>
+        {onAbandon && !allDone && (
+          <button
+            className="r1-back"
+            onClick={() => setConfirmAbandon(true)}
+            title="Leave this warband for good"
+            style={{ color: '#ff3d8b70', borderColor: '#ff3d8b30' }}
+          >
+            ABANDON
+          </button>
+        )}
         <div className="r1-topbar-center">
           <span className="r1-raid-tag">{RAID01.code} · {RAID01.title}</span>
           <div className="r1-boss-hp-row">
@@ -422,23 +450,21 @@ export default function Raid01Combat({
 
       <div className="r1-body">
 
-        {/* ── Main column — the editor owns the field ── */}
+        {/* ── Main column — the editor ── */}
         <div className="r1-main">
           <div className="r1-editor-header">
-            <span className="r1-head-mark" style={{ color: phaseColor }}>{head.glyph}</span>
-            <span className="r1-head-title">{head.name}</span>
-            <span className="r1-filename">{head.filename}</span>
-            {myNeck === head.phase && !isSevered && (
-              <span className="r1-domain-tag" style={{ color: myRole.color, borderColor: `${myRole.color}45` }}>YOUR DOMAIN</span>
+            <span className="r1-head-mark" style={{ color: phaseColor }}>{fn.glyph}</span>
+            <span className="r1-head-title">{fn.name}</span>
+            <span className="r1-filename">{fn.filename}</span>
+            {myFunctionIds.includes(fn.id) && !isSevered && (
+              <span className="r1-domain-tag">YOUR FUNCTION</span>
             )}
-            {!canEdit && !isSevered && (
-              <span className="r1-edit-lock">
-                {claimedByOther ? `⛨ CLAIMED BY ${memberName(headShared.claimed_by)}` : 'CLAIM THIS HEAD TO ENGAGE'}
-              </span>
+            {isSevered && (
+              <span className="r1-edit-lock sev">☠ {fn.name} COMPLETE{fnShared.severed_by ? ` — BY ${memberName(fnShared.severed_by)}` : ''}</span>
             )}
-            {isSevered && <span className="r1-edit-lock sev">☠ SEVERED{headShared.severed_by ? ` — BY ${memberName(headShared.severed_by)}` : ''}</span>}
+            <span className="r1-fn-progress">{completedCount} / {fnList.length} FUNCTIONS</span>
             <span className={`r1-editor-status ${pasteBlocked ? 'flagged' : failCount === 0 ? 'clear' : 'errors'}`}>
-              {pasteBlocked ? '✕ PASTE BLOCKED — type it, Hunter' : failCount === 0 ? '✓ all wards down' : `${failCount} wards holding`}
+              {pasteBlocked ? '✕ PASTE BLOCKED' : isSevered ? '✓ COMPLETE' : failCount === 0 ? '✓ all wards down' : `${failCount} wards holding`}
             </span>
           </div>
 
@@ -469,14 +495,14 @@ export default function Raid01Combat({
             )}
           </div>
 
-          {/* ── Ward strip — always visible, never eats editor width ── */}
+          {/* ── Ward strip ── */}
           <div className="r1-wardbar">
             <span className="r1-wardbar-label">WARDS</span>
             <span className={`r1-scanner-count${failCount === 0 ? ' clear' : ''}`}>
-              {isSevered ? 'SEVERED' : failCount === 0 ? 'ALL GREEN — STRIKE' : `${failCount} HOLDING`}
+              {isSevered ? 'COMPLETE' : failCount === 0 ? 'ALL GREEN — STRIKE' : `${failCount} HOLDING`}
             </span>
             <div className="r1-chip-row">
-              {head.wards.map(w => (
+              {fn.wards.map(w => (
                 <button
                   key={w.id}
                   className={`r1-chip${wardResults[w.id] ? ' pass' : ' fail'}${expandedHint === w.id ? ' expanded' : ''}`}
@@ -500,13 +526,13 @@ export default function Raid01Combat({
               </div>
               <div className={`r1-ward-hint${wardResults[expandedWard.id] ? ' pass' : ''}`}>
                 {wardResults[expandedWard.id]
-                  ? 'Ward down. It stays down as long as your code holds — STRIKE when the strip is all green.'
+                  ? 'Ward down. STRIKE when the strip is all green.'
                   : expandedWard.hint}
               </div>
             </div>
           )}
 
-          {/* IDE console — same idiom as the gates */}
+          {/* Console */}
           <div className="r1-console">
             <div className="r1-console-strip" onClick={() => setConsoleOpen(o => !o)}>
               <span className="r1-console-caret">{consoleOpen ? '▾' : '▸'}</span>
@@ -535,17 +561,9 @@ export default function Raid01Combat({
             )}
           </div>
 
-          {/* Strike strip — CLAIM / STRIKE always reachable, panels or not */}
+          {/* Strike strip */}
           <div className="r1-strike-strip">
-            {!claimedByMe && !isSevered ? (
-              <button
-                className="r1-claim-btn"
-                disabled={claimedByOther || fell}
-                onClick={handleClaimClick}
-              >
-                {claimedByOther ? '⛨ CONTESTED' : '⚑ CLAIM HEAD'}
-              </button>
-            ) : (
+            {!isSevered ? (
               <button
                 className={`r1-strike-btn${failCount === 0 && !isSevered ? ' ready' : ''}`}
                 onClick={handleStrike}
@@ -553,6 +571,8 @@ export default function Raid01Combat({
               >
                 ▶ STRIKE
               </button>
+            ) : (
+              <span className="r1-complete-badge">✓ FUNCTION COMPLETE</span>
             )}
             <button
               className={`r1-browser-btn${browserOpen ? ' open' : ''}`}
@@ -566,63 +586,61 @@ export default function Raid01Combat({
           </div>
         </div>
 
-        {/* ── Docked drawer — all panels stay mounted; CSS controls visibility ── */}
+        {/* ── Docked drawer ── */}
         <aside className={`r1-drawer${drawerOpen ? ' open' : ''}`}>
 
-          {/* ⌖ HEADS */}
-          <section className={`r1-panel${panel === 'heads' ? ' active' : ''}`} aria-label="Heads">
+          {/* ⊞ FUNCTIONS */}
+          <section className={`r1-panel${panel === 'function' ? ' active' : ''}`} aria-label="Functions">
             <div className="r1-panel-title">
-              <span>⌖ THE NINE HEADS</span>
+              <span>⊞ FUNCTION PROGRESSION — {completedCount} / {fnList.length}</span>
               <button className="r1-panel-close" onClick={() => setDrawerOpen(false)} title="Close (Esc)">✕</button>
             </div>
             <div className="r1-panel-scroll">
-              {PHASES.map(p => {
-                const locked = p.n > currentPhase
-                const isDomain = myNeck === p.n
+              {fnList.map(f => {
+                const state = functions[f.id] ?? { status: 'open' }
+                const sev = state.status === 'severed'
+                const isCurrent = f.id === currentFn?.id && !allDone
+                const locked = f.seq > (completedCount + 1)
+                const owner = ROLES[f.role]
                 return (
-                  <div key={p.n} className={`r1-phase-group${locked ? ' locked' : ''}`}>
-                    <div className="r1-phase-head" style={{ color: p.color }}>
-                      <span>{p.label}</span>
-                      <span className="r1-phase-head-tags">
-                        {isDomain && (
-                          <span className="r1-domain-mini" style={{ color: myRole.color, borderColor: `${myRole.color}45` }}>
-                            YOUR DOMAIN
-                          </span>
-                        )}
-                        {locked && <span className="r1-lock">SEALED</span>}
-                      </span>
-                    </div>
-                    {HEADS.filter(h => h.phase === p.n).map(h => {
-                      const s = heads[h.id] ?? { status: 'open' }
-                      const sev = s.status === 'severed'
-                      const mine = s.claimed_by === myId && !sev
-                      return (
-                        <button
-                          key={h.id}
-                          className={`r1-head-row${currentHeadId === h.id ? ' active' : ''}${sev ? ' severed' : ''}${isDomain && !sev ? ' domain' : ''}`}
-                          style={isDomain && !sev ? { '--domain-c': myRole.color } : undefined}
-                          disabled={locked}
-                          onClick={() => setCurrentHeadId(h.id)}
-                        >
-                          <span className="r1-head-glyph">{h.glyph}</span>
-                          <span className="r1-head-name">{h.name}</span>
-                          <span className={`r1-head-state${sev ? ' sev' : mine ? ' mine' : s.status === 'claimed' ? ' other' : ''}`}>
-                            {sev ? 'SEVERED' : mine ? 'YOURS' : s.status === 'claimed' ? memberName(s.claimed_by) : 'OPEN'}
-                          </span>
-                        </button>
-                      )
-                    })}
+                  <div
+                    key={f.id}
+                    className={`r1-fn-row${isCurrent ? ' active' : ''}${sev ? ' done' : ''}${locked ? ' locked' : ''}`}
+                    style={owner ? { '--fn-c': owner.color } : undefined}
+                  >
+                    <span className="r1-fn-dot">{sev ? '✓' : isCurrent ? '▶' : locked ? '⛨' : f.glyph}</span>
+                    <span className="r1-fn-name">{f.name}</span>
+                    <span className="r1-fn-role" style={{ color: owner?.color }}>
+                      {owner?.glyph} {owner?.label ?? '—'}
+                    </span>
+                    <span className={`r1-fn-status${sev ? ' done' : isCurrent ? ' live' : ''}`}>
+                      {sev ? 'DONE' : isCurrent ? 'ACTIVE' : locked ? 'LOCKED' : 'READY'}
+                    </span>
                   </div>
                 )
               })}
 
-              {/* Selected head briefing */}
-              <div className="r1-brief">
-                <div className="r1-brief-label">▶ {head.name}</div>
-                <p className="r1-brief-what">{head.brief.what}</p>
-                <div className="r1-brief-line"><span>SKILL</span>{head.brief.skill}</div>
-                <div className="r1-brief-line"><span>OBJECTIVE</span>{head.brief.objective}</div>
-              </div>
+              {/* Current function brief */}
+              {fn && !isSevered && (
+                <div className="r1-brief">
+                  <div className="r1-brief-label">▶ {fn.name}</div>
+                  <p className="r1-brief-what">{fn.brief.what}</p>
+                  <div className="r1-brief-line"><span>SKILL</span>{fn.brief.skill}</div>
+                  <div className="r1-brief-line"><span>OBJECTIVE</span>{fn.brief.objective}</div>
+                  {fn.brief.stages && (
+                    <div className="r1-brief-stages">
+                      <div className="r1-brief-label">PROGRESSION</div>
+                      {fn.brief.stages.map((s, i) => (
+                        <div key={i} className="r1-brief-stage">
+                          <span className="r1-brief-stage-label">{s.label}</span>
+                          <span className="r1-brief-stage-time">{s.time}</span>
+                          <span className="r1-brief-stage-desc">{s.desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 
@@ -633,12 +651,16 @@ export default function Raid01Combat({
               <button className="r1-panel-close" onClick={() => setDrawerOpen(false)} title="Close (Esc)">✕</button>
             </div>
             <div className="r1-panel-scroll">
-              <div className="r1-boss-scene">
+              <div className={`r1-boss-scene${attacking ? ' boss-attack' : ''}`}>
                 <RaidBossVarkul
                   headStates={headStates}
-                  targetId={currentHeadId}
+                  targetId={null}
                   phase={currentPhase}
-                  dead={allDead}
+                  dead={allDone}
+                  attacking={attacking}
+                  frame
+                  hp={bossHP}
+                  hpMax={BOSS_HP_MAX}
                 />
               </div>
               <div className="r1-boss-readout">
@@ -647,28 +669,35 @@ export default function Raid01Combat({
                   <span className="r1-readout-hp-max">/ {BOSS_HP_MAX} HP</span>
                 </div>
                 <div className="r1-readout-pips">
-                  {HEADS.map(h => (
+                  {fnList.map(f => (
                     <span
-                      key={h.id}
-                      className={`r1-pip${heads[h.id]?.status === 'severed' ? ' cut' : ''}`}
-                      style={{ '--pip-c': PHASES[h.phase - 1].color }}
-                      title={h.name}
+                      key={f.id}
+                      className={`r1-pip${functions[f.id]?.status === 'severed' ? ' cut' : ''}`}
+                      style={{ '--pip-c': ROLES[f.role]?.color ?? '#3df0e8' }}
+                      title={f.name}
                     />
                   ))}
                 </div>
-                {PHASES.map(p => {
-                  const cut = HEADS.filter(h => h.phase === p.n && heads[h.id]?.status === 'severed').length
-                  return (
-                    <div key={p.n} className="r1-readout-row">
-                      <span className="r1-readout-neck" style={{ color: p.color }}>{p.label}</span>
-                      <span className={`r1-readout-state${cut === 3 ? ' done' : p.n > currentPhase ? ' sealed' : ''}`}>
-                        {cut === 3 ? 'SEVERED' : p.n > currentPhase ? 'SEALED' : `${cut} / 3`}
-                      </span>
-                    </div>
-                  )
-                })}
+                <div className="r1-readout-row">
+                  <span className="r1-readout-neck" style={{ color: PHASES[0].color }}>{PHASES[0].label}</span>
+                  <span className={`r1-readout-state${completedCount >= 1 ? ' done' : ''}`}>
+                    {completedCount >= 1 ? 'DONE' : currentFn?.phase === 1 ? 'ACTIVE' : 'PENDING'}
+                  </span>
+                </div>
+                <div className="r1-readout-row">
+                  <span className="r1-readout-neck" style={{ color: PHASES[1].color }}>{PHASES[1].label}</span>
+                  <span className={`r1-readout-state${completedCount >= 2 ? ' done' : completedCount >= 1 && currentFn?.phase === 2 ? ' active' : ''}`}>
+                    {completedCount >= 2 ? 'DONE' : completedCount >= 1 && currentFn?.phase === 2 ? 'ACTIVE' : completedCount >= 1 ? 'READY' : 'LOCKED'}
+                  </span>
+                </div>
+                <div className="r1-readout-row">
+                  <span className="r1-readout-neck" style={{ color: PHASES[2].color }}>{PHASES[2].label}</span>
+                  <span className={`r1-readout-state${completedCount === fnList.length ? ' done' : completedCount >= 2 ? ' active' : ''}`}>
+                    {completedCount === fnList.length ? 'DONE' : completedCount >= 2 ? `${completedCount - 2} / 3` : 'LOCKED'}
+                  </span>
+                </div>
                 <div className="r1-readout-note">
-                  Boss HP is shared — every sever lands −{HEAD_DAMAGE} for the whole warband.
+                  Boss HP is shared — completing a function deals −{FUNCTION_DAMAGE} for the whole warband.
                 </div>
               </div>
             </div>
@@ -682,14 +711,31 @@ export default function Raid01Combat({
             </div>
             <div className="r1-panel-scroll party">
               <div className="r1-party">
-                {members.map(m => {
-                  const r = ROLES[m.role]
+                {Array.from(
+                  members.reduce((map, m) => {
+                    if (!map.has(m.user_id)) map.set(m.user_id, [])
+                    const r = ROLES[m.role]
+                    if (r) map.get(m.user_id).push(r)
+                    return map
+                  }, new Map())
+                ).map(([uid, roles]) => {
+                  const name = members.find(m => m.user_id === uid)?.name ?? 'HUNTER'
+                  const isMe = uid === myId
                   return (
-                    <div key={m.user_id} className={`r1-party-row${m.user_id === myId ? ' me' : ''}`}>
-                      <span className="r1-party-glyph" style={{ color: r?.color ?? '#3df0e8' }}>{r?.glyph ?? '·'}</span>
-                      <span className="r1-party-name">{m.user_id === myId ? `${m.name} (YOU)` : m.name}</span>
-                      <span className="r1-party-role" style={{ color: r ? `${r.color}b0` : undefined }}>{r?.label ?? 'HUNTER'}</span>
-                      <span className="r1-party-severs">{severCounts[m.user_id] ?? 0} ✂</span>
+                    <div key={uid} className={`r1-party-row${isMe ? ' me' : ''}`}>
+                      <span className="r1-party-glyph" style={{ color: roles[0]?.color ?? '#3df0e8' }}>{roles[0]?.glyph ?? '·'}</span>
+                      <span className="r1-party-name">{isMe ? `${name} (YOU)` : name}</span>
+                      <span className="r1-party-roles">
+                        {roles.map(r => {
+                          const f = FUNCTIONS_BY_ROLE[r.id]
+                          return (
+                            <span key={r.id} className="r1-party-role-badge" style={{ '--role-c': r.color }}>
+                              {r.glyph} {r.label}{f ? ` (F${f.seq})` : ''}
+                            </span>
+                          )
+                        })}
+                      </span>
+                      <span className="r1-party-severs">{severCounts[uid] ?? 0} ✦</span>
                     </div>
                   )
                 })}
@@ -707,12 +753,15 @@ export default function Raid01Combat({
           </section>
         </aside>
 
-        {/* ── Dock — slim vertical icon strip ── */}
+        {/* ── Attack corruption overlay ── */}
+        {attacking && <div className="r1-attack-overlay" />}
+
+        {/* ── Dock ── */}
         <nav className="r1-dock" aria-label="Combat panels">
           {[
-            { id: 'heads', icon: '⌖', label: 'HEADS' },
-            { id: 'boss',  icon: '◎', label: 'BOSS' },
-            { id: 'party', icon: '⚑', label: 'PARTY' },
+            { id: 'function', icon: '⊞', label: 'FUNCTIONS' },
+            { id: 'boss',     icon: '◎', label: 'BOSS' },
+            { id: 'party',    icon: '⚑', label: 'PARTY' },
           ].map(t => (
             <button
               key={t.id}
@@ -727,12 +776,16 @@ export default function Raid01Combat({
         </nav>
       </div>
 
-      {/* Bottom HUD — personal HP */}
+      {/* Bottom HUD */}
       <div className="r1-hud">
         <span className="r1-hud-identity">
           {displayName}
-          {myRole && (
-            <span className="r1-hud-role" style={{ color: myRole.color }}> · {myRole.glyph} {myRole.label}</span>
+          {myRoles.length > 0 && (
+            <span className="r1-hud-role">
+              {myRoles.map(r => (
+                <span key={r.id} style={{ color: r.color }}> {r.glyph} {r.label}</span>
+              ))}
+            </span>
           )}
         </span>
         <div className="r1-hud-hp-wrap">
@@ -743,10 +796,13 @@ export default function Raid01Combat({
           <span className="r1-hud-hp-val">{playerHP}/{PLAYER_HP_MAX}</span>
         </div>
         <div className="r1-hud-region">{RAID01.region}</div>
+        <button className="r1-surrender-btn" onClick={() => setConfirmSurrender(true)} title="Give up / force finish">
+          ✕ SURRENDER
+        </button>
         <div className="r1-hud-right">● VERA ON · FEED LIVE</div>
       </div>
 
-      {/* Hunter Browser — INSTANCE preview of the current head + raid Field Manual */}
+      {/* Hunter Browser */}
       <div className="r1-browser-anchor">
         <HunterBrowser
           config={browserConfig}
@@ -759,8 +815,7 @@ export default function Raid01Combat({
         />
       </div>
 
-      {/* Offscreen check iframe — rendered (not display:none) so computed styles
-          and geometry resolve; H5/H6 wards measure real layout. */}
+      {/* Offscreen check iframe */}
       <iframe
         ref={checkIframeRef}
         title="raid check"
@@ -772,13 +827,13 @@ export default function Raid01Combat({
         sandbox="allow-scripts allow-same-origin"
       />
 
-      {/* Sever toast — the kill is felt even with every panel closed */}
+      {/* Sever toast */}
       {severToast && (
         <div key={severToast.id} className="r1-sever-toast">
           <span className="r1-sever-toast-glyph">{severToast.glyph}</span>
-          <span className="r1-sever-toast-name">{severToast.name} — SEVERED</span>
+          <span className="r1-sever-toast-name">{severToast.name} — COMPLETE</span>
           <span className="r1-sever-toast-by">
-            VARKUL −{HEAD_DAMAGE}{severToast.byMe ? ' · YOUR CUT' : ` · ${memberName(severToast.by)}`}
+            VARKUL −{FUNCTION_DAMAGE}{severToast.byMe ? ' · YOUR CUT' : ` · ${memberName(severToast.by)}`}
           </span>
         </div>
       )}
@@ -798,10 +853,49 @@ export default function Raid01Combat({
             <div className="r1-fell-title">HUNTER DOWN</div>
             <div className="r1-fell-sub">VERA // HANDLER</div>
             <p className="r1-fell-text">
-              The brood dragged you back to the Gate mouth. Your code stands, every severed head stays
-              severed — only your wind is gone. Get up.
+              The brood dragged you back to the Gate mouth. Your code stands, every completed function stays
+              complete — only your wind is gone. Get up.
             </p>
             <button className="r1-fell-btn" onClick={handleRespawn}>RESPAWN AT THE GATE</button>
+          </div>
+        </div>
+      )}
+
+      {/* Step away — the fight keeps running, you keep your place in the party */}
+      {confirmSurrender && (
+        <div className="r1-surrender-overlay">
+          <div className="r1-surrender-modal">
+            <div className="r1-surrender-title">STEP AWAY?</div>
+            <p className="r1-surrender-text">
+              The Broodgate stays open and your warband keeps fighting. Your code is saved and
+              every function already paid out stays paid — walk back in whenever you want.
+            </p>
+            <div className="r1-surrender-actions">
+              <button className="r1-surrender-cancel" onClick={() => setConfirmSurrender(false)}>CANCEL</button>
+              <button className="r1-surrender-confirm" onClick={onExit}>STEP AWAY</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Abandon — actually leaves the warband. Without this a stalled party is
+          locked out of raiding forever, because every member is reattached to
+          their live raid on load. */}
+      {confirmAbandon && (
+        <div className="r1-surrender-overlay">
+          <div className="r1-surrender-modal">
+            <div className="r1-surrender-title">ABANDON THE RAID?</div>
+            <p className="r1-surrender-text">
+              You leave the warband for good. Your {ENTRY_COST} $SHARD entry is <strong>not</strong> refunded —
+              the Gate is already open — but functions that have paid out stay paid. Do this if your
+              party has gone dark and you want to raid again.
+            </p>
+            <div className="r1-surrender-actions">
+              <button className="r1-surrender-cancel" onClick={() => setConfirmAbandon(false)}>STAY</button>
+              <button className="r1-surrender-confirm" onClick={() => { setConfirmAbandon(false); onAbandon?.() }}>
+                ABANDON
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -814,13 +908,14 @@ export default function Raid01Combat({
             <div className="r1-victory-boss">{RAID01.boss.name}</div>
             <div className="r1-victory-defeated">DEFEATED</div>
             <p className="r1-victory-note">
-              First confirmed herald kill in Association history. Somewhere far above, in a tower of
-              black glass, something with too much blood pauses mid-slaughter — and smiles.
+              All five functions deployed. The hydra's heart of static gutters and dies. First confirmed herald
+              kill in Association history. Somewhere far above, in a tower of black glass, something with too
+              much blood pauses mid-slaughter — and smiles.
             </p>
             <div className="r1-victory-rewards">
-              <div className="r1-victory-reward"><span>900 XP</span><label>FULL-CLEAR TOTAL</label></div>
-              <div className="r1-victory-reward"><span>3650</span><label>$SHARD EACH</label></div>
-              <div className="r1-victory-reward"><span>9 / 9</span><label>HEADS SEVERED</label></div>
+              <div className="r1-victory-reward"><span>1000 XP</span><label>FULL-CLEAR TOTAL</label></div>
+              <div className="r1-victory-reward"><span>4000</span><label>$SHARD EACH</label></div>
+              <div className="r1-victory-reward"><span>5 / 5</span><label>FUNCTIONS COMPLETE</label></div>
             </div>
             <div className="r1-victory-chip">PAYOUTS CLEARED AUTOMATICALLY — CHECK YOUR LEDGER</div>
             <button className="r1-victory-btn" onClick={onExit}>RETURN TO THE WAR ROOM</button>
