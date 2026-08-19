@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useNav } from '../context/NavigationContext'
 import RaidIDE, { SYNC_CODE_CHECKS } from './RaidIDE'
 import { attachNames } from '../lib/publicProfiles'
+import { debounce } from '../lib/debounce'
 import {
   RAID01, ROLES as RAID01_ROLES, ROLE_LIST as RAID01_ROLE_LIST, FUNCTIONS as RAID01_FUNCTIONS,
   BOSS_HP_MAX as RAID01_BOSS_HP, PARTY_MIN as RAID01_PARTY_MIN, PARTY_MAX as RAID01_PARTY_MAX,
@@ -505,6 +506,7 @@ export default function RaidView() {
   const [raidFilesLoaded, setRaidFilesLoaded] = useState(false)
   const raidChannel = useRef(null)
   const lobbyChannel = useRef(null)
+  const lobbyReload = useRef(null)
 
   const loadRaidDetails = useCallback(async (raidId) => {
     const [{ data: raid }, { data: mems }, { data: evts }] = await Promise.all([
@@ -520,9 +522,12 @@ export default function RaidView() {
   }, [])
 
   const loadOpenRaids = useCallback(async () => {
-    // Supabase query builders are then-only thenables (no .catch) — calling .catch
-    // throws synchronously. Wrap in try/catch; the RPC is optional (lobby auto-expiry).
-    try { await supabase.rpc('cleanup_expired_lobby_raids') } catch { /* ignore if RPC missing */ }
+    // NOTE: `cleanup_expired_lobby_raids()` used to run here. Because this
+    // function is the handler for the realtime listeners below, every client
+    // fired that write on every lobby event — and its cascade deletes emitted
+    // more events, which re-triggered it on every client again. That write
+    // amplification is a large part of why the lobby fell over at ~20 users.
+    // TODO: move lobby expiry to a pg_cron job (or call it on mount only).
     const { data: raids } = await supabase
       .from('raids').select('*').eq('status', 'lobby').order('created_at', { ascending: false })
     const list = raids ?? []
@@ -538,22 +543,28 @@ export default function RaidView() {
     setOpenRaidMembers(grouped)
   }, [])
 
-  // Realtime subscription for the lobby list (when user is not in a raid)
+  // Realtime subscription for the lobby list (when user is not in a raid).
+  // Was four unfiltered listeners on two shared tables, all pointing at a
+  // 3-query reload: one warband creation woke every client four times over.
+  // Now one server-filtered listener behind a debounce; seat counts refresh on
+  // the slow poll below.
   const subscribeLobby = useCallback(() => {
-    if (lobbyChannel.current) lobbyChannel.current.unsubscribe()
+    if (lobbyChannel.current) supabase.removeChannel(lobbyChannel.current)
+    const reload = debounce(loadOpenRaids, 450)
+    lobbyReload.current = reload
     lobbyChannel.current = supabase
-      .channel('raid-lobby-watch')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'raids' }, loadOpenRaids)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'raids' }, loadOpenRaids)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'raid_members' }, loadOpenRaids)
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'raid_members' }, loadOpenRaids)
+      .channel(`raid-lobby-watch:${user?.id ?? 'anon'}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'raids', filter: 'status=eq.lobby' },
+        reload)
       .subscribe()
-  }, [loadOpenRaids])
+  }, [loadOpenRaids, user?.id])
 
   // Realtime subscription for an active raid
   function subscribeToRaid(raidId) {
-    if (raidChannel.current) raidChannel.current.unsubscribe()
-    if (lobbyChannel.current) { lobbyChannel.current.unsubscribe(); lobbyChannel.current = null }
+    if (raidChannel.current) supabase.removeChannel(raidChannel.current)
+    lobbyReload.current?.cancel()
+    if (lobbyChannel.current) { supabase.removeChannel(lobbyChannel.current); lobbyChannel.current = null }
     raidChannel.current = supabase
       .channel(`raid:${raidId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'raids', filter: `id=eq.${raidId}` },
@@ -600,10 +611,20 @@ export default function RaidView() {
   useEffect(() => {
     loadActiveRaid()
     return () => {
-      if (raidChannel.current) raidChannel.current.unsubscribe()
-      if (lobbyChannel.current) lobbyChannel.current.unsubscribe()
+      lobbyReload.current?.cancel()
+      if (raidChannel.current) supabase.removeChannel(raidChannel.current)
+      if (lobbyChannel.current) supabase.removeChannel(lobbyChannel.current)
     }
   }, [loadActiveRaid])
+
+  // Seat counts refresh on a slow poll instead of an unfiltered `raid_members`
+  // realtime listener — one query per client per 12s, versus an N-wide reload
+  // storm every time anyone joined or left a lobby.
+  useEffect(() => {
+    if (activeRaid || loading) return
+    const id = setInterval(() => { loadOpenRaids() }, 12000)
+    return () => clearInterval(id)
+  }, [activeRaid, loading, loadOpenRaids])
 
   useEffect(() => {
     if (!user) return
@@ -760,7 +781,7 @@ export default function RaidView() {
         if (refundable) await refundRaidEntry(activeRaid.id)
         await supabase.from('raid_members').delete().eq('raid_id', activeRaid.id).eq('user_id', user.id)
       }
-      if (raidChannel.current) raidChannel.current.unsubscribe()
+      if (raidChannel.current) { supabase.removeChannel(raidChannel.current); raidChannel.current = null }
       setActiveRaid(null); setMyMembership(null); setMembers([]); setEvents([])
       await loadOpenRaids()
       subscribeLobby()
@@ -1045,7 +1066,7 @@ export default function RaidView() {
           {isAdminForced ? (
             <div className="raid-payout-badge raid-payout-zero" style={{ gridColumn: '1 / -1' }}>
               <span className="raid-payout-icon">⚑</span>
-              <span className="raid-payout-label">ADMIN TEST — no XP or $SHARD awarded</span>
+              <span className="raid-payout-label">ADMIN TEST — no XP or Shards awarded</span>
             </div>
           ) : myMembership ? (
             <>
@@ -1064,13 +1085,13 @@ export default function RaidView() {
               {iWin ? (
                 <div className="raid-payout-badge" style={{ borderColor: 'oklch(0.82 0.18 75 / 0.5)', background: 'oklch(0.82 0.18 75 / 0.08)' }}>
                   <span className="raid-payout-icon" style={{ color: 'var(--amber)' }}>◈</span>
-                  <span className="raid-payout-amount" style={{ color: 'var(--amber)' }}>+{bankPot} $SHARD</span>
+                  <span className="raid-payout-amount" style={{ color: 'var(--amber)' }}>+{bankPot} Shards</span>
                   <span className="raid-payout-label">{bankAlreadyPaid ? 'bank already claimed' : 'BANK WON — highest score'}</span>
                 </div>
               ) : (
                 <div className="raid-payout-badge raid-payout-zero">
                   <span className="raid-payout-icon">⊘</span>
-                  <span className="raid-payout-label">−1000 $SHARD — entry fee burned</span>
+                  <span className="raid-payout-label">−1000 Shards — entry fee burned</span>
                 </div>
               )}
             </>
@@ -1168,7 +1189,7 @@ export default function RaidView() {
               <p className="dash-raid-lore">{RAID01.boss.lore}</p>
               <div className="dash-raid-meta">
                 <span>⚔ {RAID01_PARTY_MIN}–{RAID01_PARTY_MAX} Hunters</span>
-                <span>◈ {RAID01_ENTRY_COST} $SHARD entry</span>
+                <span>◈ {RAID01_ENTRY_COST} Shards entry</span>
                 <span>⏱ 5 Sequential Functions</span>
               </div>
               <div className="dash-raid-actions">

@@ -1,0 +1,103 @@
+/* Playable hero demo — scoped under .ldemo */
+.ldemo {
+  --d-cyan: #3df0e8;
+  --d-gold: #f5c453;
+  --d-magenta: #ff3d8b;
+  --d-ink: #eaf6f5;
+  --d-ink-2: #9fb2b3;
+  --d-ink-3: #5d6c6e;
+  --d-line: rgba(120,210,205,0.16);
+
+  background: linear-gradient(180deg, rgba(16,17,25,0.9), rgba(11,12,17,0.95));
+  border: 1px solid var(--d-line);
+  padding: 20px;
+  font-family: "Saira", system-ui, sans-serif;
+  position: relative;
+}
+
+/* HP bars */
+.ldemo-bars { display: grid; gap: 8px; margin-bottom: 14px; }
+.ldemo-bar { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px; }
+.ldemo-bar-lbl {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--d-ink-3);
+}
+.ldemo-bar-lbl.enemy { color: var(--d-magenta); opacity: 0.8; }
+.ldemo-track { height: 6px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.ldemo-fill { height: 100%; transition: width 0.35s cubic-bezier(0.2,0.8,0.2,1); }
+.ldemo-fill.you { background: var(--d-cyan); box-shadow: 0 0 12px rgba(61,240,232,0.5); }
+.ldemo-fill.enemy { background: var(--d-magenta); box-shadow: 0 0 12px rgba(255,61,139,0.5); }
+
+.ldemo-hint {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; color: var(--d-gold);
+  letter-spacing: 0.06em; margin-bottom: 10px; min-height: 16px;
+}
+
+/* Code block */
+.ldemo-code {
+  margin: 0; display: flex; flex-direction: column;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px; line-height: 1.75;
+  background: rgba(8,8,12,0.6);
+  border: 1px solid rgba(120,210,205,0.08);
+  padding: 12px 8px;
+  overflow-x: auto;
+}
+.ldemo-line {
+  display: block; white-space: pre; padding: 1px 8px;
+  color: var(--d-ink-2); border-left: 2px solid transparent;
+  transition: background 0.12s, color 0.12s;
+}
+.ldemo-line.live { cursor: pointer; }
+.ldemo-line.live:hover,
+.ldemo-line.live:focus-visible {
+  background: rgba(61,240,232,0.07);
+  color: var(--d-ink); border-left-color: var(--d-cyan);
+  outline: none;
+}
+.ldemo-line.found {
+  background: rgba(57,232,171,0.1); color: #39e8ab;
+  border-left-color: #39e8ab; text-decoration: line-through;
+  text-decoration-color: rgba(57,232,171,0.5);
+}
+.ldemo-line.miss {
+  background: rgba(255,61,139,0.08); color: var(--d-magenta);
+  border-left-color: var(--d-magenta);
+}
+.ldemo-mark { margin-right: 6px; font-weight: 700; }
+
+/* Feedback */
+.ldemo-note {
+  margin-top: 12px; padding: 10px 12px;
+  font-size: 13px; line-height: 1.5;
+  border-left: 2px solid;
+}
+.ldemo-note.ok  { background: rgba(57,232,171,0.06); border-color: #39e8ab; color: #cfeee2; }
+.ldemo-note.bad { background: rgba(255,61,139,0.06); border-color: var(--d-magenta); color: #f3ccdb; }
+
+.ldemo-end {
+  margin-top: 14px; padding: 14px 16px;
+  font-size: 14px; line-height: 1.6;
+  border: 1px solid;
+}
+.ldemo-end strong { display: block; margin-bottom: 4px; font-size: 16px; }
+.ldemo-end.win  { border-color: rgba(61,240,232,0.4); background: rgba(61,240,232,0.06); color: var(--d-ink); }
+.ldemo-end.lose { border-color: rgba(255,61,139,0.35); background: rgba(255,61,139,0.05); color: var(--d-ink); }
+.ldemo-end.win strong { color: var(--d-cyan); }
+
+.ldemo-retry {
+  display: block; margin-top: 10px;
+  background: none; border: 1px solid rgba(120,210,205,0.3);
+  color: var(--d-ink); padding: 7px 16px; cursor: pointer;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.08em;
+}
+.ldemo-retry:hover { border-color: var(--d-cyan); color: var(--d-cyan); }
+
+@media (max-width: 560px) {
+  .ldemo { padding: 14px; }
+  .ldemo-code { font-size: 11px; }
+  .ldemo-bar { grid-template-columns: 76px 1fr; }
+}

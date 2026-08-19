@@ -231,11 +231,14 @@
 
 /* ── Hero banner ─────────────────────────────────────────────────────────── */
 .hero-banner {
-  padding: 32px 36px; margin-bottom: 28px;
+  padding: 40px 36px; margin-bottom: 28px;
   position: relative; overflow: hidden;
   background: linear-gradient(135deg, rgba(20,24,36,0.9), rgba(10,12,18,0.95));
   border: 1px solid rgba(120,210,205,0.18);
-  display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center;
+  /* Single column now — the streak hexagon that used to sit on the right was
+     the loudest object on the page and read "NO STREAK YET" to every new
+     player. The hero's job is one action, not a dashboard. */
+  display: block;
 }
 .hero-banner::before {
   content: "";
@@ -261,9 +264,33 @@
   text-transform: uppercase; letter-spacing: 0.01em; margin-bottom: 8px;
 }
 .hero-banner p { color: #9fb2b3; font-size: 15px; max-width: 480px; }
-.hero-banner .btn-primary { margin-top: 16px; }
 
-.hero-xp-bar { margin-top: 16px; }
+/* One line naming the next thing, then the button. Nothing between them. */
+.hero-next {
+  color: #9fb2b3; font-size: 16px; margin-top: 4px;
+}
+.hero-next strong { color: #eaf6f5; font-weight: 600; }
+
+/* THE primary action. Deliberately oversized — on the old dashboard the CTA
+   was styled identically to four other buttons, so nothing told a newcomer
+   where to click. */
+.dash-wrap .btn-continue {
+  margin-top: 22px;
+  font-size: 17px; font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 16px 44px;
+  border-radius: 0;
+  box-shadow: 0 0 30px rgba(61,240,232,0.35);
+}
+.dash-wrap .btn-continue:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(61,240,232,0.3);
+}
+
+/* Two cards instead of four. */
+.stats-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+
+.hero-xp-bar { margin-top: 22px; max-width: 460px; }
 .hero-xp-labels {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 6px; flex-wrap: wrap; gap: 4px;
@@ -720,7 +747,7 @@
 }
 .btn-metamask:hover { background: rgba(245,196,83,0.16); }
 
-/* ── Seeker badges ───────────────────────────────────────────────────────── */
+/* ── Hunter badges ───────────────────────────────────────────────────────── */
 .pilot-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
 .pilot-badge {
   display: inline-flex; align-items: center; gap: 5px;
@@ -1042,4 +1069,182 @@
 @media (max-width: 800px) {
   .dash-raid-card-body { grid-template-columns: 1fr; }
   .dash-friends-sidebar { width: 280px; }
+}
+
+/* ── Your path — DB-driven gate list ──────────────────────────────────────
+   Replaces the old hardcoded "Active Quests" panel, which only ever knew
+   about gates 01-04 and went permanently stale once a player passed gate 4. */
+.path-list { padding: 0; overflow: hidden; }
+.path-empty {
+  padding: 20px 18px;
+  font-family: var(--f-mono); font-size: 11px; color: var(--ink-3);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.path-row {
+  display: grid; grid-template-columns: 34px 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-popup, rgba(255,255,255,0.05));
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.path-row:last-child { border-bottom: none; }
+.path-row:hover:not(.locked) { background: rgba(61,240,232,0.04); }
+.path-row.locked { cursor: default; opacity: 0.42; }
+.path-row.next { background: rgba(61,240,232,0.06); box-shadow: inset 2px 0 0 var(--teal, #3df0e8); }
+
+.path-ic { font-size: 17px; text-align: center; }
+.path-row.done .path-ic { color: var(--lime, #7ee787); font-size: 14px; }
+
+.path-body { min-width: 0; }
+.path-title {
+  font-size: 13.5px; color: var(--ink-1, #eaf6f5);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 8px;
+}
+.path-row.done .path-title { color: var(--ink-2, #9fb2b3); }
+.path-boss {
+  font-family: var(--f-mono); font-size: 8.5px; letter-spacing: 0.1em;
+  color: var(--magenta, #ff3d8b); border: 1px solid currentColor;
+  border-radius: 0; padding: 1px 4px; flex-shrink: 0;
+}
+.path-topic {
+  font-family: var(--f-mono); font-size: 10px; color: var(--ink-3);
+  margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.path-right { flex-shrink: 0; }
+.path-xp { font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-3); }
+.path-xp.done { color: var(--lime, #7ee787); }
+.path-cta {
+  font-family: var(--f-mono); font-size: 11px; font-weight: 600;
+  color: var(--teal, #3df0e8); letter-spacing: 0.04em;
+}
+
+/* ── Open warbands ─────────────────────────────────────────────────────── */
+.wb-list { padding: 0; overflow: hidden; }
+.wb-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; cursor: pointer;
+  border-bottom: 1px solid var(--line-popup, rgba(255,255,255,0.05));
+  transition: background 0.14s;
+}
+.wb-row:last-child { border-bottom: none; }
+.wb-row:hover { background: rgba(255,61,139,0.05); }
+.wb-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--lime, #7ee787); box-shadow: 0 0 8px currentColor;
+}
+.wb-name {
+  flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wb-join, .wb-start {
+  font-family: var(--f-mono); font-size: 10.5px; font-weight: 600;
+  color: var(--magenta, #ff3d8b); flex-shrink: 0; cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .path-topic { display: none; }
+}
+
+/* Hero: copy on the left, the two stats stacked on the right, level with the
+   streak chip. They used to sit in a separate band under the hero. */
+.hero-banner { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: start; }
+.hero-stats-col { display: flex; flex-direction: column; gap: 14px; min-width: 210px; }
+.hero-stats-col .stats-grid,
+.hero-stats-col .stats-grid-2 {
+  display: flex; flex-direction: column; gap: 14px;
+  max-width: none; margin: 0;
+}
+.hero-stats-col .stat { min-width: 210px; }
+
+/* Only one column left in the body once "Your path" moved out. */
+.dash-cols-1 { grid-template-columns: minmax(0, 380px) !important; }
+
+@media (max-width: 1100px) {
+  .hero-banner { grid-template-columns: 1fr; gap: 24px; }
+  .hero-stats-col { flex-direction: row; min-width: 0; }
+  .hero-stats-col .stats-grid,
+  .hero-stats-col .stats-grid-2 { flex-direction: row; }
+  .hero-stats-col .stat { min-width: 0; flex: 1; }
+  .dash-cols-1 { grid-template-columns: 1fr !important; }
+}
+
+/* ── Mission cards (dashboard, right of Top hunters) ─────────────────────── */
+.dash-cols-2 { grid-template-columns: minmax(0, 320px) minmax(0, 1fr) !important; }
+
+.ms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+.ms-card {
+  background: linear-gradient(180deg, rgba(20,24,36,0.55), rgba(10,12,18,0.65));
+  border: 1px solid var(--line);
+  padding: 14px 15px;
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 5px;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.ms-card:hover:not(.locked) {
+  border-color: rgba(61,240,232,0.4);
+  transform: translateY(-1px);
+}
+.ms-card.next {
+  border-color: rgba(61,240,232,0.5);
+  background: linear-gradient(180deg, rgba(61,240,232,0.07), rgba(10,12,18,0.65));
+  box-shadow: inset 2px 0 0 var(--teal);
+}
+.ms-card.done { opacity: 0.62; }
+.ms-card.locked { opacity: 0.38; cursor: default; }
+
+.ms-top { display: flex; align-items: center; justify-content: space-between; }
+.ms-ic { font-size: 18px; line-height: 1; }
+.ms-card.done .ms-ic { color: var(--lime); font-size: 15px; }
+.ms-boss {
+  font-family: var(--f-mono); font-size: 8.5px; letter-spacing: 0.1em;
+  color: var(--magenta); border: 1px solid currentColor; padding: 1px 5px;
+}
+
+.ms-title {
+  font-size: 14px; color: var(--ink-1); line-height: 1.25;
+  margin-top: 2px;
+}
+.ms-topic {
+  font-family: var(--f-mono); font-size: 10px; color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ms-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--line-popup);
+  font-family: var(--f-mono); font-size: 10.5px;
+}
+.ms-xp { color: var(--ink-3); }
+.ms-card.done .ms-xp { color: var(--lime); }
+.ms-cta { color: var(--ink-3); }
+.ms-card.next .ms-cta { color: var(--teal); font-weight: 600; }
+
+@media (max-width: 1100px) {
+  .dash-cols-2 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 560px) {
+  .ms-grid { grid-template-columns: 1fr; }
+}
+
+/* Missions column matches the height of the left column (Top hunters +
+   Open warbands), so the two bottoms line up instead of the cards
+   floating short. */
+.dash-cols-2 { align-items: stretch; }
+.dash-cols-2 > div { display: flex; flex-direction: column; }
+.dash-cols-2 > div:last-child > .section-block {
+  flex: 1; display: flex; flex-direction: column; margin-bottom: 0;
+}
+.dash-cols-2 > div:last-child .ms-grid {
+  flex: 1;
+  grid-template-rows: repeat(2, minmax(140px, 1fr));
+}
+/* Footer pins to the bottom of each stretched card. */
+.ms-card .ms-foot { margin-top: auto; }
+
+@media (max-width: 1100px) {
+  .dash-cols-2 > div:last-child .ms-grid { grid-template-rows: none; }
 }

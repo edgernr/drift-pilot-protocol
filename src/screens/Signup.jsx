@@ -90,9 +90,9 @@ export default function Signup() {
           <span className="auth-eyebrow">// Enlisting · Season 01</span>
           <h1>
             Welcome,<br />
-            <span className="tint-gold">Seeker.</span>
+            <span className="tint-gold">Hunter.</span>
           </h1>
-          <p>Create your account and start earning $SHARD from day one.</p>
+          <p>Create your account and start earning Shards from day one.</p>
         </div>
 
         <div className="auth-status">
@@ -131,7 +131,7 @@ export default function Signup() {
               onChange={e => setCompany(e.target.value)}
             />
             <div className="auth-field">
-              <label>Seeker name</label>
+              <label>Hunter name</label>
               <input
                 type="text"
                 placeholder="e.g. Axon"

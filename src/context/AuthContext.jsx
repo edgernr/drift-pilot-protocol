@@ -19,7 +19,7 @@ export const HUNT_REWARDS = {
 
 // Raid XP rewards (distinct from DRIFT payout amounts: 2350/1050/250/0)
 export const RAID_XP_REWARDS  = { PERFECT: 500, PASSED: 300, PARTIAL: 100, FAILED: 0 }
-// A raid:* row stores XP in xp_earned; the $SHARD payout is DERIVED from it here.
+// A raid:* row stores XP in xp_earned; the Shards payout is DERIVED from it here.
 const RAID_XP_TO_HUNT  = { 500: 2350, 300: 1050, 100: 250, 0: 0 }
 const RAID_NEW_XP_SET   = new Set([100, 300, 500])          // new-format XP values
 const RAID_OLD_TO_XP    = { 2350: 500, 1050: 300, 250: 100 } // old DRIFT amounts → XP
@@ -129,7 +129,7 @@ export function AuthProvider({ children }) {
     // minimal profile so a fresh user is never stuck. PGRST116 = "no rows".
     if (!prof && profErr) {
       const { data: { user: authUser } } = await supabase.auth.getUser()
-      const fallbackName = authUser?.email ?? 'Seeker'
+      const fallbackName = authUser?.email ?? 'Hunter'
       const { data: created, error: upsertErr } = await supabase
         .from('profiles')
         .upsert({ id: userId, name: fallbackName }, { onConflict: 'id' })
@@ -375,7 +375,7 @@ export function AuthProvider({ children }) {
     return !error
   }
 
-  // Void a flagged clear: delete the quest_completions row. XP + $SHARD are
+  // Void a flagged clear: delete the quest_completions row. XP + Shards are
   // derived from surviving rows, so this cleanly reverses the reward.
   async function voidClear(targetUserId, questId) {
     if (!user || !profile?.is_admin) return false
@@ -444,7 +444,7 @@ export function AuthProvider({ children }) {
   }
 
   // Season 01 prologue gating: flips profiles.prologue_done (see supabase/prologue_done.sql).
-  // Called once, at the end of the "Zero Hour" flow. No XP/$SHARD — the prologue
+  // Called once, at the end of the "Zero Hour" flow. No XP/Shards — the prologue
   // deliberately pays nothing; Gate 01 is the first real payout.
   async function markPrologueDone() {
     if (!user) return false

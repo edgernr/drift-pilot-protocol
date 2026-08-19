@@ -41,7 +41,7 @@ export default function Privacy() {
             <p>We collect the following information directly from you and as you use the Service:</p>
             <ul style={{ margin: '10px 0 0', paddingLeft: 22 }}>
               <li><strong>Account details:</strong> your email address and display name (and, for Academy accounts, the parent/guardian's account details and the learner's display name).</li>
-              <li><strong>Learning progress &amp; analytics:</strong> your quest/gate completions, XP, levels, badges, and in-app $SHARD balance, plus gameplay analytics such as time spent on challenges and paste counts (used for progress tracking and anti-cheat).</li>
+              <li><strong>Learning progress &amp; analytics:</strong> your quest/gate completions, XP, levels, badges, and in-app Shards balance, plus gameplay analytics such as time spent on challenges and paste counts (used for progress tracking and anti-cheat).</li>
               <li><strong>Technical data:</strong> basic information your browser provides (for example, general device/browser type) needed to deliver and secure the Service.</li>
             </ul>
             <p style={{ marginTop: 12 }}>
@@ -53,7 +53,7 @@ export default function Privacy() {
           <Section n="2" title="How We Use Your Information">
             <ul style={{ margin: '0 0 0', paddingLeft: 22 }}>
               <li>To create and manage your account and authenticate you.</li>
-              <li>To track learning progress, award XP/badges/$SHARD, and power leaderboards.</li>
+              <li>To track learning progress, award XP/badges/Shards, and power leaderboards.</li>
               <li>To detect cheating and protect the integrity of the academy (anti-cheat).</li>
               <li>To operate, maintain, debug, and improve the Service.</li>
               <li>To communicate with you about your account, security, or important changes.</li>

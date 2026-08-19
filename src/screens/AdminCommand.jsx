@@ -184,7 +184,7 @@ export default function AdminCommand() {
                       const ok = await clearFlag(row.user_id, row.quest_id)
                       if (ok) setFlaggedRows(r => r.filter((_, j) => j !== i))
                     }}>Clear</button>
-                  <button className="ac-btn ac-btn-hot" title="Delete this clear — reverses XP + $SHARD"
+                  <button className="ac-btn ac-btn-hot" title="Delete this clear — reverses XP + Shards"
                     onClick={async () => {
                       const ok = await voidClear(row.user_id, row.quest_id)
                       if (ok) setFlaggedRows(r => r.filter((_, j) => j !== i))

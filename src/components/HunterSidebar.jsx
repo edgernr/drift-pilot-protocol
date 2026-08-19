@@ -49,7 +49,7 @@ export default function HunterSidebar({ active }) {
         </div>
 
         <div className="hs-group">
-          <div className="hs-label">Seeker HQ</div>
+          <div className="hs-label">Hunter HQ</div>
           <div className="hs-list">
             <a onClick={() => openTab('home')}><span className="hs-ic">◈</span> Dashboard</a>
             <a onClick={() => openTab('skill-tree')}><span className="hs-ic">⟐</span> Skill Tree</a>
@@ -60,7 +60,7 @@ export default function HunterSidebar({ active }) {
         <div className="hs-group">
           <div className="hs-label">Rewards</div>
           <div className="hs-list">
-            <a onClick={() => openTab('wallet')}><span className="hs-ic">$</span> $SHARD Wallet</a>
+            <a onClick={() => openTab('wallet')}><span className="hs-ic">$</span> Shards Wallet</a>
             <a onClick={() => openTab('leaderboard')}><span className="hs-ic">♦</span> Leaderboard</a>
           </div>
         </div>
@@ -88,8 +88,8 @@ export default function HunterSidebar({ active }) {
         <div className="hs-profile" onClick={() => go(`pilot/${user.id}`)} title="Your public profile">
           <div className="hs-avatar"><HunterSigil config={profile?.avatar} name={profile?.name} size="100%" /></div>
           <div className="hs-profile-meta">
-            <div className="hs-profile-name">{profile?.name ?? 'Seeker'}</div>
-            <div className="hs-profile-bal">{fmt(balance)} $SHARD</div>
+            <div className="hs-profile-name">{profile?.name ?? 'Hunter'}</div>
+            <div className="hs-profile-bal">{fmt(balance)} Shards</div>
           </div>
         </div>
         <a className="hs-logout" onClick={() => { setOpen(false); logout() }}>Sign out</a>

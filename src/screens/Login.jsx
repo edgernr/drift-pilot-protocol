@@ -55,7 +55,7 @@ export default function Login() {
           <span className="auth-eyebrow">// Re-entering the system</span>
           <h1>
             Welcome back,<br />
-            <span className="tint-cyan">Seeker.</span>
+            <span className="tint-cyan">Hunter.</span>
           </h1>
           <p>Log in to resume your missions, claim your streak rewards, and push your rank up the ladder.</p>
         </div>

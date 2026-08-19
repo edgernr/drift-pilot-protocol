@@ -136,7 +136,7 @@ export default function PilotProfile() {
       <div className="pp-state">
         <div className="pp-state-glyph">⊘</div>
         <div className="pp-state-title">SEEKER NOT FOUND</div>
-        <div className="pp-state-sub">This callsign doesn't exist in the records.</div>
+        <div className="pp-state-sub">This name doesn't exist in the records.</div>
         <a href="/" className="btn btn-primary" style={{ marginTop: 24 }}>Return to Base →</a>
       </div>
     </div>
@@ -175,7 +175,7 @@ export default function PilotProfile() {
     { v: pilot.level, l: 'LEVEL', c: pilot.levelColor },
     { v: fmt(pilot.totalXp), l: 'XP', c: 'var(--teal)' },
     { v: gates, l: 'CLEARED', c: 'var(--lime)' },
-    { v: fmt(pilot.totalHunt), l: '$SHARD', c: 'var(--magenta)' },
+    { v: fmt(pilot.totalHunt), l: 'Shards', c: 'var(--magenta)' },
     { v: pilot.streak, l: 'STREAK', c: 'var(--amber)' },
   ]
 
@@ -207,7 +207,7 @@ export default function PilotProfile() {
               LV.{pilot.level} · {pilot.levelLabel}
             </div>
             <div className="pp-meta-line">
-              Seeker since {joined}
+              Hunter since {joined}
               {pilot.lastActive && <> · <span className="pp-lastseen">last dive {relTime(pilot.lastActive)}</span></>}
             </div>
             <div className="pp-badges">

@@ -21,7 +21,7 @@ import gorgorothConfig from '../data/gates/prologueGorgoroth'
  *   → cs2 (THE MARK) → fall (CS-3, vertical parallax)
  *   → cs4 (SIGNAL)   → prologue_done=true → goto('quest')  [Gate 01 = Level 2]
  *
- * The prologue pays no XP/$SHARD — Gate 01 is the first real payout.
+ * The prologue pays no XP/Shards — Gate 01 is the first real payout.
  */
 const STAGES = ['cs0', 'exam', 'cs1', 'gorgoroth', 'cs2', 'fall', 'cs4']
 

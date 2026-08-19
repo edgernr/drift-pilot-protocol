@@ -9,6 +9,7 @@ import FriendsRail from '../components/FriendsRail'
 import InviteAcceptModal from '../components/InviteAcceptModal'
 import * as F from '../lib/friends'
 import { attachNames } from '../lib/publicProfiles'
+import { debounce } from '../lib/debounce'
 import {
   RAID01, FUNCTIONS, FUNCTIONS_BY_ID, PHASES, PAYOUTS, ROLES, ROLE_LIST,
   BOSS_HP_MAX, FUNCTION_DAMAGE, PARTY_MIN, PARTY_MAX, ENTRY_COST, INVITE_TTL_MS,
@@ -56,8 +57,10 @@ export default function Raid01() {
   const [friendError, setFriendError] = useState(null)
   const [friendNotice, setFriendNotice] = useState(null)
   const [sentRequests, setSentRequests] = useState([])
+  const [payoutError, setPayoutError] = useState(null)
   const channelRef = useRef(null)
   const lobbyChannelRef = useRef(null)
+  const lobbyReloadRef = useRef(null)
 
   const myId = user?.id
   const isLeader = raid?.created_by === myId
@@ -97,8 +100,10 @@ export default function Raid01() {
 
   // ─── Realtime ────────────────────────────────────────────────────────────────
   const subscribeRun = useCallback((raidId) => {
-    channelRef.current?.unsubscribe()
-    lobbyChannelRef.current?.unsubscribe(); lobbyChannelRef.current = null
+    if (channelRef.current) supabase.removeChannel(channelRef.current)
+    if (lobbyChannelRef.current) supabase.removeChannel(lobbyChannelRef.current)
+    lobbyReloadRef.current?.cancel()
+    lobbyChannelRef.current = null
     channelRef.current = supabase
       .channel(`broodgate:${raidId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'raids', filter: `id=eq.${raidId}` },
@@ -114,14 +119,27 @@ export default function Raid01() {
       .subscribe()
   }, [loadRun])
 
+  // Lobby watch. Two things kept this from scaling past ~20 concurrent hunters:
+  //   1. the `raids` listener had no filter, so every row change anywhere woke
+  //      every client, and
+  //   2. an unfiltered `raid_members` listener meant one warband creation
+  //      (1 raid row + N member rows) fired a full 3-query reload per row, on
+  //      every connected client.
+  // Now: server-side filter, no member listener, debounced handler. Seat counts
+  // refresh on the slow poll below instead of on a realtime fan-out.
   const subscribeLobbies = useCallback(() => {
-    lobbyChannelRef.current?.unsubscribe()
+    if (lobbyChannelRef.current) supabase.removeChannel(lobbyChannelRef.current)
+    const reload = debounce(loadLobbies, 450)
+    lobbyReloadRef.current = reload
     lobbyChannelRef.current = supabase
-      .channel('broodgate-lobby-watch')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'raids' }, loadLobbies)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'raid_members' }, loadLobbies)
+      // Topic is per-user: a hardcoded topic collides with itself across
+      // remounts and can duplicate delivery on one socket.
+      .channel(`broodgate-lobby-watch:${myId ?? 'anon'}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'raids', filter: 'status=eq.bg_lobby' },
+        reload)
       .subscribe()
-  }, [loadLobbies])
+  }, [loadLobbies, myId])
 
   // ─── Init ────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -158,10 +176,22 @@ export default function Raid01() {
     })()
     return () => {
       cancelled = true
-      channelRef.current?.unsubscribe()
-      lobbyChannelRef.current?.unsubscribe()
+      lobbyReloadRef.current?.cancel()
+      // removeChannel (not unsubscribe) — unsubscribe leaves the channel object
+      // on the client's list, so remounts accumulate dead duplicate topics.
+      if (channelRef.current) supabase.removeChannel(channelRef.current)
+      if (lobbyChannelRef.current) supabase.removeChannel(lobbyChannelRef.current)
     }
   }, [user, loadRun, loadLobbies, subscribeRun, subscribeLobbies])
+
+  // Seat counts used to ride on an unfiltered `raid_members` realtime listener,
+  // which is what actually broke at ~20 users. A slow poll while the lobby list
+  // is on screen costs ~N/12 queries per second instead of N² reloads per join.
+  useEffect(() => {
+    if (raid || loading || sealed) return
+    const id = setInterval(() => { loadLobbies() }, 12000)
+    return () => clearInterval(id)
+  }, [raid, loading, sealed, loadLobbies])
 
   // ─── Invites sent FOR this lobby (who's pending / who declined) ────────────
   const fetchRaidInvites = useCallback(async (raidId) => {
@@ -185,7 +215,7 @@ export default function Raid01() {
         { event: '*', schema: 'public', table: 'raid_invites', filter: `raid_id=eq.${raid.id}` },
         () => fetchRaidInvites(raid.id))
       .subscribe()
-    return () => ch.unsubscribe()
+    return () => { supabase.removeChannel(ch) }
   }, [raid?.id, raid?.status, fetchRaidInvites])
 
   // Retire invites nobody answered. Only the sender or the raid leader may
@@ -230,7 +260,7 @@ export default function Raid01() {
         { event: '*', schema: 'public', table: 'raid_invites', filter: `invitee_id=eq.${user.id}` },
         fetchInvites)
       .subscribe()
-    return () => { cancelled = true; ch.unsubscribe() }
+    return () => { cancelled = true; supabase.removeChannel(ch) }
   }, [user, raid])
 
   // ─── Payouts — per function, automatic, idempotent ──────────────────────────
@@ -241,9 +271,18 @@ export default function Raid01() {
     if (!raid || !myId || !members.some(m => m.user_id === myId)) return
     const done = profile?.completedQuestIds
     if (!done) return
-    const claim = (suffix, xp) => {
+    // The DB now REJECTS a payout row unless you are a member of that raid AND
+    // the function is genuinely severed (supabase/raid_payout_guard.sql). That
+    // guard must never eat a legitimate payout in silence, so a refusal is
+    // surfaced instead of thrown away.
+    const claim = async (suffix, xp) => {
       const key = `raid:${raid.id}${suffix}`
-      if (!done.has(key)) completeQuest(key, xp, {})
+      if (done.has(key)) return
+      const ok = await completeQuest(key, xp, {})
+      if (!ok) setPayoutError(
+        'The Association refused a payout for this function. Your progress is safe — ' +
+        'reload the war room, and tell the owner if it keeps happening.'
+      )
     }
     if (fnDone(1)) claim(PAYOUTS.f1.suffix, PAYOUTS.f1.xp)
     if (fnDone(2)) claim(PAYOUTS.f2.suffix, PAYOUTS.f2.xp)
@@ -389,7 +428,7 @@ export default function Raid01() {
         }
         await supabase.from('raid_members').delete().eq('raid_id', raid.id).eq('user_id', myId)
       }
-      channelRef.current?.unsubscribe()
+      if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
       setRaid(null); setMembers([]); setFuncs({}); setEvents([])
       await loadLobbies()
       subscribeLobbies()
@@ -420,7 +459,7 @@ export default function Raid01() {
           .update({ status: 'bg_failed', ended_at: new Date().toISOString() })
           .eq('id', raid.id)
       }
-      channelRef.current?.unsubscribe()
+      if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
       setRaid(null); setMembers([]); setFuncs({}); setEvents([])
       await loadLobbies()
       subscribeLobbies()
@@ -545,6 +584,13 @@ export default function Raid01() {
   if (raid && (raid.status === 'bg_active' || raid.status === 'bg_complete')) {
     return (
       <>
+        {payoutError && (
+          <div className="r1w-payout-alert" role="alert">
+            <span className="r1w-payout-alert-tag">PAYOUT REFUSED</span>
+            <span>{payoutError}</span>
+            <button className="r1w-payout-alert-x" onClick={() => setPayoutError(null)}>✕</button>
+          </div>
+        )}
         {isAdmin && (
           <div className="r1w-admin-bar">
             <span className="r1w-admin-tag">ADMIN</span>
@@ -585,7 +631,7 @@ export default function Raid01() {
   // A member ROW is a role, not a person — one hunter can hold several. The
   // breach gate counts distinct hunters (so nobody solos a party raid by
   // buying a second role) and demands every one of the five functions has an
-  // owner, which is what makes an extra role worth its $SHARD.
+  // owner, which is what makes an extra role worth its Shards.
   const distinctHunters = new Set(members.map(m => m.user_id)).size
   const coveredRoles = new Set(members.map(m => m.role))
   const uncoveredRoles = ROLE_LIST.filter(r => !coveredRoles.has(r.id))
@@ -605,8 +651,8 @@ export default function Raid01() {
   const joinLabel = pickedRoles.length === 0
     ? 'PICK A SPECIALIZATION'
     : !canAfford
-      ? `NEED ${totalEntry} $SHARD`
-      : `JOIN — ${totalEntry} $SHARD`
+      ? `NEED ${totalEntry} Shards`
+      : `JOIN — ${totalEntry} Shards`
 
   const handleInviteFriend = async (friendId) => {
     if (!raid || busy) return
@@ -642,7 +688,7 @@ export default function Raid01() {
           <span className="r1w-tag">{RAID01.code} · {RAID01.region}</span>
           <div className="r1w-title">{RAID01.title}</div>
         </div>
-        <span className="r1w-shard">◈ {spendable.toLocaleString()} $SHARD</span>
+        <span className="r1w-shard">◈ {spendable.toLocaleString()} Shards</span>
         {inLobby && (
           <span className="r1w-shard" style={{ opacity: 0.5 }}>
             {friends.length} FRIEND{friends.length === 1 ? '' : 'S'}
@@ -733,7 +779,7 @@ export default function Raid01() {
                   </div>
                 ) : isLeader ? (
                   <div className="r1w-lobby-pick-roles">
-                    <span className="r1w-myroles-label">PICK YOUR ROLE(S) — 1st free, extras 1,000 $SHARD</span>
+                    <span className="r1w-myroles-label">PICK YOUR ROLE(S) — 1st free, extras 1,000 Shards</span>
                     <div className="r1w-lobby-role-cards">
                       {ROLE_LIST.map(r => {
                         const fn = FUNCTIONS.find(f => f.role === r.id)
@@ -773,7 +819,7 @@ export default function Raid01() {
                           setBusy(false)
                           await loadRun(raid.id)
                         }}>
-                        CONFIRM ROLES — {totalEntry} $SHARD
+                        CONFIRM ROLES — {totalEntry} Shards
                       </button>
                     )}
                   </div>
@@ -825,10 +871,10 @@ export default function Raid01() {
                 <span className="r1w-step-title">CHOOSE YOUR SPECIALIZATION{pickedRoles.length > 1 ? 'S' : ''}</span>
                 <span className="r1w-step-note">
                   {pickedRoles.length === 0
-                    ? 'pick up to 3 roles — 1st free, extras 1,000 $SHARD each'
+                    ? 'pick up to 3 roles — 1st free, extras 1,000 Shards each'
                     : pickedRoles.length === 1
                       ? '1 role selected — free'
-                      : `${pickedRoles.length} roles selected — ${(pickedRoles.length - 1) * EXTRA_ROLE_COST} $SHARD extra`}
+                      : `${pickedRoles.length} roles selected — ${(pickedRoles.length - 1) * EXTRA_ROLE_COST} Shards extra`}
                 </span>
               </div>
               <div className="r1w-step-roles">
@@ -871,11 +917,11 @@ export default function Raid01() {
                 <div className="r1w-role-summary">
                   <span>
                     {pickedRoles.length} role{pickedRoles.length > 1 ? 's' : ''} selected ·
-                    Entry: {ENTRY_COST} $SHARD ·
-                    Extra: {(pickedRoles.length - 1) * EXTRA_ROLE_COST} $SHARD
+                    Entry: {ENTRY_COST} Shards ·
+                    Extra: {(pickedRoles.length - 1) * EXTRA_ROLE_COST} Shards
                   </span>
                   <span className="r1w-role-total">
-                    Total: {totalEntry} $SHARD
+                    Total: {totalEntry} Shards
                     {spendable < totalEntry && !isAdmin && <span className="r1w-role-insufficient"> — INSUFFICIENT</span>}
                   </span>
                 </div>
@@ -888,7 +934,7 @@ export default function Raid01() {
               <div className="r1w-step-head">
                 <span className="r1w-step-num">02</span>
                 <span className="r1w-step-title">RAISE OR JOIN A WARBAND</span>
-                <span className="r1w-step-note">entry {ENTRY_COST} $SHARD + {EXTRA_ROLE_COST} $SHARD per extra role — refunded if you leave before the breach</span>
+                <span className="r1w-step-note">entry {ENTRY_COST} Shards + {EXTRA_ROLE_COST} Shards per extra role — refunded if you leave before the breach</span>
               </div>
               {invitedRaid && (
                 <div className="r1w-invite-banner">
@@ -953,10 +999,10 @@ export default function Raid01() {
                   {!warbandName.trim()
                     ? 'NAME YOUR WARBAND'
                     : pickedRoles.length === 0
-                      ? 'RAISE WARBAND (0 $SHARD — NO ROLE)'
+                      ? 'RAISE WARBAND (0 Shards — NO ROLE)'
                       : !canAfford
-                        ? `NEED ${totalEntry} $SHARD`
-                        : `RAISE WARBAND — ${totalEntry} $SHARD`}
+                        ? `NEED ${totalEntry} Shards`
+                        : `RAISE WARBAND — ${totalEntry} Shards`}
                 </button>
               </div>
             </section>

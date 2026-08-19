@@ -107,17 +107,17 @@ export default function Terms() {
             </p>
           </Section>
 
-          <Section n="6" title="$SHARD — In-App Reward Only">
+          <Section n="6" title="Shards — In-App Reward Only">
             <p>
-              <strong>$SHARD is an in-app reward used within the Service.</strong> It represents
+              <strong>Shards is an in-app reward used within the Service.</strong> It represents
               progress and engagement and is intended for use inside the academy (for example, to
               unlock or replay content or to apply XP multipliers, where such features exist).
             </p>
             <ul style={{ margin: '10px 0 0', paddingLeft: 22 }}>
-              <li><strong>$SHARD has no guaranteed monetary value.</strong> We make no promise that it can be redeemed, exchanged, sold, or converted into fiat currency or any other asset.</li>
-              <li>$SHARD is <strong>not</strong> a security, investment, share, or financial instrument, and is <strong>not</strong> intended to be one.</li>
+              <li><strong>Shards has no guaranteed monetary value.</strong> We make no promise that it can be redeemed, exchanged, sold, or converted into fiat currency or any other asset.</li>
+              <li>Shards is <strong>not</strong> a security, investment, share, or financial instrument, and is <strong>not</strong> intended to be one.</li>
               <li>Nothing in the Service constitutes financial, investment, legal, or tax advice. Any market figures, prices, or tokenomics shown in marketing or demo materials are illustrative and not an offer, guarantee, or promise of value.</li>
-              <li>We may adjust, cap, expire, or discontinue $SHARD balances, earn rates, and mechanics at any time, including for Phase-1 launch.</li>
+              <li>We may adjust, cap, expire, or discontinue Shards balances, earn rates, and mechanics at any time, including for Phase-1 launch.</li>
             </ul>
           </Section>
 
@@ -143,7 +143,7 @@ export default function Terms() {
               restrict, or permanently terminate your access — with or without notice — if you violate
               these Terms, engage in cheating or abuse, or where required to protect the Service or
               other users. On termination, your right to use the Service ends and any in-app balances,
-              including $SHARD, may be forfeited.
+              including Shards, may be forfeited.
             </p>
           </Section>
 

@@ -141,7 +141,7 @@ export default function Guild() {
   return (
     <div className="guild-wrap">
       <header className="g-header">
-        <a className="g-back" onClick={() => goto('dashboard')}>← Seeker HQ</a>
+        <a className="g-back" onClick={() => goto('dashboard')}>← Hunter HQ</a>
         <h1 className="g-title">GUILDS</h1>
         <p className="g-subtitle">Licensed hunter crews of the Association.</p>
       </header>
@@ -348,7 +348,7 @@ function GuildHome({ guild, roster, profile, onlineIds, goto, busy, confirmLeave
                   {mgmt.applications.map(app => (
                     <div key={app.id} className="g-invite">
                       <div className="g-emblem-sm"><HunterSigil config={app.public_profiles?.avatar} name={app.public_profiles?.name} size="100%" /></div>
-                      <div className="g-invite-meta"><div className="g-invite-name">{app.public_profiles?.name ?? 'Seeker'}</div></div>
+                      <div className="g-invite-meta"><div className="g-invite-name">{app.public_profiles?.name ?? 'Hunter'}</div></div>
                       <div className="g-invite-actions">
                         <button className="g-btn g-btn-primary g-btn-sm" disabled={busy} onClick={() => mgmt.onRespondApp(app.id, true)}>Accept</button>
                         <button className="g-btn g-btn-ghost g-btn-sm" disabled={busy} onClick={() => mgmt.onRespondApp(app.id, false)}>Decline</button>

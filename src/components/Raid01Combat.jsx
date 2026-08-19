@@ -73,7 +73,7 @@ export default function Raid01Combat({
       }
     }
     return states
-  }, [functions])
+  }, [functions, fnList])
 
   const memberName = useCallback(
     (id) => members.find(m => m.user_id === id)?.name ?? 'HUNTER',
@@ -88,7 +88,7 @@ export default function Raid01Combat({
   const lastFnRef = useRef(currentFn?.id)
   const [currentFnId, setCurrentFnId] = useState(currentFn?.id ?? 'f1')
   const [codeMap, setCodeMap] = useState({})
-  const [wardResults, setWardResults] = useState({})
+  const [wardResultsByFn, setWardResultsByFn] = useState({})   // { [fnId]: { [wardId]: bool } }
   const [expandedHint, setExpandedHint] = useState(null)
   const [playerHP, setPlayerHP] = useState(PLAYER_HP_MAX)
   const [combo, setCombo] = useState(0)
@@ -127,7 +127,13 @@ export default function Raid01Combat({
   const victoryFiredRef = useRef(false)
   const prevSeveredRef = useRef(null)
   const toastIdRef = useRef(0)
-  const bossFlashRef = useRef(null)
+  // Two independent effects animate the boss, and they used to share ONE timer
+  // ref: each cleared the other's pending reset. A hit landing within ~700ms of
+  // a function completing left `attacking` stuck true — and because the CSS
+  // class was already on the node, every later hit produced no shake, no lunge
+  // and no flash until something else re-rendered it away. Separate timers.
+  const attackTimerRef = useRef(null)
+  const bossFlashTimerRef = useRef(null)
 
   const fn = currentFn ?? fnList[fnList.length - 1]
   const fnShared = functions[fn.id] ?? { status: 'open' }
@@ -150,8 +156,8 @@ export default function Raid01Combat({
   // ─── Personal damage helper ──────────────────────────────────────────────────
   const triggerAttack = useCallback(() => {
     setAttacking(true)
-    clearTimeout(bossFlashRef.current)
-    bossFlashRef.current = setTimeout(() => setAttacking(false), 700)
+    clearTimeout(attackTimerRef.current)
+    attackTimerRef.current = setTimeout(() => setAttacking(false), 700)
   }, [])
 
   const takeDamage = useCallback((amount, why) => {
@@ -191,31 +197,90 @@ export default function Raid01Combat({
   }, [currentFnId, loadCode])
 
   // ─── Ward evaluation ─────────────────────────────────────────────────────────
+  //
+  // SECURITY (audit P0-2). This used to read `iframe.contentDocument` from the
+  // parent, which required sandbox="allow-scripts allow-same-origin" — i.e. the
+  // player's code ran ON THE APP ORIGIN with access to localStorage, where the
+  // Supabase session token lives. Combined with raid_files being writable by
+  // any user for any raid, that was a full account-takeover path: write JS into
+  // a stranger's raid file, wait for them to open that function, steal their
+  // session.
+  //
+  // Now the wards are serialized INTO the frame, run against its own document,
+  // and post their results back out. The frame is a unique opaque origin and
+  // can no longer see anything of ours. The RLS half of the fix is in
+  // supabase/fix_p0_security.sql.
+  //
+  // This works because every ward is a pure function of (doc, win, code) with
+  // no closure over outer scope — verified across raid01.js. If you ever write
+  // a ward that captures a variable from module scope, it will silently fail
+  // here. Keep them pure.
+  const checkSeqRef = useRef(0)
+
   const runChecks = useCallback((afterResults) => {
     const iframe = checkIframeRef.current
     if (!iframe || !fn) return
     const currentCode = codeMap[currentFnId] ?? fn.starter
-    iframe.srcdoc = fn.buildCheckDoc(currentCode)
-    iframe.onload = () => {
-      requestAnimationFrame(() => {
-        const doc = iframe.contentDocument
-        const win = iframe.contentWindow
-        if (!doc || !win) return
-        const results = {}
-        fn.wards.forEach(w => {
-          try { results[w.id] = w.test(doc, win, currentCode) } catch { results[w.id] = false }
-        })
-        afterResults?.(results)
-      })
+    const seq = ++checkSeqRef.current
+
+    const wardSrc = fn.wards
+      .map(w => `{id:${JSON.stringify(w.id)},fn:${w.test.toString()}}`)
+      .join(',')
+
+    const runner = `
+<script>
+(function(){
+  var CODE = ${JSON.stringify(currentCode)};
+  var SEQ  = ${seq};
+  var W = [${wardSrc}];
+  function run(){
+    var out = {};
+    for (var i = 0; i < W.length; i++) {
+      try { out[W[i].id] = !!W[i].fn(document, window, CODE) }
+      catch (e) { out[W[i].id] = false }
     }
+    try { parent.postMessage({ __wards: out, __seq: SEQ }, '*') } catch (e) {}
+  }
+  if (document.readyState === 'complete') setTimeout(run, 0)
+  else window.addEventListener('load', function(){ setTimeout(run, 0) })
+})();
+</script>`
+
+    // If the player's code hard-crashes before our runner reports, don't hang
+    // the UI — fail every ward closed.
+    const timer = setTimeout(() => {
+      if (checkSeqRef.current !== seq) return
+      window.removeEventListener('message', onMsg)
+      afterResults?.(Object.fromEntries(fn.wards.map(w => [w.id, false])))
+    }, 2500)
+
+    function onMsg(e) {
+      if (e.source !== iframe.contentWindow) return
+      const d = e.data
+      if (!d || d.__seq !== seq || typeof d.__wards !== 'object') return
+      clearTimeout(timer)
+      window.removeEventListener('message', onMsg)
+      afterResults?.(d.__wards)
+    }
+    window.addEventListener('message', onMsg)
+
+    iframe.srcdoc = fn.buildCheckDoc(currentCode) + runner
   }, [currentFnId, codeMap, fn])
 
   useEffect(() => {
-    const t = setTimeout(() => runChecks(setWardResults), 350)
+    // Results are filed under the function they were produced for, so a slow
+    // check that lands after a switch can't paint the wrong function's chips.
+    const fnAtRequest = currentFnId
+    const t = setTimeout(
+      () => runChecks(results => setWardResultsByFn(prev => ({ ...prev, [fnAtRequest]: results }))),
+      350
+    )
     return () => clearTimeout(t)
-  }, [runChecks])
+  }, [runChecks, currentFnId])
 
-  useEffect(() => { setWardResults({}); setExpandedHint(null) }, [currentFnId])
+  // Ward results are stored PER FUNCTION rather than wiped by an effect on
+  // every switch. Same visible behaviour, minus a render-cascade, and results
+  // can no longer bleed from one function's wards onto another's ids.
 
   // ─── Code change → local map + debounced save ──────────────────────────────
   const handleCodeChange = useCallback((val, ev) => {
@@ -321,15 +386,21 @@ export default function Raid01Combat({
         setSeverToast({ id: tid, glyph: f.glyph, name: f.name, by, byMe: by === myId })
         setTimeout(() => setSeverToast(t => (t?.id === tid ? null : t)), 2600)
         setBossFlash(true)
-        clearTimeout(bossFlashRef.current)
-        bossFlashRef.current = setTimeout(() => setBossFlash(false), 900)
+        clearTimeout(bossFlashTimerRef.current)
+        bossFlashTimerRef.current = setTimeout(() => setBossFlash(false), 900)
       }
     }
     prevSeveredRef.current = new Set(severedFns)
 
-    // Phase banners — visual-only
+    // Phase banners — visual-only, and only for transitions THIS client saw.
+    // Seeded on the first pass (like prevSeveredRef above) so a hunter who
+    // joins or reloads a raid that is already 2 functions deep doesn't get
+    // both banners slammed on screen at once for history they missed.
     const phase1Done = completedCount >= 1
     const phase2Done = completedCount >= 2
+    if (prevPhaseDoneRef.current === null) {
+      prevPhaseDoneRef.current = [phase1Done ? 1 : 0, phase2Done ? 1 : 0]
+    }
     if (phase1Done && prevPhaseDoneRef.current[0] === 0) {
       setPhaseBanner({ label: `${FUNCTIONS[0].name} — DEPLOYED`, sub: 'THE PIPELINE OPENS — PHASE II', color: '#f5c453' })
       setTimeout(() => setPhaseBanner(null), 3200)
@@ -347,7 +418,7 @@ export default function Raid01Combat({
     }
   }, [functions]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const prevPhaseDoneRef = useRef([0, 0])
+  const prevPhaseDoneRef = useRef(null)   // null until the first pass seeds it
 
   // ─── STRIKE ─────────────────────────────────────────────────────────────────
   const handleStrike = useCallback(() => {
@@ -355,7 +426,7 @@ export default function Raid01Combat({
     setStrikeKey(k => k + 1)
     bleedCountRef.current = 0
     runChecks((results) => {
-      setWardResults(results)
+      setWardResultsByFn(prev => ({ ...prev, [currentFnId]: results }))
       const struck = struckRef.current[currentFnId] ?? new Set()
       const newly = fn.wards.filter(w => results[w.id] && !struck.has(w.id))
       newly.forEach(w => struck.add(w.id))
@@ -378,13 +449,16 @@ export default function Raid01Combat({
         setTimeout(() => setDmgFlash(f => (f?.id === id ? null : f)), 1100)
       } else {
         setCombo(0)
-        triggerAttack()
+        // takeDamage already fires triggerAttack — calling it here too set two
+        // competing reset timers for one animation.
         takeDamage(STRIKE_FAIL_DMG, 'DEFLECTED')
       }
     })
-  }, [fell, isSevered, fn, runChecks, currentFnId, codeMap, onComplete, saveCode, takeDamage])
+  }, [fell, isSevered, fn, runChecks, currentFnId, codeMap, onComplete, saveCode, takeDamage, triggerAttack])
 
   // ─── Computed display ────────────────────────────────────────────────────────
+  // The current function's ward results, read straight out of the keyed store.
+  const wardResults = wardResultsByFn[currentFnId] ?? {}
   const bossPct = (bossHP / BOSS_HP_MAX) * 100
   const playerPct = (playerHP / PLAYER_HP_MAX) * 100
   const playerLow = playerHP <= 30
@@ -402,7 +476,7 @@ export default function Raid01Combat({
       if (s?.status === 'severed' && s.severed_by) counts[s.severed_by] = (counts[s.severed_by] ?? 0) + 1
     }
     return counts
-  }, [functions])
+  }, [functions, fnList])
 
   const displayName = profile?.name ?? user?.email ?? 'HUNTER'
   const browserConfig = useMemo(() => ({
@@ -824,7 +898,9 @@ export default function Raid01Combat({
           width: '1100px', height: '800px',
           border: 0, pointerEvents: 'none', visibility: 'hidden',
         }}
-        sandbox="allow-scripts allow-same-origin"
+        /* No allow-same-origin — see the runChecks comment above. The frame is
+           a unique opaque origin and cannot reach our localStorage or session. */
+        sandbox="allow-scripts"
       />
 
       {/* Sever toast */}
@@ -886,7 +962,7 @@ export default function Raid01Combat({
           <div className="r1-surrender-modal">
             <div className="r1-surrender-title">ABANDON THE RAID?</div>
             <p className="r1-surrender-text">
-              You leave the warband for good. Your {ENTRY_COST} $SHARD entry is <strong>not</strong> refunded —
+              You leave the warband for good. Your {ENTRY_COST} Shards entry is <strong>not</strong> refunded —
               the Gate is already open — but functions that have paid out stay paid. Do this if your
               party has gone dark and you want to raid again.
             </p>
@@ -914,7 +990,7 @@ export default function Raid01Combat({
             </p>
             <div className="r1-victory-rewards">
               <div className="r1-victory-reward"><span>1000 XP</span><label>FULL-CLEAR TOTAL</label></div>
-              <div className="r1-victory-reward"><span>4000</span><label>$SHARD EACH</label></div>
+              <div className="r1-victory-reward"><span>4000</span><label>Shards EACH</label></div>
               <div className="r1-victory-reward"><span>5 / 5</span><label>FUNCTIONS COMPLETE</label></div>
             </div>
             <div className="r1-victory-chip">PAYOUTS CLEARED AUTOMATICALLY — CHECK YOUR LEDGER</div>

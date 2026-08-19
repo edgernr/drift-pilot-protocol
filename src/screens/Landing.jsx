@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNav } from '../context/NavigationContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -8,24 +8,15 @@ const STEPS = [
   { rank: 'e', n: '01', title: 'Awaken',             desc: 'Take the Awakening test. The System reads your level and assigns your first E-rank Gate. No setup, no wallet.' },
   { rank: 'd', n: '02', title: 'Enter a Gate',        desc: 'Each Gate is a contained coding mission with a clear objective, a live editor, and a System that checks your work.' },
   { rank: 'c', n: '03', title: 'Clear it',            desc: 'Pass every objective to clear the Gate. You earn XP and Void Shards the moment it closes.' },
-  { rank: 'b', n: '04', title: 'Rank up',             desc: 'XP raises your Seeker rank E→D→C→B→A→S. Higher ranks unlock harder Gates and rarer rewards.' },
+  { rank: 'b', n: '04', title: 'Rank up',             desc: 'XP raises your Hunter rank E→D→C→B→A→S. Higher ranks unlock harder Gates and rarer rewards.' },
   { rank: 's', n: '05', title: 'Build real projects', desc: 'S-rank Gates are full builds — ship a real app, add it to your portfolio, prove the skill is yours.' },
-]
-
-const RANKS = [
-  { r: 's', name: 'Sovereign',   desc: 'Ship production-grade builds', xp: '120,000 XP', gold: true },
-  { r: 'a', name: 'Ascendant',   desc: 'Architect full features',      xp: '60,000 XP' },
-  { r: 'b', name: 'Breaker',     desc: 'Compose real components',      xp: '28,000 XP' },
-  { r: 'c', name: 'Clearer',     desc: 'Solve multi-step Gates',       xp: '12,000 XP' },
-  { r: 'd', name: 'Delver',      desc: 'Handle the fundamentals',      xp: '4,000 XP'  },
-  { r: 'e', name: 'Unawakened',  desc: 'Where every Seeker begins',    xp: '0 XP',  dim: true },
 ]
 
 const FAQS = [
   { q: 'Do I need to know how to code already?',
     a: 'No. Gate 01 is E-rank — designed for complete beginners. The System checks your code against clear objectives and you progress at your own pace.' },
   { q: 'How do Void Shards actually work?',
-    a: "Shards are points you earn by clearing Gates and holding streaks. Spend them in-game on hints, retries, and cosmetics. They're stored in your Seeker profile — no purchase required, ever." },
+    a: "Shards are points you earn by clearing Gates and holding streaks. Spend them in-game on hints, retries, and cosmetics. They're stored in your Hunter profile — no purchase required, ever." },
   { q: 'Is there any crypto in this?',
     a: "No. Void Shards are in-game points, earned only by playing — like XP in any game. There's no wallet, no purchase, and nothing on-chain. You learn, you earn, you spend them in-game. That's it." },
   { q: 'Is the code real, or just quizzes?',
@@ -47,7 +38,6 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false)
   const [stats, setStats] = useState({ pilots: null, gates: null })
   const [openFaq, setOpenFaq] = useState(0)
-  const particleRef = useRef(null)
 
   // New hunters (prologue not done, zero clears) enter through "Zero Hour".
   const needsPrologue = profile?.prologue_done === false && (profile?.questsCompleted ?? 0) === 0
@@ -69,28 +59,6 @@ export default function Landing() {
           ? { pilots: Number(data.pilots) || 0, gates: Number(data.gates_cleared) || 0 }
           : { pilots: 0, gates: 0 })
       }, () => setStats({ pilots: 0, gates: 0 }))
-  }, [])
-
-  // Gate particles (26 rising embers, ~18% chance gold)
-  useEffect(() => {
-    const layer = particleRef.current
-    if (!layer) return
-    for (let i = 0; i < 26; i++) {
-      const p = document.createElement('span')
-      p.className = 'p'
-      p.style.left = (18 + Math.random() * 64) + '%'
-      const size = 2 + Math.random() * 2.5
-      p.style.width = size + 'px'
-      p.style.height = size + 'px'
-      p.style.animationDuration = (4 + Math.random() * 5) + 's'
-      p.style.animationDelay   = '-' + (Math.random() * 6) + 's'
-      if (Math.random() > 0.82) {
-        p.style.background  = 'var(--lp-gold-bright)'
-        p.style.boxShadow   = '0 0 8px rgba(245,196,83,0.9)'
-      }
-      layer.appendChild(p)
-    }
-    return () => { if (layer) layer.innerHTML = '' }
   }, [])
 
   // Scroll reveal
@@ -152,14 +120,12 @@ export default function Landing() {
         <div className="lp-links">
           <a href="#journey">Journey</a>
           <a href="#worlds">Worlds</a>
-          <a href="#gate">Gates</a>
-          <a href="#ranks">Ranks</a>
           <a href="#faq">FAQ</a>
         </div>
         <div className="lp-nav-right">
           {user
             ? <button className="lp-btn lp-ghost lp-sm" onClick={() => goto('dashboard')}>Dashboard →</button>
-            : <button className="lp-btn lp-gold" onClick={() => goto('signup')}>Awaken <span className="arr">⟶</span></button>
+            : <button className="lp-btn lp-gold" onClick={() => goto('signup')}>Sign up <span className="arr">⟶</span></button>
           }
         </div>
       </nav>
@@ -168,17 +134,68 @@ export default function Landing() {
 
         {/* ── HERO ── */}
         <section className="lp-hero">
+
+          {/* Ambient dogfight. Borderless full-hero layer, not a panel — it
+              plays across and behind the copy, so it can be dropped into a
+              header or any other band later. Everything is SVG + CSS on one
+              shared 16s cycle, which is what keeps the ship, its shots and the
+              enemy deaths in sync without any JS. */}
+          <div className="sky" aria-hidden="true">
+            <div className="sky-stars far" />
+            <div className="sky-stars mid" />
+            <div className="sky-stars near" />
+
+            {/* enemies fall from the top; f2 spawns on the left, behind the copy */}
+            {['f1', 'f2', 'f3'].map(id => (
+              <svg key={id} className={`foe ${id}`} viewBox="0 0 44 52">
+                <path d="M22 52 L6 34 L2 14 L22 24 L42 14 L38 34 Z" fill="#ff3d8b" opacity="0.92" />
+                <path d="M2 14 L10 2 L22 24 Z" fill="#7d1a44" />
+                <path d="M42 14 L34 2 L22 24 Z" fill="#7d1a44" />
+                <circle cx="22" cy="30" r="3" fill="#08080c" />
+              </svg>
+            ))}
+
+            {/* tracer bursts, one per kill */}
+            <span className="tracer t1" />
+            <span className="tracer t2" />
+            <span className="tracer t3" />
+
+            {/* impacts */}
+            {['x1', 'x2', 'x3'].map(id => (
+              <div key={id} className={`burst ${id}`}>
+                <i className="flash" />
+                <i className="ring" />
+                <i className="ring r2" />
+                {[0, 1, 2, 3, 4, 5].map(n => <s key={n} className={`shard sh${n}`} />)}
+              </div>
+            ))}
+
+            {/* the player — banks, turns and comes back */}
+            <svg className="jet" viewBox="0 0 44 64">
+              <defs>
+                <linearGradient id="jetHull" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#9dfffa" />
+                  <stop offset="60%" stopColor="#3df0e8" />
+                  <stop offset="100%" stopColor="#12706d" />
+                </linearGradient>
+              </defs>
+              <path d="M22 2 L30 22 L40 44 L26 40 L22 52 L18 40 L4 44 L14 22 Z" fill="url(#jetHull)" />
+              <path d="M22 2 L26 20 L18 20 Z" fill="#eaf6f5" opacity="0.9" />
+              <circle cx="22" cy="26" r="3.2" fill="#08080c" />
+              <rect className="burn" x="18" y="50" width="8" height="12" fill="#f5c453" />
+            </svg>
+          </div>
+
           <div className="hero-copy">
             <span className="lp-eyebrow">System online // Void Shards</span>
             <h1 className="h-xl">
               <span className="l1">Awaken</span>
-              <span className="l1">as a <span className="tint-cyan">Seeker.</span></span>
+              <span className="l1">as a <span className="tint-cyan">Hunter.</span></span>
               <span className="l2">Clear <b>Gates.</b> Level up as a <b>developer.</b></span>
             </h1>
             <p className="lp-lead">
-              Void Shards turns learning to code into a Solo-Leveling-style ascent.
-              Step through a Gate, clear a real coding mission, earn XP and $SHARD,
-              and rank up from E to S as your actual skills grow.
+              Play a game, fight monsters, become a real software engineer.
+              Earn XP and Shards, and rank up from E to S as your actual skills grow.
             </p>
             <div className="hero-cta">
               <button className="lp-btn lp-cyan" onClick={enter}>Enter the first Gate <span className="arr">⟶</span></button>
@@ -187,7 +204,7 @@ export default function Landing() {
             <div className="hero-stats">
               <div className="s">
                 <div className="n">{fmt(stats.pilots)}</div>
-                <div className="k">Seekers awakened</div>
+                <div className="k">Hunters awakened</div>
               </div>
               <div className="s">
                 <div className="n">{fmt(stats.gates)}</div>
@@ -200,33 +217,12 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Gate visual */}
-          <div className="gate-stage">
-            <div className="gate-vis">
-              <span className="frame-br tl" /><span className="frame-br tr" />
-              <span className="frame-br bl" /><span className="frame-br brr" />
-              <div className="lp-gate-glow" />
-              <div className="lp-arch a1" />
-              <div className="lp-arch a2" />
-              <div className="lp-arch a3" />
-              <div className="lp-gate-core" />
-              <div className="lp-gate-beam" />
-              <div className="lp-gate-particles" ref={particleRef} />
-              <div className="lp-seeker" />
-              <div className="lp-gate-floor" />
-              <div className="lp-gate-readout">
-                GATE // OPEN<br />
-                <span className="d">THREAT: E-RANK</span><br />
-                <span className="d">STATUS: STABLE</span>
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* ── JOURNEY ── */}
         <section className="lp-sec" id="journey">
           <div className="lp-sec-head">
-            <span className="lp-eyebrow">// The Seeker's journey</span>
+            <span className="lp-eyebrow">// The Hunter's journey</span>
             <h2 className="h-lg lp-reveal">From <span className="tint-dim">E-rank</span> novice<br />to <span className="tint-gold">S-rank</span> developer.</h2>
             <p className="lp-lead lp-reveal">No abstract "learning paths." A clear loop you can feel: awaken, enter a Gate, clear it, rank up, and walk out with real projects.</p>
           </div>
@@ -290,9 +286,9 @@ export default function Landing() {
             <article className="lp-world young lp-reveal" onClick={() => goto('academy')}>
               <div className="w-bg" />
               <div className="w-inner">
-                <div className="w-label">World 03 — Young Seekers</div>
+                <div className="w-label">World 03 — Young Hunters</div>
                 <h3>The Academy</h3>
-                <p>A brighter, friendlier training ground for young Seekers (8–16). Same Gates, gentler threats, colorful guides.</p>
+                <p>A brighter, friendlier training ground for young Hunters (8–16). Same Gates, gentler threats, colorful guides.</p>
                 <div className="w-meta">
                   <span className="lp-tag gold">Ages 8–16</span>
                   <span className="lp-tag">Guided</span>
@@ -300,113 +296,6 @@ export default function Landing() {
                 <span className="w-enter gold">Enter the Academy <span className="arr">⟶</span></span>
               </div>
             </article>
-          </div>
-        </section>
-
-        {/* ── SAMPLE GATE ── */}
-        <section className="lp-sec" id="gate">
-          <div className="lp-sec-head">
-            <span className="lp-eyebrow">// Sample Gate</span>
-            <h2 className="h-lg lp-reveal">Look inside a Gate.</h2>
-          </div>
-
-          <div className="lp-gate-sample">
-            <div className="lp-reveal">
-              <p className="lp-lead">Every Gate is a mission briefing: a clear objective, a rank, and a fixed reward. The System grades your code against the objectives — clear them all and the Gate closes, paying out XP and Void Shards instantly.</p>
-              <div className="gate-icons">
-                <div className="gi-row">
-                  <span className="lp-rank c sm" style={{ display: 'inline-flex' }}>C</span>
-                  <span className="lp-mono gi-text">Rank scales with the threat inside</span>
-                </div>
-                <div className="gi-row">
-                  <span className="lp-shard lg" />
-                  <span className="lp-mono gi-text">Shards drop the instant a Gate clears</span>
-                </div>
-              </div>
-              <button className="lp-btn lp-cyan" style={{ marginTop: 34 }} onClick={enter}>Enter Gate 01 <span className="arr">⟶</span></button>
-            </div>
-
-            <div className="lp-panel lp-cyan-edge lp-gate-window lp-reveal">
-              <div className="br tl" /><div className="br tr" />
-              <div className="br bl" /><div className="br br2" />
-              <div className="gw-head">
-                <span className="gw-id">▸ Gate 01 // The Abyss</span>
-                <span className="gw-stat">STATUS: UNCLEARED</span>
-              </div>
-              <div className="gw-body">
-                <div className="gw-title">
-                  <h3>The Document Tomb</h3>
-                  <span className="lp-rank e">E</span>
-                </div>
-                <div className="gw-sub">Objective — find and fix all 4 markup errors in the broken HTML document</div>
-                <div className="gw-rewards">
-                  <div className="gw-reward xp">
-                    <div className="k">XP Reward</div>
-                    <div className="v">+100</div>
-                  </div>
-                  <div className="gw-reward shard">
-                    <div className="k">Void Shards</div>
-                    <div className="v"><span className="lp-shard" /> 80</div>
-                  </div>
-                </div>
-                <div className="gw-obj">
-                  <div className="o done"><span className="bx" /> Semantic structure: correct DOCTYPE</div>
-                  <div className="o done"><span className="bx" /> All tags properly closed</div>
-                  <div className="o"><span className="bx" /> Required attributes present</div>
-                  <div className="o"><span className="bx" /> No nesting violations</div>
-                </div>
-              </div>
-              <div className="gw-foot">
-                <div className="gw-diff">
-                  Difficulty <span className="lp-bar" data-lp-fill="20"><i /></span>
-                </div>
-                <button className="lp-btn lp-gold gw-btn" onClick={enter}>Clear Gate <span className="arr">⟶</span></button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── RANKS & SHARDS ── */}
-        <section className="lp-sec" id="ranks">
-          <div className="lp-sec-head">
-            <span className="lp-eyebrow gold">// Ranks &amp; Void Shards</span>
-            <h2 className="h-lg lp-reveal">Climb the ladder.<br />Bank the <span className="tint-gold">Shards.</span></h2>
-          </div>
-
-          <div className="lp-ranks-grid">
-            <div className="lp-ladder lp-reveal">
-              {RANKS.map(r => (
-                <div key={r.r} className={`lp-row${r.gold ? ' gold' : ''}`}>
-                  <span className={`lp-rank ${r.r}`}>{r.r.toUpperCase()}</span>
-                  <div>
-                    <div className={`lvl-name${r.gold ? ' tint-gold' : r.dim ? ' tint-dim' : ''}`}>{r.name}</div>
-                    <div className="lvl-desc">{r.desc}</div>
-                  </div>
-                  <div className="lvl-xp">{r.xp}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="lp-shard-side lp-reveal">
-              <div className="shard-visual">
-                <div className="big-shard"><span className="shard-label">$SHARD</span></div>
-              </div>
-              <div className="shard-points">
-                {[
-                  { title: 'Earned, not bought',  body: "Shards only drop from clearing Gates and keeping streaks. You can't buy your way up a rank." },
-                  { title: 'Spend them in-game',  body: 'Trade Shards for hints, Gate retries, cosmetic gear, and early access to new worlds.' },
-                  { title: 'Yours to keep',        body: 'Shards live in your Seeker profile. No wallet, no purchase, no obligation — ever.' },
-                ].map(pt => (
-                  <div key={pt.title} className="shard-pt">
-                    <span className="lp-shard pt-ic" />
-                    <div><h4>{pt.title}</h4><p>{pt.body}</p></div>
-                  </div>
-                ))}
-              </div>
-              <div className="wallet-note">
-                <b>Points, not crypto.</b> Void Shards are in-game progression points — earned by clearing Gates, spent on hints, retries, and cosmetics. No wallet, no purchases, nothing on-chain.
-              </div>
-            </div>
           </div>
         </section>
 
@@ -430,7 +319,7 @@ export default function Landing() {
                 </div>
               </div>
               <div className="lp-disclaimer">
-                ⚠ Void Shards is an independent learning platform. It is <b>not affiliated with, sponsored by, or endorsed by any cryptocurrency project</b>. "$SHARD" / "Void Shards" are in-app progression points — not a cryptocurrency, not an investment, and they carry no monetary value.
+                ⚠ Void Shards is an independent learning platform. It is <b>not affiliated with, sponsored by, or endorsed by any cryptocurrency project</b>. "Shards" / "Void Shards" are in-app progression points — not a cryptocurrency, not an investment, and they carry no monetary value.
               </div>
             </div>
 
@@ -457,7 +346,7 @@ export default function Landing() {
           <h2 className="h-lg lp-reveal" style={{ marginTop: 18 }}>Will you <span className="tint-cyan">awaken?</span></h2>
           <p className="lp-lead lp-reveal">Step through your first Gate in under a minute. No card, no wallet, no setup — just you and the void.</p>
           <div className="lp-final-cta">
-            <button className="lp-btn lp-gold" onClick={enter}>Awaken now <span className="arr">⟶</span></button>
+            <button className="lp-btn lp-gold" onClick={enter}>Sign up <span className="arr">⟶</span></button>
           </div>
         </div>
       </section>
@@ -471,7 +360,6 @@ export default function Landing() {
           <div className="lp-f-links">
             <a href="#journey">Journey</a>
             <a href="#worlds">Worlds</a>
-            <a href="#ranks">Ranks</a>
             <a href="#faq">FAQ</a>
             <button onClick={() => goto('terms')}>Terms</button>
             <button onClick={() => goto('privacy')}>Privacy</button>

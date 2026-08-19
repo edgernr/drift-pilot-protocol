@@ -88,6 +88,7 @@ export default function Dashboard() {
     { id: 'act1-ch10', label: 'Gate 10 — The Static City', xp: 600 },
   ]
   const [quests, setQuests] = useState([])
+  const [openLobbies, setOpenLobbies] = useState([])
   const [lbData, setLbData] = useState([])
   const [settingsName, setSettingsName] = useState('')
   const [saveStatus, setSaveStatus] = useState(null)
@@ -109,6 +110,25 @@ export default function Dashboard() {
     supabase.from('quests').select('*').eq('world', 1).order('order_index')
       .then(({ data }) => { if (data) setQuests(data) })
   }, [])
+
+  // Open warbands, for the dashboard card. One-shot query on mount and a slow
+  // refresh — deliberately NOT a realtime subscription: an unfiltered lobby
+  // listener on every dashboard is exactly what broke the raid screens.
+  useEffect(() => {
+    if (!user) return
+    let stop = false
+    const load = async () => {
+      const { data } = await supabase
+        .from('raids').select('id,name,status,created_at')
+        .in('status', ['bg_lobby', 'lobby'])
+        .order('created_at', { ascending: false })
+        .limit(4)
+      if (!stop && data) setOpenLobbies(data)
+    }
+    load()
+    const t = setInterval(load, 30000)
+    return () => { stop = true; clearInterval(t) }
+  }, [user])
 
   useEffect(() => {
     localStorage.setItem('hunt-card-variant', cardVariant)
@@ -153,12 +173,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return
     const ch = supabase
-      .channel('dash-friend-requests')
+      .channel(`dash-friend-requests:${user.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'friend_requests', filter: `receiver_id=eq.${user.id}` },
         fetchFriends)
       .subscribe()
-    return () => ch.unsubscribe()
+    return () => { supabase.removeChannel(ch) }
   }, [user, fetchFriends])
 
   useEffect(() => {
@@ -169,12 +189,12 @@ export default function Dashboard() {
     }
     fetchInvites()
     const ch = supabase
-      .channel('dash-my-invites')
+      .channel(`dash-my-invites:${user.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'raid_invites', filter: `invitee_id=eq.${user.id}` },
         fetchInvites)
       .subscribe()
-    return () => ch.unsubscribe()
+    return () => { supabase.removeChannel(ch) }
   }, [user])
 
   // Welcome modal yields to the prologue (which replaces its teaching role).
@@ -275,8 +295,11 @@ export default function Dashboard() {
     // server-side. Degrade gracefully if the view isn't provisioned yet.
     ;(async () => {
       // avatar is added to the view by guilds.sql — retry without it pre-migration
-      let res = await supabase.from('leaderboard').select('id,name,total_xp,avatar').order('total_xp', { ascending: false })
-      if (res.error) res = await supabase.from('leaderboard').select('id,name,total_xp').order('total_xp', { ascending: false })
+      // .limit(100) matters: the view is a full-table aggregate over every
+      // profile joined to every completion. Unbounded, it gets slower for
+      // everyone with each new player, and nobody scrolls past the top 100.
+      let res = await supabase.from('leaderboard').select('id,name,total_xp,avatar').order('total_xp', { ascending: false }).limit(100)
+      if (res.error) res = await supabase.from('leaderboard').select('id,name,total_xp').order('total_xp', { ascending: false }).limit(100)
       const { data, error } = res
       if (error || !data) {
         if (error) console.warn('leaderboard view unavailable:', error.message)
@@ -285,14 +308,17 @@ export default function Dashboard() {
       }
       const ranked = data.map((p, i) => ({
         id: p.id,
-        name: p.name || 'Seeker',
+        name: p.name || 'Hunter',
         totalXp: p.total_xp ?? 0,
         avatar: p.avatar ?? null,
         rank: i + 1,
       }))
       setLbData(ranked)
     })()
-  }, [profile])
+    // Depend on the XP value, not the `profile` object: fetchProfile rebuilds
+    // that object after every quest completion and gate unlock, so `[profile]`
+    // re-ran this whole aggregate several times per session per user.
+  }, [profile?.totalXp])
 
   function openSettings() {
     setSettingsName(profile?.name ?? '')
@@ -325,6 +351,9 @@ export default function Dashboard() {
   // questsCompleted counts raid rows too, so it can exceed the gate denominator.
   // Count only Act I gate completions for the "QUESTS CLEARED" stat.
   const gatesDone = [...(profile?.completedQuestIds ?? [])].filter(id => id.startsWith('act1-ch')).length
+  // Plain-language name of the next thing to do, for the one hero line. Falls
+  // back to a generic label so the hero never renders an empty or broken title.
+  const nextGateTitle = quests[gatesDone]?.title ?? quests[gatesDone]?.name ?? `Gate ${String(gatesDone + 1).padStart(2, '0')}`
   const totalXp = profile?.totalXp ?? 0
   const totalHunt = profile?.totalHunt ?? 0
   const totalHuntSpent = profile?.totalHuntSpent ?? 0
@@ -357,7 +386,7 @@ export default function Dashboard() {
     'act1-ch09': { label: 'Gate 09 — The Control Room',  icon: '⬡' },
     'act1-ch10': { label: 'Gate 10 — The Static City',   icon: '📡' },
   }
-  // Source of truth for $SHARD payouts lives in AuthContext.HUNT_REWARDS —
+  // Source of truth for Shards payouts lives in AuthContext.HUNT_REWARDS —
   // mirror it directly so wallet credits, transactions, and notifications match.
   const HUNT_REWARDS_UI = HUNT_REWARDS
   function resolveQuestMeta(questId, xpEarned) {
@@ -365,7 +394,7 @@ export default function Dashboard() {
     if (questId?.startsWith('raid:')) return { label: 'Raid completed', icon: '⚔️', drift: xpEarned ?? 0, kind: 'raid' }
     return { label: questId, icon: '◈', drift: 0, kind: 'unknown' }
   }
-  const pilotName = profile?.name ?? 'Seeker'
+  const pilotName = profile?.name ?? 'Hunter'
   const streak = profile?.streak ?? 0
   const streakMult = profile?.streakMultiplier ?? 1
   const xpMult = profile?.xpMultiplier ?? 1
@@ -394,17 +423,13 @@ export default function Dashboard() {
   const act10Done = doneQuests.has('act1-ch10')
   const myRank = lbData.find(r => r.id === user?.id)?.rank ?? null
 
+  // Derived from the quests table rather than a hardcoded ladder. The old
+  // version had no all-cleared branch, so a player who finished every gate
+  // fell through and got sent back to Gate 01.
   function gotoActiveQuest() {
-    if (act9Done && !act10Done) return goto('quest10')
-    if (act8Done && !act9Done) return goto('quest9')
-    if (act7Done && !act8Done) return goto('quest8')
-    if (act6Done && !act7Done) return goto('quest7')
-    if (act5Done && !act6Done) return goto('quest6')
-    if (act4Done && !act5Done) return goto('quest5')
-    if (act1Done && act2Done && act3Done && !act4Done) return goto('quest4')
-    if (act1Done && act2Done && !act3Done) return goto('quest3')
-    if (act1Done && !act2Done) return goto('quest2')
-    goto('quest')
+    const idx = quests.findIndex(q => !doneQuests.has(q.id))
+    if (idx === -1) return setView('skill-tree')   // everything cleared
+    goto(idx === 0 ? 'quest' : `quest${idx + 1}`)
   }
 
   function gotoQuestById(id) {
@@ -433,9 +458,9 @@ export default function Dashboard() {
             {onboardStep === 1 && (<>
               <div className="welcome-glyph onboard-glyph-pulse">◈</div>
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>VOID SHARDS</div>
-              <h2 className="welcome-title">Welcome, Seeker.</h2>
+              <h2 className="welcome-title">Welcome, Hunter.</h2>
               <p className="welcome-body">
-                EVA City is a neon district where the old code has corrupted. As a Seeker you'll clear the Gates — debugging sectors, building real projects, and earning $SHARD.<br /><br />
+                EVA City is a neon district where the old code has corrupted. As a Hunter you'll clear the Gates — debugging sectors, building real projects, and earning Shards.<br /><br />
                 Clear all 10 gates in Act I to unlock the Reactive Sector. Raid the tower for bonus rewards.
               </p>
               <div className="onboard-dots">
@@ -462,7 +487,7 @@ export default function Dashboard() {
                     <span className="onboard-gate-icon">{g.icon}</span>
                     <span className="onboard-gate-name">{g.name}</span>
                     <span className="onboard-gate-sub">{g.sub}</span>
-                    <span className="onboard-gate-reward">+{g.xp} XP · +{g.drift} $SHARD</span>
+                    <span className="onboard-gate-reward">+{g.xp} XP · +{g.drift} Shards</span>
                   </div>
                 ))}
               </div>
@@ -472,17 +497,17 @@ export default function Dashboard() {
               <button className="welcome-cta" style={{ marginTop: 16 }} onClick={() => setOnboardStep(3)}>Continue →</button>
             </>)}
 
-            {/* ── Step 3: Callsign ── */}
+            {/* ── Step 3: Name ── */}
             {onboardStep === 3 && (<>
               <div className="welcome-glyph">◈</div>
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--teal)', letterSpacing: '0.18em', marginBottom: 10 }}>STEP 3 OF 3</div>
-              <h2 className="welcome-title">Confirm Your Callsign</h2>
-              <p className="welcome-body" style={{ marginBottom: 0 }}>This is how you'll appear on the leaderboard and your shareable seeker profile.</p>
+              <h2 className="welcome-title">Choose your name</h2>
+              <p className="welcome-body" style={{ marginBottom: 0 }}>This is how you'll appear on the leaderboard and your shareable hunter profile.</p>
               <input
                 className="onboard-name-input"
                 value={onboardName || profile?.name || ''}
                 onChange={e => setOnboardName(e.target.value)}
-                placeholder="Enter callsign..."
+                placeholder="Enter your name..."
                 maxLength={30}
                 autoFocus
               />
@@ -551,25 +576,17 @@ export default function Dashboard() {
       )}
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => { goto('landing'); setSidebarOpen(false) }}>
-          <svg width="150" height="40" viewBox="0 0 172 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="VOID SHARDS">
-            <path d="M13 2L23 16L13 38L3 16Z" stroke="#f5c453" strokeWidth="1.4" strokeLinejoin="round"/>
-            <path d="M13 2L23 16L13 18Z" fill="#f5c45330"/>
-            <path d="M13 2L3 16L13 18Z" fill="#f5c45318"/>
-            <path d="M23 16L13 38L13 18Z" fill="#f5c4530d"/>
-            <path d="M3 16L13 38L13 18Z" fill="#f5c45516"/>
-            <path d="M3 16H23" stroke="#f5c45340" strokeWidth="0.6"/>
-            <path d="M13 2L16.5 7.5" stroke="white" strokeWidth="0.7" strokeLinecap="round" strokeOpacity="0.5"/>
-            <text x="31" y="28" fontFamily="'Saira Condensed','Arial Narrow',Arial,sans-serif" fontSize="22" fontWeight="700" letterSpacing="1.5" fill="#eaf6f5">VOID</text>
-            <text x="90" y="28" fontFamily="'Saira Condensed','Arial Narrow',Arial,sans-serif" fontSize="22" fontWeight="700" letterSpacing="1.5" fill="#3df0e8">SHARDS</text>
-          </svg>
+          {/* Same mark as the landing page — one logo across the product. */}
+          <span className="logo-mark" />
+          Void Shards
         </div>
 
         <div>
-          <div className="section-label">Seeker HQ</div>
+          <div className="section-label">Hunter HQ</div>
           <div className="navlist">
             <a className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><span className="ic">◈</span> Dashboard</a>
             <a onClick={gotoActiveQuest}><span className="ic">▶</span> Active Quest</a>
-            <a className={view === 'skill-tree' ? 'active' : ''} onClick={() => setView('skill-tree')}><span className="ic">⟐</span> Skill Tree</a>
+            <a className={view === 'skill-tree' ? 'active' : ''} onClick={() => setView('skill-tree')}><span className="ic">⟐</span> Missions</a>
 <a className={view === 'raids' ? 'active' : ''} onClick={() => setView('raids')}><span className="ic">※</span> Raids</a>
           </div>
         </div>
@@ -577,8 +594,7 @@ export default function Dashboard() {
         <div>
           <div className="section-label">Rewards</div>
           <div className="navlist">
-            <a className={view === 'wallet' ? 'active' : ''} onClick={() => setView('wallet')}><span className="ic">$</span> $SHARD Wallet</a>
-            <a className={view === 'leaderboard' ? 'active' : ''} onClick={() => setView('leaderboard')}><span className="ic">♦</span> Leaderboard</a>
+            <a className={view === 'wallet' ? 'active' : ''} onClick={() => setView('wallet')}><span className="ic">$</span> Shards Wallet</a>
           </div>
         </div>
 
@@ -605,13 +621,6 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="wallet-card">
-          <div className="addr">
-            <span className="dot" style={{ color: 'var(--lime)' }} />
-            SEEKER VAULT
-          </div>
-          <div className="bal">{fmt(spendableDrift)}<span className="u">$SHARD</span></div>
-        </div>
       </aside>
 
       <main className="dash-main">
@@ -676,7 +685,7 @@ export default function Dashboard() {
                             <span style={{ fontSize: 18, flexShrink: 0 }}>{meta.icon}</span>
                             <div>
                               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-1)' }}>{meta.label} cleared</div>
-                              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', marginTop: 2 }}>+{meta.drift} $SHARD · {new Date(c.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--ink-3)', marginTop: 2 }}>+{meta.drift} Shards · {new Date(c.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                             </div>
                           </div>
                         )
@@ -736,202 +745,85 @@ export default function Dashboard() {
                 <span className="chip chip-amber" style={{ display: 'inline-flex' }}>
                   <span className="dot dot-pulse" /> {streak > 0 ? `${streak}-DAY STREAK` : 'START YOUR STREAK'}
                 </span>
-                <h1 style={{ marginTop: 16 }}>GM, <span style={nameColor ? { color: nameColor } : undefined}>{pilotName}</span>.<br /><span className="gradient-text">Ready for today's mission?</span></h1>
+                <h1 style={{ marginTop: 16 }}>Welcome back, <span style={nameColor ? { color: nameColor } : undefined}>{pilotName}</span>.<br /><span className="gradient-text">Ready for today's mission?</span></h1>
                 {(isFounder || isSubscribed) && (
                   <div className="pilot-badges">
                     {isFounder && <span className="pilot-badge badge-founder">⬡ EDGERNR</span>}
                     {isSubscribed && <span className="pilot-badge badge-season1">◈ SEASON 01</span>}
                   </div>
                 )}
-                {(() => {
-                  const totalGates = quests.length || 10
-                  const remaining = Math.max(0, totalGates - gatesDone)
-                  return (
-                    <p>{gatesDone === 0
-                      ? <>Your first mission awaits. Complete Act I to unlock <strong>React Act II</strong>.</>
-                      : remaining > 0
-                      ? <>You're {remaining} quest{remaining !== 1 ? 's' : ''} away from unlocking <strong>React Act II</strong>. {
-                          xpMult > 1
-                            ? (isSubscribed && streakMult > 1
-                                ? <>Season Pass <strong>×{fmtMult(SEASON_PASS_XP_MULT)}</strong> + streak <strong>×{fmtMult(streakMult)}</strong> = <strong>×{fmtMult(xpMult)} XP</strong>.</>
-                                : isSubscribed
-                                  ? <>Your Season Pass is earning <strong>×{fmtMult(SEASON_PASS_XP_MULT)} XP</strong>.</>
-                                  : <>Your streak is earning <strong>×{fmtMult(streakMult)} XP</strong> — keep it alive.</>)
-                            : <>Build a <strong>3-day streak</strong> to start earning bonus XP.</>
-                        }</>
-                      : <>Act I complete. <strong>React Act II</strong> is now unlocked. Ready for the next challenge?</>
-                    }</p>
-                  )
-                })()}
+                {/* One line, plain language, naming the actual next thing.
+                    The old copy branched four ways to explain compound XP
+                    multiplier maths to someone who had zero XP. */}
+                <p className="hero-next">
+                  {gatesDone === 0
+                    ? <>Next up: <strong>{nextGateTitle}</strong></>
+                    : gatesDone < (quests.length || 10)
+                      ? <>Next up: <strong>{nextGateTitle}</strong></>
+                      : <>You've cleared everything available. <strong>React Act II</strong> is unlocked.</>}
+                </p>
 
-                {/* XP Level progress bar */}
+                {/* THE primary action. One button, visually dominant, nothing
+                    competing with it on this screen. */}
+                <button className="btn btn-primary btn-continue" onClick={gotoActiveQuest}>
+                  {gatesDone === 0 ? 'START' : 'CONTINUE'} →
+                </button>
+
+                {/* One progress ladder. Level/label only — Rank E–S and Global
+                    Rank were two more ladders nobody could relate to this one. */}
                 <div className="hero-xp-bar">
                   <div className="hero-xp-labels">
                     <span style={{ color: levelData.color, fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                      LV.{levelData.level} {levelData.label}
+                      Level {levelData.level}
                     </span>
                     <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)' }}>
                       {levelData.level < 10
-                        ? `${levelData.xpInLevel} / ${levelData.xpNeeded} XP · ${levelData.progress}% → LV.${levelData.level + 1} ${levelData.nextLabel}`
-                        : 'MAX RANK · LEGEND ACHIEVED'
-                      }
+                        ? `${levelData.xpInLevel} / ${levelData.xpNeeded} XP`
+                        : 'Max level'}
                     </span>
                   </div>
                   <div className="hero-xp-track">
                     <div className="hero-xp-fill" style={{ width: `${levelData.progress}%`, background: levelData.color }} />
                   </div>
                 </div>
-
-                <button className="btn btn-primary" onClick={gotoActiveQuest}>Resume Quest →</button>
               </div>
-              <div className="streak-art">
-                <div className="streak-flame">{streak || '—'}</div>
-                <div className="streak-lbl">{streak > 0 ? (streakMult > 1 ? `DAY STREAK · ×${streakMult} XP` : 'DAY STREAK') : 'NO STREAK YET'}</div>
-              </div>
-            </div>
 
-            <div className="stats-grid">
-              {[
-                { color: 'var(--teal)',    label: 'TOTAL XP',        val: fmt(totalXp),       delta: 'lifetime earned' },
-                { color: 'var(--magenta)', label: '$SHARD BALANCE',   val: fmt(spendableDrift), unit: 'SHARD', delta: `${fmt(totalHunt)} earned · ${fmt(totalHuntSpent)} spent` },
-                { color: 'var(--violet)',  label: 'QUESTS CLEARED',  val: String(gatesDone), unit: `/${quests.length || 10}`, delta: `${Math.min(100, Math.round(gatesDone / (quests.length || 10) * 100))}% of Act I` },
-                { color: 'var(--amber)',   label: 'GLOBAL RANK',     val: myRank ? `#${myRank}` : '—', delta: myRank ? `of ${lbData.length} seekers` : lbData.length > 0 ? 'not ranked yet' : 'loading...' },
-              ].map(s => (
-                <div key={s.label} className="stat">
-                  <div className="label"><span className="dot" style={{ color: s.color }} />{s.label}</div>
-                  <div className="val">{s.val}{s.unit && <span className="u">{s.unit}</span>}</div>
-                  <div className="delta">{s.delta}</div>
+              {/* Total XP and Gates cleared now sit beside the streak instead of
+                  in a separate band below the hero. */}
+              <div className="hero-stats-col">
+                {/* Two stats, not four. Shards has a whole wallet screen and rank has
+                    a whole leaderboard screen — repeating them here just gave a new
+                    player four large zeros to look at. */}
+                <div className="stats-grid stats-grid-2">
+                  {[
+                    { color: 'var(--teal)',   label: 'TOTAL XP',       val: fmt(totalXp),      delta: 'lifetime earned' },
+                    { color: 'var(--violet)', label: 'GATES CLEARED',  val: String(gatesDone), unit: `/${quests.length || 10}`, delta: `${Math.min(100, Math.round(gatesDone / (quests.length || 10) * 100))}% of Act I` },
+                  ].map(s => (
+                    <div key={s.label} className="stat">
+                      <div className="label"><span className="dot" style={{ color: s.color }} />{s.label}</div>
+                      <div className="val">{s.val}{s.unit && <span className="u">{s.unit}</span>}</div>
+                      <div className="delta">{s.delta}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
 
-            <div className="dash-cols">
+
+            {/* The panels that used to live here were removed because they were
+                HARDCODED to gates 01-04 (permanently stale after gate 4) or were
+                advertising unshipped content. What follows is the same idea done
+                from the database, so it stays correct for the whole season. */}
+            <div className="dash-cols dash-cols-2">
+
               <div>
                 <div className="section-block">
                   <div className="sb-head">
-                    <h3>Active Quests</h3>
-                    <span className="more" onClick={() => setView('skill-tree')}>View all →</span>
+                    <h3>Top hunters</h3>
                   </div>
-                  <div className="aq-list">
-                    <div className="aq" onClick={() => goto('quest')}>
-                      <div className="icon" style={{ background: 'linear-gradient(135deg, oklch(0.86 0.18 185 / 0.15), oklch(0.55 0.26 220 / 0.15))', color: 'var(--teal)' }}>📡</div>
-                      <div>
-                        <div className="aq-title">Gate 01 — The Document Tomb</div>
-                        <div className="meta">
-                          {act1Done
-                            ? <span className="chip chip-lime" style={{ padding: '2px 6px' }}>COMPLETED</span>
-                            : <span className="chip chip-magenta" style={{ padding: '2px 6px' }}>CURRENT</span>
-                          }
-                          <span>{act1Done ? '100 XP earned' : '~10 min · Rank E'}</span>
-                        </div>
-                      </div>
-                      <div className="pr">
-                        <div className="bar"><div className="fill" style={{ width: act1Done ? '100%' : '0%', background: act1Done ? 'linear-gradient(90deg, var(--lime), var(--teal))' : undefined }} /></div>
-                        <div className="pct">{act1Done ? '100% · 100 XP' : 'NOT STARTED'}</div>
-                      </div>
-                      <button className="btn btn-primary btn-sm">{act1Done ? 'Review' : 'Enter'}</button>
-                    </div>
-
-                    <div className="aq" onClick={() => goto('quest2')}>
-                      <div className="icon" style={{ background: 'linear-gradient(135deg, oklch(0.72 0.22 290 / 0.2), oklch(0.5 0.18 270 / 0.2))', color: 'var(--violet)' }}>⚱️</div>
-                      <div>
-                        <div className="aq-title">Gate 02 — The Semantic Crypt</div>
-                        <div className="meta">
-                          {act2Done
-                            ? <span className="chip chip-lime" style={{ padding: '2px 6px' }}>COMPLETED</span>
-                            : act1Done
-                            ? <span className="chip chip-amber" style={{ padding: '2px 6px' }}>UNLOCKED</span>
-                            : <span className="chip" style={{ padding: '2px 6px', fontSize: 10 }}>LOCKED</span>
-                          }
-                          <span>{act2Done ? '200 XP earned' : '~10 min · Rank E'}</span>
-                        </div>
-                      </div>
-                      <div className="pr">
-                        <div className="bar"><div className="fill" style={{ width: act2Done ? '100%' : '0%', background: act2Done ? 'linear-gradient(90deg, var(--lime), var(--teal))' : undefined }} /></div>
-                        <div className="pct">{act2Done ? '100% · 200 XP' : 'NOT STARTED'}</div>
-                      </div>
-                      <button className="btn btn-primary btn-sm">{act2Done ? 'Review' : 'Enter'}</button>
-                    </div>
-
-                    <div className="aq" onClick={() => goto('quest3')}>
-                      <div className="icon" style={{ background: 'linear-gradient(135deg, oklch(0.62 0.22 25 / 0.2), oklch(0.4 0.15 15 / 0.2))', color: 'oklch(0.68 0.24 25)' }}>📋</div>
-                      <div>
-                        <div className="aq-title">Gate 03 — The Form Gate</div>
-                        <div className="meta">
-                          {act3Done
-                            ? <span className="chip chip-lime" style={{ padding: '2px 6px' }}>COMPLETED</span>
-                            : act2Done
-                            ? <span className="chip chip-amber" style={{ padding: '2px 6px' }}>UNLOCKED</span>
-                            : <span className="chip" style={{ padding: '2px 6px', fontSize: 10 }}>LOCKED</span>
-                          }
-                          <span>{act3Done ? '300 XP earned' : '~15 min · Rank D · Boss'}</span>
-                        </div>
-                      </div>
-                      <div className="pr">
-                        <div className="bar"><div className="fill" style={{ width: act3Done ? '100%' : '0%', background: act3Done ? 'linear-gradient(90deg, var(--lime), var(--teal))' : undefined }} /></div>
-                        <div className="pct">{act3Done ? '100% · 300 XP' : 'NOT STARTED'}</div>
-                      </div>
-                      <button className="btn btn-primary btn-sm">{act3Done ? 'Review' : 'Enter'}</button>
-                    </div>
-
-                    <div className="aq" onClick={() => goto('quest4')}>
-                      <div className="icon" style={{ background: 'linear-gradient(135deg, oklch(0.82 0.18 75 / 0.2), oklch(0.60 0.15 55 / 0.2))', color: 'var(--amber)' }}>🎨</div>
-                      <div>
-                        <div className="aq-title">Gate 04 — Paint the City</div>
-                        <div className="meta">
-                          {act4Done
-                            ? <span className="chip chip-lime" style={{ padding: '2px 6px' }}>COMPLETED</span>
-                            : act3Done
-                            ? <span className="chip chip-amber" style={{ padding: '2px 6px' }}>UNLOCKED</span>
-                            : <span className="chip" style={{ padding: '2px 6px', fontSize: 10 }}>LOCKED</span>
-                          }
-                          <span>{act4Done ? '200 XP earned' : '~15 min · Rank E · CSS'}</span>
-                        </div>
-                      </div>
-                      <div className="pr">
-                        <div className="bar"><div className="fill" style={{ width: act4Done ? '100%' : '0%', background: act4Done ? 'linear-gradient(90deg, var(--lime), var(--teal))' : undefined }} /></div>
-                        <div className="pct">{act4Done ? '100% · 200 XP' : 'NOT STARTED'}</div>
-                      </div>
-                      <button className="btn btn-primary btn-sm">{act4Done ? 'Review' : 'Enter'}</button>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              <div>
-                <div className="section-block">
-                  {(() => {
-                    const objectives = [
-                      { done: act1Done, text: 'Clear Gate 01 — The Document Tomb', rw: '+100 XP' },
-                      { done: act2Done, text: 'Clear Gate 02 — The Semantic Crypt', rw: '+200 XP' },
-                      { done: act3Done, text: 'Clear Gate 03 — The Form Gate',     rw: '+300 XP' },
-                      { done: act4Done, text: 'Clear Gate 04 — Paint the City',    rw: '+200 XP' },
-                      { done: streak >= 3, text: 'Build a 3-day streak',           rw: '+streak' },
-                    ]
-                    const objDone = objectives.filter(o => o.done).length
-                    return (
-                      <>
-                        <div className="sb-head"><h3>Season Objectives</h3><span className="more">{objDone}/{objectives.length}</span></div>
-                        <div className="panel daily-card">
-                          {objectives.map(d => (
-                            <div key={d.text} className={`daily-item${d.done ? ' done' : ''}`}>
-                              <div className="check">{d.done ? '✓' : '○'}</div>
-                              <div className="t">{d.text}</div>
-                              <div className="rw">{d.rw}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )
-                  })()}
-                </div>
-
-                <div className="section-block">
-                  <div className="sb-head"><h3>Season Leaderboard</h3><span className="more">Top {Math.min(lbData.length, 5)}</span></div>
                   <div className="panel lb">
                     {lbData.length === 0
-                      ? <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', padding: '8px 0' }}>Loading...</div>
+                      ? <div className="path-empty">No rankings yet — clear a gate to appear here.</div>
                       : lbData.slice(0, 5).map(r => (
                           <div key={r.id} className={`lb-row${r.rank <= 3 ? ' top' : ''}${r.id === user?.id ? ' me' : ''}`} style={{ cursor: 'pointer' }} onClick={() => goto(`pilot/${r.id}`)}>
                             <div className="rank">{r.rank}</div>
@@ -943,63 +835,85 @@ export default function Dashboard() {
                           </div>
                         ))
                     }
+                  </div>
+                </div>
+
+                <div className="section-block">
+                  <div className="sb-head">
+                    <h3>Open warbands</h3>
+                    <span className="more" onClick={() => setView('raids')}>Raids →</span>
+                  </div>
+                  <div className="panel wb-list">
+                    {openLobbies.length === 0 ? (
+                      <div className="path-empty">
+                        No warbands right now.
+                        <span className="wb-start" onClick={() => setView('raids')}>Start one →</span>
+                      </div>
+                    ) : openLobbies.map(l => (
+                      <div key={l.id} className="wb-row" onClick={() => setView('raids')}>
+                        <span className="wb-dot" />
+                        <span className="wb-name">{l.name || 'Unnamed warband'}</span>
+                        <span className="wb-join">Join →</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="section-block">
+                  <div className="sb-head">
+                    <h3>Missions</h3>
+                    <span className="more" onClick={() => setView('skill-tree')}>All →</span>
+                  </div>
+                  {/* A window of four around where the player actually is —
+                      current gate first, then what's next. Driven by the quests
+                      table, so it stays correct all season instead of being
+                      pinned to gates 01-04 like the panel this replaces. */}
+                  <div className="ms-grid">
                     {(() => {
-                      const me = lbData.find(r => r.id === user?.id)
-                      if (!me || me.rank <= 5) return null
-                      return (
-                        <div className="lb-row me" style={{ cursor: 'pointer' }} onClick={() => goto(`pilot/${me.id}`)}>
-                          <div className="rank">{me.rank}</div>
-                          <div className="who">
-                            <div className="av" style={{ background: 'linear-gradient(135deg, var(--violet), var(--magenta))' }}><HunterSigil config={profile?.avatar} name={pilotName} size="100%" /></div>
-                            <span>{pilotName} · <span style={{ color: 'var(--magenta)', fontSize: 10, fontFamily: 'var(--f-mono)' }}>YOU</span></span>
+                      const total = quests.length
+                      if (!total) return <div className="path-empty">Loading missions…</div>
+                      const start = Math.min(gatesDone, Math.max(0, total - 4))
+                      return quests.slice(start, start + 4).map((q, n) => {
+                        const i = start + n
+                        const done = doneQuests.has(q.id)
+                        const isNext = !done && i === gatesDone
+                        const locked = !done && i > gatesDone
+                        const route = i === 0 ? 'quest' : `quest${i + 1}`
+                        return (
+                          <div
+                            key={q.id}
+                            className={`ms-card${done ? ' done' : ''}${isNext ? ' next' : ''}${locked ? ' locked' : ''}`}
+                            onClick={() => { if (!locked) goto(route) }}
+                          >
+                            <div className="ms-top">
+                              <span className="ms-ic">{done ? '✓' : locked ? '🔒' : (q.icon || '◈')}</span>
+                              {q.is_boss && <span className="ms-boss">BOSS</span>}
+                            </div>
+                            <div className="ms-title">{q.title}</div>
+                            <div className="ms-topic">{q.topic}</div>
+                            <div className="ms-foot">
+                              <span className="ms-xp">{done ? `+${q.xp} XP` : `${q.xp} XP`}</span>
+                              <span className="ms-cta">
+                                {done ? 'Review' : locked ? 'Locked' : 'Start →'}
+                              </span>
+                            </div>
                           </div>
-                          <div className="xp">{fmt(totalXp)}</div>
-                        </div>
-                      )
+                        )
+                      })
                     })()}
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="section-block">
-              <div className="sb-head"><h3>World Map</h3><span className="more">Season 01</span></div>
-              <div className="panel wmap-grid">
-                {[
-                  { n:'01', name:'HTML Ruins',      color:'var(--amber)',   quests: Math.min(gatesDone, quests.length || 10), total: quests.length || 10, boss:'DIV EATER', active:true  },
-                  { n:'02', name:'Reactive Sector', color:'var(--violet)',  active:false },
-                  { n:'03', name:'Router Maze',     color:'var(--teal)',    active:false },
-                  { n:'04', name:'Immersive Grid',  color:'var(--magenta)', active:false },
-                ].map(w => (
-                  <div key={w.n} className={`wmap-world${w.active ? ' wmap-active' : ''}`} style={{ '--wc': w.color }}>
-                    <div className="wmap-header">
-                      <span className="wmap-num">W{w.n}</span>
-                      {w.active ? <span className="wmap-live">ACTIVE</span> : <span className="wmap-locked">LOCKED</span>}
-                    </div>
-                    <div className="wmap-name">{w.name}</div>
-                    <div className="wmap-bar-wrap">
-                      <div className="wmap-fill" style={{ width: w.active ? `${Math.round(w.quests / w.total * 100)}%` : '0%' }} />
-                    </div>
-                    <div className="wmap-foot">
-                      {w.active ? (
-                        <>
-                          <span>{w.quests}/{w.total} quests</span>
-                          <span className="wmap-boss">{w.boss}</span>
-                        </>
-                      ) : (
-                        <span style={{ color: 'var(--ink-3)' }}>Coming in Season 02</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </>
         ) : view === 'skill-tree' ? (
           <>
             <div className="st-header">
               <div>
-                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Skill Tree</h2>
+                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Missions</h2>
                 <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                   W01 · HTML Ruins · {questsDone}/{quests.length} quests · {fmt(totalXp)} XP earned
                 </p>
@@ -1016,7 +930,7 @@ export default function Dashboard() {
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'oklch(0.72 0.28 340 / 0.06)', border: '1px solid oklch(0.72 0.28 340 / 0.2)', borderRadius: 10, padding: '12px 18px', fontFamily: 'var(--f-mono)', fontSize: 11 }}>
                   <span style={{ fontSize: 20 }}>🔓</span>
-                  <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 10 gates</strong> sequentially with a Season Pass — no $SHARD spend needed.</span>
+                  <span style={{ color: 'var(--ink-2)', flex: 1 }}>Unlock <strong style={{ color: 'var(--ink-1)' }}>all 10 gates</strong> sequentially with a Season Pass — no Shards spend needed.</span>
                   <button className="btn btn-primary" style={{ fontSize: 11, padding: '6px 14px', flexShrink: 0 }} onClick={handleCheckout} disabled={checkoutLoading}>
                     {checkoutLoading ? 'Loading…' : 'Get Season Pass →'}
                   </button>
@@ -1066,12 +980,12 @@ export default function Dashboard() {
                         uStatus === 'unlocking' ? (
                           <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--ink-3)' }}>...</span>
                         ) : uStatus === 'insufficient' ? (
-                          <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--magenta)' }}>Need {huntCost} $SHARD</span>
+                          <span className="chip" style={{ padding: '1px 6px', fontSize: 9, color: 'var(--magenta)' }}>Need {huntCost} Shards</span>
                         ) : (
                           <button
                             style={{ padding: '2px 8px', fontSize: 9, color: 'var(--magenta)', background: 'none', border: '1px solid oklch(0.72 0.28 340 / 0.4)', borderRadius: 4, cursor: 'pointer', fontFamily: 'var(--f-mono)' }}
                             onClick={e => { e.stopPropagation(); handleUnlock(chKey, huntCost) }}
-                          >{huntCost} $SHARD</button>
+                          >{huntCost} Shards</button>
                         )
                       )}
                     </div>
@@ -1084,7 +998,7 @@ export default function Dashboard() {
           <>
             <div className="st-header">
               <div>
-                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>$SHARD Wallet</h2>
+                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Shards Wallet</h2>
                 <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                   Off-chain balance · Season 01
                 </p>
@@ -1136,12 +1050,12 @@ export default function Dashboard() {
                 <div style={{ position: 'relative' }}>
                   <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.12em', marginBottom: 6 }}>BALANCE</div>
                   <div style={{ fontSize: 40, fontWeight: 700, color: 'oklch(1 0 0 / 0.95)', letterSpacing: '-0.02em', lineHeight: 1 }}>{fmt(spendableDrift)}</div>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'oklch(1 0 0 / 0.5)', marginTop: 4 }}>$SHARD</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'oklch(1 0 0 / 0.5)', marginTop: 4 }}>Shards</div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
                   <div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>SEEKER</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'oklch(1 0 0 / 0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>HUNTER</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: nameColor ?? 'oklch(1 0 0 / 0.85)' }}>{pilotName.toUpperCase()}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -1180,7 +1094,7 @@ export default function Dashboard() {
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Transaction History</div>
                 <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
                   {completions.length === 0 && unlocks.length === 0 ? (
-                    <div style={{ padding: '24px 20px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No transactions yet. Clear a gate to earn $SHARD.</div>
+                    <div style={{ padding: '24px 20px', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)' }}>No transactions yet. Clear a gate to earn Shards.</div>
                   ) : (
                     [
                       ...completions.map(c => ({ type: 'earn', quest_id: c.quest_id, date: c.completed_at, drift: resolveQuestMeta(c.quest_id, c.xp_earned).drift, xp_earned: c.xp_earned })),
@@ -1225,36 +1139,6 @@ export default function Dashboard() {
             </div>
             <RaidView />
           </>
-        ) : view === 'leaderboard' ? (
-          <>
-            <div className="st-header">
-              <div>
-                <h2 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '-0.02em', marginBottom: 6 }}>Leaderboard</h2>
-                <p style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                  Season 01 · {lbData.length} seeker{lbData.length !== 1 ? 's' : ''} ranked
-                </p>
-              </div>
-            </div>
-
-            <div className="panel lb" style={{ maxWidth: 640 }}>
-              {lbData.length === 0
-                ? <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink-3)', padding: '16px 0' }}>Loading...</div>
-                : lbData.map(r => (
-                    <div key={r.id} className={`lb-row${r.rank <= 3 ? ' top' : ''}${r.id === user?.id ? ' me' : ''}`} style={{ cursor: 'pointer' }} onClick={() => goto(`pilot/${r.id}`)}>
-                      <div className="rank">{r.rank}</div>
-                      <div className="who">
-                        <div className="av" style={{ background: `linear-gradient(135deg, ${LB_GRADS[(r.rank - 1) % LB_GRADS.length]})` }}><HunterSigil config={r.avatar} name={r.name} size="100%" /></div>
-                        <span>
-                          {r.name}
-                          {r.id === user?.id && <span style={{ color: 'var(--magenta)', fontSize: 10, fontFamily: 'var(--f-mono)', marginLeft: 6 }}>YOU</span>}
-                        </span>
-                      </div>
-                      <div className="xp">{fmt(r.totalXp)} XP</div>
-                    </div>
-                  ))
-              }
-            </div>
-          </>
         ) : (
           <>
             <div className="set-hero">
@@ -1267,7 +1151,7 @@ export default function Dashboard() {
 
             <div className="set-grid">
               <div className="section-block">
-                <div className="sb-head"><h3>Seeker Profile</h3></div>
+                <div className="sb-head"><h3>Hunter Profile</h3></div>
                 <div className="panel set-form">
                   <div className="set-field">
                     <label className="set-label">Display Name</label>
@@ -1275,7 +1159,7 @@ export default function Dashboard() {
                       className="set-input"
                       value={settingsName}
                       onChange={e => setSettingsName(e.target.value)}
-                      placeholder="Your seeker name"
+                      placeholder="Your name"
                     />
                   </div>
                   <div className="set-field">
@@ -1459,7 +1343,7 @@ export default function Dashboard() {
                 <div className="sb-head"><h3>Public Profile</h3></div>
                 <div className="panel set-form">
                   <div className="set-field">
-                    <div className="set-label">Share your seeker profile</div>
+                    <div className="set-label">Share your profile</div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input
                         className="set-input set-readonly"

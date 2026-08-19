@@ -13,7 +13,7 @@ const EXTRA_ROLE_COST = 1000
 // Accepting used to only flip raid_invites.status to 'accepted' — the hunter
 // was never added to the warband, so the button said JOIN and did nothing.
 // Joining genuinely requires three things the RPC can't decide for you:
-// which specialization(s) you take, the $SHARD entry burn, and the
+// which specialization(s) you take, the Shards entry burn, and the
 // raid_members rows. This modal does all three, in an order that fails safe.
 export default function InviteAcceptModal({ invite, onClose, onJoined }) {
   const { profile, user, burnRaidEntry, refreshProfile } = useAuth()
@@ -106,7 +106,7 @@ export default function InviteAcceptModal({ invite, onClose, onJoined }) {
         ) : (
           <>
             <div className="iam-section-label">
-              PICK YOUR SPECIALIZATION{picked.length > 1 ? 'S' : ''} — 1st free, extras {EXTRA_ROLE_COST.toLocaleString()} $SHARD
+              PICK YOUR SPECIALIZATION{picked.length > 1 ? 'S' : ''} — 1st free, extras {EXTRA_ROLE_COST.toLocaleString()} Shards
             </div>
 
             <div className="iam-roles">
@@ -145,7 +145,7 @@ export default function InviteAcceptModal({ invite, onClose, onJoined }) {
                     (picked.length > 1 ? ` + ${((picked.length - 1) * EXTRA_ROLE_COST).toLocaleString()} extra` : '')}
               </span>
               <span className={`iam-total${!canAfford ? ' short' : ''}`}>
-                {total.toLocaleString()} $SHARD
+                {total.toLocaleString()} Shards
                 {!canAfford && ' — INSUFFICIENT'}
               </span>
             </div>

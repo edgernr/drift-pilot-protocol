@@ -594,7 +594,7 @@ export default function RaidIDE({
       .subscribe()
 
     return () => {
-      if (filesChannel.current) filesChannel.current.unsubscribe()
+      if (filesChannel.current) supabase.removeChannel(filesChannel.current)
     }
   }, [loadFiles, raid.id])
 
